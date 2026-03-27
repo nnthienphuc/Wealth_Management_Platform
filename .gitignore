@@ -1,0 +1,38 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio cache
+.vs/
+
+# Environment config
+.env
+.env.*
+
+# User-specific files
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Ignore REAL secret config files only
+appsettings.Production.json
+appsettings.json
+
+# Ignore Google OAuth secret (do not commit)
+client_secret_*.json
+
+# DB backups
+*.trn
+/Database/backups/
+*.bak
+/Database/hard-delete-investor.sql
+
+# Document
+Document
+/Document
+
+#Image
+Storage
+/Storage/
