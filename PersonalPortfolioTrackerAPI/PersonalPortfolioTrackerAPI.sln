@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37012.4 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalPortfolioTracker", "PersonalPortfolioTracker\PersonalPortfolioTracker.csproj", "{CBFECBBE-D7EC-4038-B114-1764B1F61BD0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CBFECBBE-D7EC-4038-B114-1764B1F61BD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBFECBBE-D7EC-4038-B114-1764B1F61BD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBFECBBE-D7EC-4038-B114-1764B1F61BD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBFECBBE-D7EC-4038-B114-1764B1F61BD0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C83551E0-9F4C-454A-A0E6-F804497E3F76}
+	EndGlobalSection
+EndGlobal
