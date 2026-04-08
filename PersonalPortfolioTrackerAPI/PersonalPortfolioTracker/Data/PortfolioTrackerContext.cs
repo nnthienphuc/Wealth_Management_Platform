@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using PersonalPortfolioTracker.Models.Entities;
+using PersonalPortfolioTracker.Data.Entities;
 
 namespace PersonalPortfolioTracker.Data;
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PersonalPortfolioTracker.Models.Entities;
+namespace PersonalPortfolioTracker.Data.Entities;
 
 public partial class TickerTypes
 {
