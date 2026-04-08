@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace PersonalPortfolioTrackerAPI.Common.Controller
+namespace PersonalPortfolioTracker.Common.Controller
 {
     [ApiController]
     [Route("api/[controller]")]
