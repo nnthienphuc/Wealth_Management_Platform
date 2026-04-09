@@ -17,7 +17,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
                     .IsDescending(false, true)
                     .HasFilter("([IsDeleted]=(0))");
 
-            builder.Property(e => e.Id)
+            builder.Property(e => e.ID)
                     .HasDefaultValueSql("(newid())")
                     .HasColumnName("ID");
             builder.Property(e => e.AccountId).HasColumnName("AccountID");
@@ -30,7 +30,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.Pit)
                     .HasColumnType("decimal(28, 8)")
                     .HasColumnName("PIT");
-            builder.Property(e => e.Pitrate)
+            builder.Property(e => e.PitRate)
                     .HasColumnType("decimal(12, 6)")
                     .HasColumnName("PITRate");
             builder.Property(e => e.PreInvestmentCost).HasColumnType("decimal(28, 8)");
@@ -39,7 +39,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.Price).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.Quantity).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.RealizedPnL).HasColumnType("decimal(28, 8)");
-            builder.Property(e => e.RealizedPnLrate)
+            builder.Property(e => e.RealizedPnLRate)
                     .HasColumnType("decimal(12, 6)")
                     .HasColumnName("RealizedPnLRate");
             builder.Property(e => e.TickerId).HasColumnName("TickerID");

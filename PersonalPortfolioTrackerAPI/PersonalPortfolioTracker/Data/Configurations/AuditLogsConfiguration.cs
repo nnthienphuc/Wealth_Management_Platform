@@ -10,7 +10,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
         {
             builder.HasQueryFilter(t => !t.IsDeleted);
 
-            builder.Property(e => e.Id)
+            builder.Property(e => e.ID)
             .HasDefaultValueSql("(newid())")
             .HasColumnName("ID");
             builder.Property(e => e.Action)

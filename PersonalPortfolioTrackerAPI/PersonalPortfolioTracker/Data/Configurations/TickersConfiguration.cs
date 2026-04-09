@@ -14,7 +14,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
 
             builder.HasIndex(e => new { e.TickerTypeId, e.Symbol }, "IX_Tickers_Type").HasFilter("([ISDELETED]=(0))");
 
-            builder.Property(e => e.Id)
+            builder.Property(e => e.ID)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("ID");
             builder.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");

@@ -12,7 +12,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
 
             builder.HasIndex(e => e.Code, "IX_TickerTypes").IsUnique();
 
-            builder.Property(e => e.Id)
+            builder.Property(e => e.ID)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("ID");
             builder.Property(e => e.Code)
