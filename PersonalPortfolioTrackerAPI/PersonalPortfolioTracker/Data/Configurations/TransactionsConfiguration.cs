@@ -4,7 +4,7 @@ using PersonalPortfolioTracker.Data.Entities;
 
 namespace PersonalPortfolioTracker.Data.Configurations
 {
-    public class TransactionConfiguration : IEntityTypeConfiguration<Transactions>
+    public class TransactionsConfiguration : IEntityTypeConfiguration<Transactions>
     {
         public void Configure(EntityTypeBuilder<Transactions> builder)
         {
