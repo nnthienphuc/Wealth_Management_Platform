@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using PersonalPortfolioTracker.Common.Entity;
 
 namespace PersonalPortfolioTracker.Data.Entities;
 
-public partial class Tickers
+public partial class Tickers : BaseAuditableEntity
 {
-    public Guid Id { get; set; }
-
     public Guid TickerTypeId { get; set; }
 
     public string Symbol { get; set; } = null!;
@@ -16,12 +13,6 @@ public partial class Tickers
     public decimal MarketPrice { get; set; }
 
     public string Currency { get; set; } = null!;
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
-
-    public bool IsDeleted { get; set; }
 
     public virtual ICollection<Holdings> Holdings { get; set; } = new List<Holdings>();
 

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using PersonalPortfolioTracker.Common.Entity;
 
 namespace PersonalPortfolioTracker.Data.Entities;
 
-public partial class Transactions
+public partial class Transactions : BaseEntity
 {
-    public Guid Id { get; set; }
-
     public Guid AccountId { get; set; }
 
     public Guid TickerId { get; set; }
@@ -25,7 +22,7 @@ public partial class Transactions
 
     public decimal? Pit { get; set; }
 
-    public decimal? Pitrate { get; set; }
+    public decimal? PitRate { get; set; }
 
     public decimal? NetAmount { get; set; }
 
@@ -33,7 +30,7 @@ public partial class Transactions
 
     public decimal? RealizedPnL { get; set; }
 
-    public decimal? RealizedPnLrate { get; set; }
+    public decimal? RealizedPnLRate { get; set; }
 
     public decimal PreQuantity { get; set; }
 
@@ -42,10 +39,6 @@ public partial class Transactions
     public decimal PreTotalInvestmentCost { get; set; }
 
     public string? Note { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
-    public bool IsDeleted { get; set; }
 
     public virtual Accounts Account { get; set; } = null!;
 

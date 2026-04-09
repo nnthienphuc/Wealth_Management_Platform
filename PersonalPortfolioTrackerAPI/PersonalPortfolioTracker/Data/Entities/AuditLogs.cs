@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace PersonalPortfolioTracker.Data.Entities;
+﻿namespace PersonalPortfolioTracker.Data.Entities;
 
 public partial class AuditLogs
 {
-    public Guid Id { get; set; }
+    public Guid ID { get; set; }
 
     public Guid InvestorId { get; set; }
 

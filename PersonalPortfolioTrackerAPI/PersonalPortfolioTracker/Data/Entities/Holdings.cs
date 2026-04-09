@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using PersonalPortfolioTracker.Common.Entity;
 
 namespace PersonalPortfolioTracker.Data.Entities;
 
-public partial class Holdings
+public partial class Holdings : BaseAuditableEntity
 {
-    public Guid Id { get; set; }
-
     public Guid AccountId { get; set; }
 
     public Guid TickerId { get; set; }
@@ -21,13 +18,7 @@ public partial class Holdings
 
     public decimal? TargetSell { get; set; }
 
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
-
     public string? Note { get; set; }
-
-    public bool IsDeleted { get; set; }
 
     public virtual Accounts Account { get; set; } = null!;
 

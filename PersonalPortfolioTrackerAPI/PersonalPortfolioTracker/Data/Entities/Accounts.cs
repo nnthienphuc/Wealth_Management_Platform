@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using PersonalPortfolioTracker.Common.Entity;
 
 namespace PersonalPortfolioTracker.Data.Entities;
 
-public partial class Accounts
+public partial class Accounts : BaseAuditableEntity
 {
-    public Guid Id { get; set; }
-
     public Guid InvestorId { get; set; }
 
     public string Name { get; set; } = null!;
@@ -23,13 +20,7 @@ public partial class Accounts
 
     public decimal TotalBalance { get; set; }
 
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime UpdatedAt { get; set; }
-
     public string? Note { get; set; }
-
-    public bool IsDeleted { get; set; }
 
     public virtual ICollection<AccountSnapshots> AccountSnapshots { get; set; } = new List<AccountSnapshots>();
 
