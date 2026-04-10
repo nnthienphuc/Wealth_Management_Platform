@@ -5,6 +5,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PersonalPortfolioTracker.Data;
+using PersonalPortfolioTracker.Data.Repositories;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -119,6 +120,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 //app.UseMiddleware<ExceptionMiddleware>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 app.UseRouting();
 
