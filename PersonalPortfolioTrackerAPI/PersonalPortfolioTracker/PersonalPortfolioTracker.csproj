@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
-    <Folder Include="Data\Repositories\" />
     <Folder Include="Models\Responses\" />
     <Folder Include="Models\Requests\" />
     <Folder Include="Services\" />
