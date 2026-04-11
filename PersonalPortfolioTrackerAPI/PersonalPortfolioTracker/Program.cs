@@ -91,6 +91,7 @@ Console.WriteLine(">>>> Using ConnectionString: " + connectionString);
 
 // Services & DI
 builder.Services.AddHttpContextAccessor(); // để inject được IHttpContextAccessor
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers
@@ -102,7 +103,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Personal Portfolio Tracker API V2");
+    c.SwaggerEndpoint("/swagger/v2/swagger.json", "Personal Portfolio Tracker API V2");
     c.RoutePrefix = "swagger";
 });
 
@@ -120,7 +121,6 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 //app.UseMiddleware<ExceptionMiddleware>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 app.UseRouting();
 
