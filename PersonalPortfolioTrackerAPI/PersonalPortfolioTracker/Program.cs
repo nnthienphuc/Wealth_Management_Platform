@@ -62,7 +62,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Swagger (Dev only)
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Personal Portfolio Tracker API", Version = "v1" });
+    c.SwaggerDoc("v2", new OpenApiInfo { Title = "Personal Portfolio Tracker API", Version = "v2" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
