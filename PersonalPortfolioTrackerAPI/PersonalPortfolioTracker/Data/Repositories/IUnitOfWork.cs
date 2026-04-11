@@ -1,18 +1,18 @@
-﻿using PersonalPortfolioTracker.Data.Entities;
+﻿using PersonalPortfolioTracker.Common.Entity;
+using PersonalPortfolioTracker.Data.Entities;
 
 namespace PersonalPortfolioTracker.Data.Repositories
 {
     public interface IUnitOfWork : IDisposable
     {
-        IRepositoryBase<Investors> Investors { get; }
-        IRepositoryBase<Accounts> Accounts { get; }
-        IRepositoryBase<Holdings> Holdings { get; }
-        IRepositoryBase<Transactions> Transactions { get; }
-        IRepositoryBase<Tickers> Tickers { get; }
-        IRepositoryBase<TickerTypes> TickerTypes { get; }
-        IRepositoryBase<AccountSnapshots> AccountSnapshots { get; }
+        // Trả về Repository cho một thực thể cụ thể. 
+        // Dùng Generic để không phải khai báo từng Repository một cách thủ công.
+        IRepositoryBase<TEntity> Repository<TEntity>() where TEntity : BaseEntity;
 
+        // Lưu tất cả thay đổi vào Database (SaveChanges)
         Task<int> SaveAsync();
+
+        // Các hàm điều khiển Giao dịch (Transaction) thủ công
         Task BeginTransactionAsync();
         Task CommitAsync();
         Task RollbackAsync();

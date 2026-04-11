@@ -1,41 +1,56 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
-using PersonalPortfolioTracker.Data.Entities;
+using PersonalPortfolioTracker.Common.Entity;
 
 namespace PersonalPortfolioTracker.Data.Repositories
 {
     public class UnitOfWork : IUnitOfWork
     {
         private readonly PortfolioTrackerContext _context;
-        private IDbContextTransaction _transaction;
+        private IDbContextTransaction? _transaction;
 
-        // Lazy loading repositories
-        private IRepositoryBase<Investors> _investors;
-        private IRepositoryBase<Accounts> _accounts;
-        private IRepositoryBase<Holdings> _holdings;
-        private IRepositoryBase<Transactions> _transactions;
-        private IRepositoryBase<Tickers> _tickers;
-        private IRepositoryBase<TickerTypes> _tickerTypes;
-        private IRepositoryBase<AccountSnapshots> _snapshots;
+        // Dictionary dùng để lưu trữ (cache) các Repository đã khởi tạo. 
+        // Giúp tái sử dụng lại Instance cũ thay vì tạo mới liên tục trong cùng một Request.
+        private Dictionary<string, object>? _repositories;
 
         public UnitOfWork(PortfolioTrackerContext context)
         {
             _context = context;
         }
 
-        // Khởi tạo Repository khi cần dùng (Singleton trong phạm vi 1 request)
-        public IRepositoryBase<Investors> Investors => _investors ??= new RepositoryBase<Investors>(_context);
-        public IRepositoryBase<Accounts> Accounts => _accounts ??= new RepositoryBase<Accounts>(_context);
-        public IRepositoryBase<Holdings> Holdings => _holdings ??= new RepositoryBase<Holdings>(_context);
-        public IRepositoryBase<Transactions> Transactions => _transactions ??= new RepositoryBase<Transactions>(_context);
-        public IRepositoryBase<Tickers> Tickers => _tickers ??= new RepositoryBase<Tickers>(_context);
-        public IRepositoryBase<TickerTypes> TickerTypes => _tickerTypes ??= new RepositoryBase<TickerTypes>(_context);
-        public IRepositoryBase<AccountSnapshots> AccountSnapshots => _snapshots ??= new RepositoryBase<AccountSnapshots>(_context);
+        /// <summary>
+        /// Tự động khởi tạo Repository cho Entity tương ứng nếu chưa có trong Dictionary.
+        /// Kỹ thuật này gọi là "Lazy Initialization".
+        /// </summary>
+        public IRepositoryBase<TEntity> Repository<TEntity>() where TEntity : BaseEntity
+        {
+            _repositories ??= new Dictionary<string, object>();
+
+            var type = typeof(TEntity).Name;
+
+            if (!_repositories.ContainsKey(type))
+            {
+                // Sử dụng Reflection để tạo Instance của RepositoryBase<TEntity>
+                var repositoryType = typeof(RepositoryBase<>);
+                var repositoryInstance = Activator.CreateInstance(
+                    repositoryType.MakeGenericType(typeof(TEntity)),
+                    _context);
+
+                _repositories.Add(type, repositoryInstance!);
+            }
+
+            return (IRepositoryBase<TEntity>)_repositories[type];
+        }
 
         public async Task<int> SaveAsync()
         {
+            // Tận dụng SaveChangesAsync đã được override để xử lý Soft Delete tự động
             return await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Bắt đầu một Transaction. Dùng khi cần đảm bảo nhiều lệnh SaveAsync() 
+        /// phải thành công hết hoặc thất bại hết (Atomicity).
+        /// </summary>
         public async Task BeginTransactionAsync()
         {
             _transaction = await _context.Database.BeginTransactionAsync();
@@ -46,10 +61,11 @@ namespace PersonalPortfolioTracker.Data.Repositories
             try
             {
                 await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
+                if (_transaction != null) await _transaction.CommitAsync();
             }
             catch
             {
+                // Nếu có bất kỳ lỗi nào xảy ra trong quá trình Commit, tự động Rollback lại dữ liệu
                 await RollbackAsync();
                 throw;
             }
@@ -57,6 +73,7 @@ namespace PersonalPortfolioTracker.Data.Repositories
             {
                 if (_transaction != null)
                 {
+                    // Giải phóng Transaction bất kể thành công hay thất bại
                     await _transaction.DisposeAsync();
                     _transaction = null;
                 }
@@ -73,9 +90,14 @@ namespace PersonalPortfolioTracker.Data.Repositories
             }
         }
 
+        /// <summary>
+        /// Giải phóng Context khi kết thúc Request (tránh tràn bộ nhớ).
+        /// </summary>
         public void Dispose()
         {
             _context.Dispose();
+            _transaction?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
