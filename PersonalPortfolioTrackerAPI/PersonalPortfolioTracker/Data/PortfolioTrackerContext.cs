@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PersonalPortfolioTracker.Common.Entity;
+using PersonalPortfolioTracker.Common.Helper;
 using PersonalPortfolioTracker.Data.Entities;
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace PersonalPortfolioTracker.Data;
@@ -32,6 +32,38 @@ public partial class PortfolioTrackerContext : DbContext
     public virtual DbSet<Tickers> Tickers { get; set; }
 
     public virtual DbSet<Transactions> Transactions { get; set; }
+
+    #region custom HardDelete (set IsDeleted = true)
+    public override int SaveChanges()
+    {
+        HandleSoftDelete();
+        return base.SaveChanges();
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        HandleSoftDelete();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void HandleSoftDelete()
+    {
+        var entities = ChangeTracker.Entries()
+        .Where(e => e.State == EntityState.Deleted && e.Entity is BaseEntity);
+
+        foreach (var entity in entities)
+        {
+            entity.State = EntityState.Modified; // Chuyển từ Delete sang Update
+            var baseEntity = (BaseEntity)entity.Entity;
+            baseEntity.IsDeleted = true; // Gán flag
+                                         // Nếu là Auditable thì cập nhật luôn ngày xóa
+            if (entity.Entity is BaseAuditableEntity auditable)
+            {
+                auditable.UpdatedAt = VietnamTime.Now();
+            }
+        }
+    }
+    # endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
