@@ -6,6 +6,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PersonalPortfolioTracker.Data;
 using PersonalPortfolioTracker.Data.Repositories;
+using PersonalPortfolioTracker.Services.AuthService;
+using PersonalPortfolioTracker.Services.EmailService;
+using PersonalPortfolioTrackerAPI.Middlewares;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -91,7 +94,9 @@ Console.WriteLine(">>>> Using ConnectionString: " + connectionString);
 
 // Services & DI
 builder.Services.AddHttpContextAccessor(); // để inject được IHttpContextAccessor
+builder.Services.AddScoped<EmailSenderService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers
@@ -120,7 +125,7 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/media"
 });
 
-//app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseRouting();
 
