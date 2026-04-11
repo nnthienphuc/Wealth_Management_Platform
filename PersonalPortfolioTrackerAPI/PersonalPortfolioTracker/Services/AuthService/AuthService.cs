@@ -174,7 +174,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (investor.IsDeleted)
                 throw new ForbiddenException("Your account has been disabled. Please contact support.");
 
-            // nếu vì lý do gì đó IsActivated = false thì cho activate luôn
+            // nếu vì lý do gì đó IsActivated == false thì cho activate luôn
             if (!investor.IsActivated)
             {
                 investor.IsActivated = true;
