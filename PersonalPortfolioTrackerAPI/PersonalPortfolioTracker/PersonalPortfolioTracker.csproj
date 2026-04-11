@@ -24,11 +24,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Models\Responses\" />
-    <Folder Include="Models\Requests\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>

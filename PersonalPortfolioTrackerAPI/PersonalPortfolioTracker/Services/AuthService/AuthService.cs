@@ -33,8 +33,10 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrWhiteSpace(request.PasswordConfirmation))
                 throw new ArgumentException("Please fill full field to create new account.");
 
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
             var isEmailExists = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == request.Email).AnyAsync();
+                .FindByCondition(i => i.Email == normalizedEmail).AnyAsync();
 
             if (isEmailExists)
                 throw new InvalidOperationException("Email is being used by another user.");
@@ -44,7 +46,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             var newInvestor = new Investors
             {
-                Email = request.Email,
+                Email = normalizedEmail,
                 FullName = request.FullName,
                 HashPassword = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 CreatedAt = VietnamTime.Now(),
@@ -76,8 +78,10 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 throw new ArgumentException("Please fill full field to login.");
 
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
             var existingInvestor = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == request.Email).FirstOrDefaultAsync();
+                .FindByCondition(i => i.Email == normalizedEmail).FirstOrDefaultAsync();
 
             if (existingInvestor == null)
                 throw new KeyNotFoundException("Entered email is not available, please create new account to use our service.");
@@ -103,7 +107,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var token = GenerateActivationToken(existingInvestor.ID);
                 var activationLink = BuildFrontendUrl("/activate", token); ;
 
-                await _emailService.SendEmailAsync(existingInvestor.Email, "Activate your account",
+                await _emailService.SendEmailAsync(normalizedEmail, "Activate your account",
                     $"Click this link to activate your account: <a href='{activationLink}'>Activate your account</a>");
 
                 throw new ForbiddenException("Your account is not activated. Please check your email.");
@@ -215,8 +219,10 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
         public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
         {
+            var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
             var existingInvestor = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == request.Email).FirstOrDefaultAsync();
+                .FindByCondition(i => i.Email == normalizedEmail).FirstOrDefaultAsync();
 
             if (existingInvestor == null)
                 throw new KeyNotFoundException("Account not found.");
@@ -229,7 +235,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var token = GenerateActivationToken(existingInvestor.ID);
                 var activationLink = BuildFrontendUrl("/activate", token);
 
-                await _emailService.SendEmailAsync(existingInvestor.Email, "Activate your account",
+                await _emailService.SendEmailAsync(normalizedEmail, "Activate your account",
                     $"Click this link to activate your account: <a href='{activationLink}'>Activate your account</a>");
 
                 throw new ForbiddenException("Your account is not activated. Please check your email.");
