@@ -1,6 +1,7 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using Microsoft.IdentityModel.Tokens;
 using PersonalPortfolioTracker.Common.Exceptions;
+using System.Net;
+using System.Text.Json;
 
 namespace PersonalPortfolioTrackerAPI.Middlewares
 {
@@ -47,8 +48,11 @@ namespace PersonalPortfolioTrackerAPI.Middlewares
 
                 // 401: chưa xác thực / token sai / đăng nhập sai
                 case UnauthorizedAccessException:
+                case SecurityTokenException: // Bắt tất cả lỗi liên quan đến Token (hết hạn, sai chữ ký,...)
                     statusCode = (int)HttpStatusCode.Unauthorized; // 401
                     errorType = "Unauthorized";
+                    if (exception is SecurityTokenExpiredException)
+                        message = "Token has expired. Please request a new activation email.";
                     break;
 
                 // 403: bị chặn bởi trạng thái (chưa kích hoạt, bị khoá, bị xóa)

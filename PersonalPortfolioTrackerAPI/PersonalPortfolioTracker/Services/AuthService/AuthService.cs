@@ -36,7 +36,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
             var isEmailExists = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == normalizedEmail).AnyAsync();
+                .FindByCondition(i => i.Email == normalizedEmail).IgnoreQueryFilters().AnyAsync();
 
             if (isEmailExists)
                 throw new InvalidOperationException("Email is being used by another user.");
@@ -81,16 +81,13 @@ namespace PersonalPortfolioTracker.Services.AuthService
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
             var existingInvestor = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == normalizedEmail).FirstOrDefaultAsync();
+                .FindByCondition(i => i.Email == normalizedEmail).IgnoreQueryFilters().FirstOrDefaultAsync();
 
             if (existingInvestor == null)
                 throw new KeyNotFoundException("Entered email is not available, please create new account to use our service.");
 
             if (string.IsNullOrWhiteSpace(request.Password))
                 throw new ForbiddenException("Your account does not have a password set. Please log in with Google or set a new password using the \"Forgot Password\" feature.");
-
-            if (existingInvestor.IsDeleted)
-                throw new ForbiddenException("Your account has been disabled. Please contact support.");
 
             if (string.IsNullOrEmpty(existingInvestor.HashPassword))
             {
@@ -101,6 +98,9 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             if (!isValidPassword)
                 throw new UnauthorizedAccessException("Password is incorrect, please try again.");
+
+            if (existingInvestor.IsDeleted)
+                throw new ForbiddenException("Your account has been disabled. Please contact support.");
 
             if (!existingInvestor.IsActivated)
             {
@@ -151,7 +151,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (string.IsNullOrWhiteSpace(email))
                 throw new UnauthorizedAccessException("Google account has no email.");
 
-            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.Email == email).FirstOrDefaultAsync();
+            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.Email == email).IgnoreQueryFilters().FirstOrDefaultAsync();
 
             if (investor == null)
             {
@@ -182,6 +182,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
             }
 
             investor.LastLoginAt = VietnamTime.Now();
+            _uow.Repository<Investors>().Update(investor);
+
             await _uow.SaveAsync();
 
             return new LoginResponse
@@ -328,6 +330,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 throw new InvalidOperationException("Account is already activated.");
 
             investor.IsActivated = true;
+            investor.UpdatedAt = VietnamTime.Now();
+            _uow.Repository<Investors>().Update(investor);
 
             return await _uow.SaveAsync() > 0;
         }
