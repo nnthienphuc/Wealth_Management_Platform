@@ -115,6 +115,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             existingInvestor.LastLoginAt = VietnamTime.Now();
 
+            _uow.Repository<Investors>().Update(existingInvestor);
+
             await _uow.SaveAsync();
 
             return new LoginResponse(
