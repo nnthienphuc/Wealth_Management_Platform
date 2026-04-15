@@ -206,10 +206,10 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             var isValidPassword = BCrypt.Net.BCrypt.Verify(dto.OldPassword, existingInvestor.HashPassword);
             if (!isValidPassword)
-                throw new UnauthorizedAccessException("Old password is incorrect.");
+                throw new InvalidOperationException("Old password is incorrect.");
 
             if (!(dto.NewPassword.Equals(dto.NewPasswordComfirmation)))
-                throw new ArgumentException("New password does not match.");
+                throw new InvalidOperationException("New password does not match.");
 
             var hashPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             existingInvestor.HashPassword = hashPassword;
