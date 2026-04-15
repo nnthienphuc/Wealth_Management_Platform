@@ -14,10 +14,10 @@ namespace PersonalPortfolioTracker.Models.Requests
 
     public record ChangePasswordRequest([Required, StringLength(100, MinimumLength = 6)] string OldPassword,
         [Required, StringLength(100, MinimumLength = 6)] string NewPassword,
-        [Required, StringLength(100, MinimumLength = 6)] string NewPasswordComfirmation);
+        [Required, StringLength(100, MinimumLength = 6)] string NewPasswordConfirmation);
 
     public record ResetPasswordRequest([Required, StringLength(50)] string Email);
 
     public record ResetPasswordConfirmationRequest([Required, StringLength(100, MinimumLength = 6)] string NewPassword,
-        [Required, StringLength(100, MinimumLength = 6)] string NewPasswordComfirmation);
+        [Required, StringLength(100, MinimumLength = 6)] string NewPasswordConfirmation);
 }

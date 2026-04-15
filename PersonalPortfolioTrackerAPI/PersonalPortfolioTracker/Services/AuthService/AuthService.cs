@@ -208,7 +208,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (!isValidPassword)
                 throw new InvalidOperationException("Old password is incorrect.");
 
-            if (!(dto.NewPassword.Equals(dto.NewPasswordComfirmation)))
+            if (!(dto.NewPassword.Equals(dto.NewPasswordConfirmation)))
                 throw new InvalidOperationException("New password does not match.");
 
             var hashPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
@@ -284,7 +284,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 if (investor.IsDeleted)
                     throw new ForbiddenException("Your account has been disabled.");
 
-                if (!(dto.NewPassword.Equals(dto.NewPasswordComfirmation)))
+                if (!(dto.NewPassword.Equals(dto.NewPasswordConfirmation)))
                     throw new ArgumentException("New password does not match.");
 
                 var purpose = principal.FindFirst("purpose")?.Value;
