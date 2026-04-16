@@ -18,9 +18,9 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# API LISTEN 5033
-EXPOSE 5033
-ENV ASPNETCORE_URLS=http://+:5033
+# API LISTEN 503
+EXPOSE 5034
+ENV ASPNETCORE_URLS=http://+:5034
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "PersonalPortfolioTrackerAPI.dll"]
