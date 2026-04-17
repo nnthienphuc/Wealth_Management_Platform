@@ -8,6 +8,7 @@ using PersonalPortfolioTracker.Data;
 using PersonalPortfolioTracker.Data.Repositories;
 using PersonalPortfolioTracker.Services.AuthService;
 using PersonalPortfolioTracker.Services.EmailService;
+using PersonalPortfolioTracker.Services.TickerTypesService;
 using PersonalPortfolioTrackerAPI.Middlewares;
 using System.Text;
 
@@ -97,6 +98,7 @@ builder.Services.AddHttpContextAccessor(); // để inject được IHttpContext
 builder.Services.AddScoped<EmailSenderService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITickerTypeService, TickerTypeService>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers
