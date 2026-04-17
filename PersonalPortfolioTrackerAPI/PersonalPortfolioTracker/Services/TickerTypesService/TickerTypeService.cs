@@ -103,6 +103,7 @@ namespace PersonalPortfolioTracker.Services.TickerTypesService
 
             var existingTickerType = await _uow.Repository<TickerTypes>()
                 .FindByCondition(tt => tt.ID == id)
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync();
 
             if (existingTickerType == null)
@@ -122,6 +123,7 @@ namespace PersonalPortfolioTracker.Services.TickerTypesService
         {
             var existingTickerType = await _uow.Repository<TickerTypes>()
                 .FindByCondition(tt => tt.ID == id)
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync();
 
             if (existingTickerType == null)
