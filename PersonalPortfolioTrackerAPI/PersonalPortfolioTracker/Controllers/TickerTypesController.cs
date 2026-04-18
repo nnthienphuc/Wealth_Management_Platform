@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PersonalPortfolioTracker.Common.Controller;
 using PersonalPortfolioTracker.Models.Requests;
-using PersonalPortfolioTracker.Services.TickerTypesService;
+using PersonalPortfolioTracker.Services.TickerTypeService;
 
 namespace PersonalPortfolioTracker.Controllers
 {

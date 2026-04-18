@@ -1,8 +1,7 @@
-﻿using PersonalPortfolioTracker.Data.Entities;
-using PersonalPortfolioTracker.Models.Requests;
+﻿using PersonalPortfolioTracker.Models.Requests;
 using PersonalPortfolioTracker.Models.Responses;
 
-namespace PersonalPortfolioTracker.Services.TickerTypesService
+namespace PersonalPortfolioTracker.Services.TickerTypeService
 {
     public interface ITickerTypeService
     {

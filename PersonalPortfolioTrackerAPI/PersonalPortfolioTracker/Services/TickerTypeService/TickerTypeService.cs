@@ -5,7 +5,7 @@ using PersonalPortfolioTracker.Data.Repositories;
 using PersonalPortfolioTracker.Models.Requests;
 using PersonalPortfolioTracker.Models.Responses;
 
-namespace PersonalPortfolioTracker.Services.TickerTypesService
+namespace PersonalPortfolioTracker.Services.TickerTypeService
 {
     public class TickerTypeService : ITickerTypeService
     {
