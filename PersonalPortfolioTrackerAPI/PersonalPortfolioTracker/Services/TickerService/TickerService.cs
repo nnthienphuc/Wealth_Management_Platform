@@ -23,17 +23,38 @@ namespace PersonalPortfolioTracker.Services.TickerService
         //        .ToListAsync();
         //}
 
-        public async Task<IEnumerable<TickerResponse>> FindByConditionAsync(Guid tickerTypeID, string? symbol)
+        public async Task<PagedResponse<TickerResponse>> FindByConditionAsync(
+                Guid tickerTypeID,
+                string? symbol,
+                int pageNumber = 1,
+                int pageSize = 10)
         {
             var query = _uow.Repository<Tickers>().FindByCondition(tt => tt.TickerTypeId == tickerTypeID);
 
-            if(string.IsNullOrWhiteSpace(symbol))
-                return await query.Select(tt => new TickerResponse(tt.ID, tt.TickerTypeId, tt.TickerType.Name, tt.Symbol, tt.Name, tt.MarketPrice, tt.Currency))
+            if (!string.IsNullOrWhiteSpace(symbol))
+            {
+                query = query.Where(tt => tt.Symbol.StartsWith(symbol));
+            }
+
+            // 1. Tính tổng số bản ghi trước khi phân trang (để FE làm thanh phân trang)
+            var totalRecords = await query.CountAsync();
+
+            // 2. Thực hiện phân trang tại DB
+            var items = await query
+                .OrderBy(tt => tt.Symbol) // Bắt buộc phải OrderBy trước khi Skip/Take
+                .Skip((pageNumber - 1) * pageSize) // Bỏ qua các dòng của trang trước
+                .Take(pageSize) // Lấy đúng số lượng dòng của trang hiện tại
+                .Select(tt => new TickerResponse(
+                    tt.ID,
+                    tt.TickerTypeId,
+                    tt.TickerType.Name,
+                    tt.Symbol,
+                    tt.Name,
+                    tt.MarketPrice,
+                    tt.Currency))
                 .ToListAsync();
 
-            return await query.Where(tt => tt.Symbol.StartsWith(symbol))
-                .Select(tt => new TickerResponse(tt.ID, tt.TickerTypeId, tt.TickerType.Name, tt.Symbol, tt.Name, tt.MarketPrice, tt.Currency))
-                .ToListAsync();
+            return new PagedResponse<TickerResponse>(items, totalRecords, pageNumber, pageSize);
         }
 
         public async Task<TickerResponse> GetByIdAsync(Guid id)

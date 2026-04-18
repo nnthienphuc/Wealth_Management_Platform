@@ -21,9 +21,13 @@ namespace PersonalPortfolioTracker.Controllers
         //}
 
         [HttpGet]
-        public async Task<IActionResult> FindByConditionAsync([FromQuery] Guid tickerTypeId, [FromQuery] string? keyword)
+        public async Task<IActionResult> GetAsync(
+            [FromQuery] Guid tickerTypeId,
+            [FromQuery] string? keyword,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            return Ok(await _service.FindByConditionAsync(tickerTypeId, keyword));
+            return Ok(await _service.FindByConditionAsync(tickerTypeId, keyword, pageNumber, pageSize));
         }
 
         [HttpGet("{id}")]
