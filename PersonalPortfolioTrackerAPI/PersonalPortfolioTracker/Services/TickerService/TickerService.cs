@@ -36,6 +36,10 @@ namespace PersonalPortfolioTracker.Services.TickerService
                 query = query.Where(tt => tt.Symbol.StartsWith(symbol));
             }
 
+            pageSize = pageSize > 50 ? 50 : pageSize;
+
+            pageNumber = pageNumber < 1 ? 1 : pageNumber;
+
             // 1. Tính tổng số bản ghi trước khi phân trang (để FE làm thanh phân trang)
             var totalRecords = await query.CountAsync();
 
