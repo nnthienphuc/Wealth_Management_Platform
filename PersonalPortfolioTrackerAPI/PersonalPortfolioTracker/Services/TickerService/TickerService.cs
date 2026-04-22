@@ -74,13 +74,16 @@ namespace PersonalPortfolioTracker.Services.TickerService
             return existingTicker;
         }
 
-        private async Task<TickerResponse?> CheckUniqueSymbol(string symbol)
+        private async Task<bool> CheckUniqueSymbol(string symbol, Guid? excludeId = null)
         {
-            return await _uow.Repository<Tickers>()
+            var query = _uow.Repository<Tickers>()
                 .FindByCondition(tt => tt.Symbol == symbol)
-                .IgnoreQueryFilters()
-                .Select(tt => new TickerResponse(tt.ID, tt.TickerTypeId, tt.TickerType.Name, tt.Symbol, tt.Name, tt.MarketPrice, tt.Currency))
-                .FirstOrDefaultAsync();
+                .IgnoreQueryFilters();
+
+            if (excludeId.HasValue)
+                query = query.Where(tt => tt.ID != excludeId.Value);
+
+            return await query.AnyAsync();
         }
 
         public async Task<bool> AddAsync(TickerCreate dto)
@@ -94,7 +97,7 @@ namespace PersonalPortfolioTracker.Services.TickerService
             if (string.IsNullOrWhiteSpace(dto.Currency))
                 throw new ArgumentException("Currency is required.");
 
-            if (await CheckUniqueSymbol(dto.Symbol) != null)
+            if (await CheckUniqueSymbol(dto.Symbol))
                 throw new InvalidOperationException($"{dto.Symbol} already exists.");
 
             if (dto.MarketPrice <= 0)
@@ -131,9 +134,7 @@ namespace PersonalPortfolioTracker.Services.TickerService
             if (dto.MarketPrice <= 0)
                 throw new ArgumentException("Market price has to greater than 0.");
 
-            var duplicateSymbol = await CheckUniqueSymbol(dto.Symbol);
-
-            if ((duplicateSymbol != null) && (duplicateSymbol.ID != id))
+            if (await CheckUniqueSymbol(dto.Symbol, id))
                 throw new InvalidOperationException($"{dto.Symbol} is used in another Ticker.");
 
             var existingTicker = await _uow.Repository<Tickers>()
