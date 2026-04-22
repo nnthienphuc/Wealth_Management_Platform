@@ -95,6 +95,7 @@ namespace PersonalPortfolioTrackerAPI.Middlewares
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
+
             return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
     }
