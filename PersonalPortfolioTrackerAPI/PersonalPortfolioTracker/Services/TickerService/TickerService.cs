@@ -36,7 +36,7 @@ namespace PersonalPortfolioTracker.Services.TickerService
                 query = query.Where(tt => tt.Symbol.StartsWith(symbol));
             }
 
-            pageSize = pageSize > 50 ? 50 : pageSize;
+            pageSize = pageSize > 20 ? 20 : pageSize;
 
             pageNumber = pageNumber < 1 ? 1 : pageNumber;
 
