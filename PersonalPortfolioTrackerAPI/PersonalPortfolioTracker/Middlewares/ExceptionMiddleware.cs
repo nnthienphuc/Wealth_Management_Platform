@@ -91,7 +91,11 @@ namespace PersonalPortfolioTrackerAPI.Middlewares
                 message
             };
 
-            return context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
     }
 }
