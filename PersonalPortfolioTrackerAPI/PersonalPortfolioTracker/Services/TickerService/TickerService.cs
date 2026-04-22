@@ -103,7 +103,7 @@ namespace PersonalPortfolioTracker.Services.TickerService
             var newTicker = new Tickers
             {
                 TickerTypeId = dto.TickerTypeID,
-                Symbol = dto.Symbol.ToUpper(),
+                Symbol = dto.Symbol.ToUpperInvariant(),
                 Name = dto.Name,
                 Currency = dto.Currency,
                 MarketPrice = dto.MarketPrice,
@@ -137,19 +137,17 @@ namespace PersonalPortfolioTracker.Services.TickerService
                 throw new InvalidOperationException($"{dto.Symbol} is used in another Ticker.");
 
             var existingTicker = await _uow.Repository<Tickers>()
-                .FindByCondition(tt => tt.ID == id)
+                .FindByCondition(tt => tt.ID == id, true)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Ticker does not exist.");
 
             existingTicker.TickerTypeId = dto.TickerTypeID;
-            existingTicker.Symbol = dto.Symbol.ToUpper();
+            existingTicker.Symbol = dto.Symbol.ToUpperInvariant();
             existingTicker.Name = dto.Name;
             existingTicker.Currency = dto.Currency;
             existingTicker.MarketPrice = dto.MarketPrice;
             existingTicker.UpdatedAt = VietnamTime.Now();
             existingTicker.IsDeleted = dto.IsDeleted;
-
-            _uow.Repository<Tickers>().Update(existingTicker);
 
             return await _uow.SaveAsync() > 0;
         }

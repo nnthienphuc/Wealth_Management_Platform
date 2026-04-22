@@ -56,11 +56,6 @@ public partial class PortfolioTrackerContext : DbContext
             entity.State = EntityState.Modified; // Chuyển từ Delete sang Update
             var baseEntity = (BaseEntity)entity.Entity;
             baseEntity.IsDeleted = true; // Gán flag
-                                         // Nếu là Auditable thì cập nhật luôn ngày xóa
-            if (entity.Entity is BaseAuditableEntity auditable)
-            {
-                auditable.UpdatedAt = VietnamTime.Now();
-            }
         }
     }
     # endregion
