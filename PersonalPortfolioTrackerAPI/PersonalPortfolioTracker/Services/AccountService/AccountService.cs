@@ -136,6 +136,8 @@ namespace PersonalPortfolioTracker.Services.AccountService
             existingAccount.Note = dto.Note ?? null;
             existingAccount.IsDeleted = dto.IsDeleted;
 
+            _uow.Repository<Accounts>().Update(existingAccount);
+
             return await _uow.SaveAsync() > 0;
         }
 
