@@ -150,8 +150,6 @@ namespace PersonalPortfolioTracker.Services.TickerService
             existingTicker.UpdatedAt = VietnamTime.Now();
             existingTicker.IsDeleted = dto.IsDeleted;
 
-            _uow.Repository<Tickers>().Update(existingTicker);
-
             return await _uow.SaveAsync() > 0;
         }
 
