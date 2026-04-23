@@ -16,10 +16,11 @@ namespace PersonalPortfolioTracker.Controllers
 
         [HttpGet]
         public async Task<IActionResult> FindByConditionAsync([FromQuery] string? accountName,
+            [FromQuery] bool isDeleted = false,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
-            return Ok(await _service.FindByConditionAsync(accountName, pageNumber, pageSize));
+            return Ok(await _service.FindByConditionAsync(accountName, isDeleted, pageNumber, pageSize));
         }
 
         [HttpPost]
@@ -36,6 +37,13 @@ namespace PersonalPortfolioTracker.Controllers
             await _service.UpdateAsync(id, dto);
 
             return Ok(new { message = "Account updated successfully." });
+        }
+
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> RestoreAsync(Guid id)
+        {
+            await _service.RestoreAsync(id);
+            return Ok(new { message = "Account restored successfully." });
         }
 
         [HttpDelete("{id}")]

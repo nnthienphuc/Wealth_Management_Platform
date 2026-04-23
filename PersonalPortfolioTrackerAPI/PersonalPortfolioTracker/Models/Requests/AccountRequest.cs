@@ -9,6 +9,5 @@ namespace PersonalPortfolioTracker.Models.Requests
         [Required, StringLength(10)] string Currency,
         [Required]  decimal InvestedBalance,
         [Required] decimal CurrentBalance,
-        string? Note,
-        bool IsDeleted);
+        string? Note);
 }

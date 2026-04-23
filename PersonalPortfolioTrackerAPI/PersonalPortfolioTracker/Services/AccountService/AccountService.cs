@@ -18,9 +18,17 @@ namespace PersonalPortfolioTracker.Services.AccountService
             _investorID = CurrentUserHelper.GetInvestorId(httpContextAccessor.HttpContext.User);
         }
 
-        public async Task<PagedResponse<AccountResponse>> FindByConditionAsync(string? accountName, int pageNumber = 1, int pageSize = 10)
+        public async Task<PagedResponse<AccountResponse>> FindByConditionAsync(string? accountName, 
+            bool isDeleted = false, 
+            int pageNumber = 1, 
+            int pageSize = 10)
         {
-            var query = _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID);
+            var query = _uow.Repository<Accounts>().FindAll();
+
+            if (isDeleted)
+                query = query.IgnoreQueryFilters().Where(tt => tt.IsDeleted == isDeleted);
+
+            query = query.Where(tt => tt.InvestorId == _investorID);
 
             if (!string.IsNullOrWhiteSpace(accountName))
             {
@@ -55,7 +63,7 @@ namespace PersonalPortfolioTracker.Services.AccountService
 
         public async Task<AccountResponse> GetByIdAsync(Guid id)
         {
-            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.ID == id)
+            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.ID == id && tt.InvestorId == _investorID)
                 .Select(tt => new AccountResponse
                 (tt.ID,
                 tt.Name,
@@ -116,7 +124,7 @@ namespace PersonalPortfolioTracker.Services.AccountService
             CheckDTO(dto);
 
             var existingAccount = await _uow.Repository<Accounts>()
-                .FindByCondition(tt => tt.ID == id)
+                .FindByCondition(tt => tt.ID == id && tt.InvestorId == _investorID, true)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync() 
                 ?? throw new KeyNotFoundException("Account does not exist.");
@@ -134,9 +142,6 @@ namespace PersonalPortfolioTracker.Services.AccountService
             existingAccount.TotalBalance = dto.InvestedBalance + dto.CurrentBalance;
             existingAccount.UpdatedAt = VietnamTime.Now();
             existingAccount.Note = dto.Note ?? null;
-            existingAccount.IsDeleted = dto.IsDeleted;
-
-            _uow.Repository<Accounts>().Update(existingAccount);
 
             return await _uow.SaveAsync() > 0;
         }
@@ -144,7 +149,7 @@ namespace PersonalPortfolioTracker.Services.AccountService
         public async Task<bool>DeleteAsync(Guid id)
         {
             var existingAccount = await _uow.Repository<Accounts>()
-                .FindByCondition(tt => tt.ID == id)
+                .FindByCondition(tt => tt.ID == id && tt.InvestorId == _investorID, true)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Account does not exist.");
@@ -153,6 +158,22 @@ namespace PersonalPortfolioTracker.Services.AccountService
                 throw new InvalidOperationException("This account has been deleted before.");
 
             _uow.Repository<Accounts>().Delete(existingAccount);
+
+            return await _uow.SaveAsync() > 0;
+        }
+
+        public async Task<bool> RestoreAsync(Guid id)
+        {
+            var existingAccount = await _uow.Repository<Accounts>()
+                .FindByCondition(tt => tt.ID == id && tt.InvestorId == _investorID, true)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Account does not exist.");
+
+            if (!existingAccount.IsDeleted)
+                throw new InvalidOperationException("This account is already active.");
+
+            existingAccount.IsDeleted = false;
+            existingAccount.UpdatedAt = VietnamTime.Now();
 
             return await _uow.SaveAsync() > 0;
         }
