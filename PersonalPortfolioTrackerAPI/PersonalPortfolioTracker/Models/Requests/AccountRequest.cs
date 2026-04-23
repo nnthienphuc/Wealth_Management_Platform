@@ -2,7 +2,7 @@
 
 namespace PersonalPortfolioTracker.Models.Requests
 {
-    public record AccountRequest([Required] Guid InvestorID,
+    public record AccountRequest(
         [Required, StringLength(50)] string Name,
         [Required, StringLength(10)] string Type,
         string? BrokerAccountNo,

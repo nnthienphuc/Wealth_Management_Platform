@@ -115,7 +115,7 @@ namespace PersonalPortfolioTracker.Services.AccountService
         {
             CheckDTO(dto);
 
-            var exsitingAccount = await _uow.Repository<Accounts>()
+            var existingAccount = await _uow.Repository<Accounts>()
                 .FindByCondition(tt => tt.ID == id)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync() 
@@ -124,33 +124,33 @@ namespace PersonalPortfolioTracker.Services.AccountService
             if (await CheckUniqueName(dto.Name, id))
                 throw new InvalidOperationException($"{dto.Name} is used in another Account.");
 
-            exsitingAccount.InvestorId = _investorID;
-            exsitingAccount.Name = dto.Name,;
-            exsitingAccount.Type = dto.Type;
-            exsitingAccount.BrokerAccountNo = dto.BrokerAccountNo ?? null;
-            exsitingAccount.Currency = dto.Currency;
-            exsitingAccount.InvestedBalance = dto.InvestedBalance;
-            exsitingAccount.CurrentBalance = dto.CurrentBalance;
-            exsitingAccount.TotalBalance = dto.InvestedBalance + dto.CurrentBalance;
-            exsitingAccount.UpdatedAt = VietnamTime.Now();
-            exsitingAccount.Note = dto.Note ?? null;
-            exsitingAccount.IsDeleted = dto.IsDeleted;
+            existingAccount.InvestorId = _investorID;
+            existingAccount.Name = dto.Name;
+            existingAccount.Type = dto.Type;
+            existingAccount.BrokerAccountNo = dto.BrokerAccountNo ?? null;
+            existingAccount.Currency = dto.Currency;
+            existingAccount.InvestedBalance = dto.InvestedBalance;
+            existingAccount.CurrentBalance = dto.CurrentBalance;
+            existingAccount.TotalBalance = dto.InvestedBalance + dto.CurrentBalance;
+            existingAccount.UpdatedAt = VietnamTime.Now();
+            existingAccount.Note = dto.Note ?? null;
+            existingAccount.IsDeleted = dto.IsDeleted;
 
             return await _uow.SaveAsync() > 0;
         }
 
         public async Task<bool>DeleteAsync(Guid id)
         {
-            var exsitingAccount = await _uow.Repository<Accounts>()
+            var existingAccount = await _uow.Repository<Accounts>()
                 .FindByCondition(tt => tt.ID == id)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Account does not exist.");
 
-            if (exsitingAccount.IsDeleted)
-                throw new InvalidOperationException("This ticker has been deleted before.");
+            if (existingAccount.IsDeleted)
+                throw new InvalidOperationException("This account has been deleted before.");
 
-            _uow.Repository<Accounts>().Delete(exsitingAccount);
+            _uow.Repository<Accounts>().Delete(existingAccount);
 
             return await _uow.SaveAsync() > 0;
         }
@@ -164,9 +164,9 @@ namespace PersonalPortfolioTracker.Services.AccountService
             if (string.IsNullOrWhiteSpace(dto.Currency))
                 throw new ArgumentException("Currency is required.");
             if (dto.InvestedBalance < 0)
-                throw new ArgumentException("Invested balance has to greater or equal than 0.");
+                throw new ArgumentException("Invested balance must be greater than or equal to 0.");
             if (dto.CurrentBalance < 0)
-                throw new ArgumentException("Current balance has to greater or equal than 0.");
+                throw new ArgumentException("Current balance must be greater than or equal to 0.");
         }
 
     }

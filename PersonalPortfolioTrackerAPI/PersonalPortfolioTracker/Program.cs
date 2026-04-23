@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PersonalPortfolioTracker.Data;
 using PersonalPortfolioTracker.Data.Repositories;
+using PersonalPortfolioTracker.Services.AccountService;
 using PersonalPortfolioTracker.Services.AuthService;
 using PersonalPortfolioTracker.Services.EmailService;
 using PersonalPortfolioTracker.Services.TickerService;
@@ -100,6 +101,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITickerTypeService, TickerTypeService>();
 builder.Services.AddScoped<ITickerService, TickerService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers
