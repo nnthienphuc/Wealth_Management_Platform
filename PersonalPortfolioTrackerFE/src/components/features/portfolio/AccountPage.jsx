@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../../../utils/axiosInstance";
+import { formatDate } from "../../../utils/formatDate"; // Import hàm format date của sếp
 import { toast } from "react-toastify";
 import { 
   PiggyBank, Wallet, Landmark, LineChart, Bitcoin, 
   CreditCard, Pencil, Trash2, X, Loader2, 
-  ArchiveRestore, Trash 
+  ArchiveRestore, Trash, Eye 
 } from "lucide-react";
 
 const USD_TO_VND = 27000;
@@ -41,12 +42,14 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(false);
   const [isTrashView, setIsTrashView] = useState(false);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // State cho Detail Modal (Xem chi tiết)
+  const [detailAccount, setDetailAccount] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -58,7 +61,18 @@ export default function AccountsPage() {
     note: "",
   });
 
-  // 1. Fetch Data
+  // Lắng nghe phím ESC để đóng Form/Modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsFormModalOpen(false);
+        setDetailAccount(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
     try {
@@ -98,13 +112,11 @@ export default function AccountsPage() {
     fetchAccounts();
   }, [pageNumber, fetchAccounts]);
 
-  // 2. Totals Calculation
   const totalVnd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "VND" ? sum + acc.totalBalance : sum, 0);
   const totalUsd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "USD" ? sum + acc.totalBalance : sum, 0);
   const grandTotalVnd = totalVnd + (totalUsd * USD_TO_VND);
 
-  // 3. Modal Handlers
-  const openModal = (account = null) => {
+  const openFormModal = (account = null) => {
     setFormError("");
     setFieldErrors({});
     if (account) {
@@ -125,11 +137,11 @@ export default function AccountsPage() {
         investedBalance: 0, currentBalance: 0, note: "",
       });
     }
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeFormModal = () => {
+    setIsFormModalOpen(false);
     setEditingAccount(null);
   };
 
@@ -148,7 +160,6 @@ export default function AccountsPage() {
     return Object.keys(errs).length === 0;
   };
 
-  // 4. Submit Add/Update
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -172,7 +183,7 @@ export default function AccountsPage() {
         res = await axiosInstance.post("/Accounts", payload);
       }
       toast.success(res.data?.message || "Account saved successfully.", { toastId: "acc-save" });
-      closeModal();
+      closeFormModal();
       fetchAccounts();
     } catch (err) {
       setFormError(err.response?.data?.message || "An error occurred while saving the account.");
@@ -181,8 +192,8 @@ export default function AccountsPage() {
     }
   };
 
-  // 5. Delete Account
-  const handleDelete = async (account) => {
+  const handleDelete = async (account, e) => {
+    if (e) e.stopPropagation();
     if (!window.confirm(`Move account "${account.name}" to recycle bin?`)) return;
     try {
       const res = await axiosInstance.delete(`/Accounts/${account.id}`);
@@ -193,8 +204,8 @@ export default function AccountsPage() {
     }
   };
 
-  // 6. Restore Account
-  const handleRestore = async (account) => {
+  const handleRestore = async (account, e) => {
+    if (e) e.stopPropagation();
     try {
       const res = await axiosInstance.put(`/Accounts/${account.id}/restore`);
       toast.success(res.data?.message || "Account restored successfully.", { toastId: "acc-res" });
@@ -264,7 +275,7 @@ export default function AccountsPage() {
 
             {!isTrashView && (
               <button
-                onClick={() => openModal()}
+                onClick={() => openFormModal()}
                 className="w-full sm:w-auto whitespace-nowrap px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-sm shadow-[0_10px_20px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgba(236,72,153,0.4)] transition-all"
               >
                 + ADD ACCOUNT
@@ -283,13 +294,14 @@ export default function AccountsPage() {
 
           {accounts.map((acc) => {
             const visual = getIconByType(acc.type);
-            const createdText = acc.createdAt ? new Date(acc.createdAt).toLocaleDateString("en-US") : "";
+            const createdText = formatDate(acc.createdAt);
             const balanceText = acc.currency === "USD" ? formatUsd(acc.totalBalance) : formatVnd(acc.totalBalance);
 
             return (
               <div
                 key={acc.id}
-                className={`bg-white rounded-[1.25rem] p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(15,23,42,0.08)] transition-all border border-transparent hover:border-pink-50 flex items-center justify-between group ${isTrashView ? "opacity-75 hover:opacity-100 grayscale-[20%]" : ""}`}
+                className={`bg-white rounded-[1.25rem] p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(15,23,42,0.08)] transition-all border border-transparent hover:border-pink-50 flex items-center justify-between group cursor-pointer ${isTrashView ? "opacity-75 hover:opacity-100 grayscale-[20%]" : ""}`}
+                onClick={() => setDetailAccount(acc)}
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${visual.bg} ${visual.text}`}>
@@ -316,16 +328,20 @@ export default function AccountsPage() {
 
                 {/* ACTIONS */}
                 <div className="flex gap-2 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => { e.stopPropagation(); setDetailAccount(acc); }} title="View Details" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-emerald-500 transition-colors">
+                    <Eye size={14} />
+                  </button>
+                  
                   {isTrashView ? (
-                    <button onClick={() => handleRestore(acc)} title="Restore" className="w-10 h-10 rounded-full border border-emerald-200 bg-emerald-50 flex items-center justify-center text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                      <ArchiveRestore size={16} strokeWidth={2.5} />
+                    <button onClick={(e) => handleRestore(acc, e)} title="Restore" className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all">
+                      <ArchiveRestore size={14} strokeWidth={2.5} />
                     </button>
                   ) : (
                     <>
-                      <button onClick={() => openModal(acc)} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); openFormModal(acc); }} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(acc)} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(acc, e); }} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
                         <Trash2 size={14} />
                       </button>
                     </>
@@ -359,37 +375,39 @@ export default function AccountsPage() {
           </div>
         )}
 
-        {/* MODAL */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-6 relative animate-in fade-in zoom-in duration-200">
+        {/* ========================================================
+            MODAL 1: FORM THÊM / SỬA TÀI KHOẢN (TRUNG TÂM)
+        ======================================================== */}
+        {isFormModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+            <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200">
               
-              <button onClick={closeModal} className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 bg-gray-100 rounded-full p-1 transition-colors">
+              <button onClick={closeFormModal} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-1.5 transition-all">
                 <X size={20} />
               </button>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 {editingAccount ? "Edit Account" : "Add Account"}
               </h2>
-              <p className="text-xs text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 mb-6">
                 Enter account details. Crypto wallets should default to USD currency.
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-2 gap-5">
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Account Name *</label>
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Account Name *</label>
                     <input 
                       name="name" value={formData.name} onChange={handleChange}
-                      className={`w-full px-4 py-2 rounded-xl border outline-none focus:ring-2 bg-gray-50 ${fieldErrors.name ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.name ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
                       placeholder="e.g. TCBS, Binance..."
                     />
-                    {fieldErrors.name && <p className="text-red-500 text-[11px] mt-1">{fieldErrors.name}</p>}
+                    {fieldErrors.name && <p className="text-red-500 text-[11px] mt-1.5">{fieldErrors.name}</p>}
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Type *</label>
-                    <select name="type" value={formData.type} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Type *</label>
+                    <select name="type" value={formData.type} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer transition-all">
                       <option value="BANK">Bank</option>
                       <option value="CASH">Cash</option>
                       <option value="SAVINGS">Savings</option>
@@ -400,61 +418,135 @@ export default function AccountsPage() {
                   </div>
                   
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Currency *</label>
-                    <select name="currency" value={formData.currency} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Currency *</label>
+                    <select name="currency" value={formData.currency} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer transition-all">
                       <option value="VND">VND</option>
                       <option value="USD">USD</option>
                     </select>
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Broker Account No</label>
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Broker Account No</label>
                     <input 
                       name="brokerAccountNo" value={formData.brokerAccountNo} onChange={handleChange}
-                      className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 transition-all"
                       placeholder="Optional"
                     />
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Invested Balance *</label>
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Invested Balance *</label>
                     <input 
                       type="number" step="any" min="0"
                       name="investedBalance" value={formData.investedBalance} onChange={handleChange}
-                      className={`w-full px-4 py-2 rounded-xl border outline-none focus:ring-2 bg-gray-50 ${fieldErrors.investedBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.investedBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
                     />
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1">Current Balance *</label>
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Current Balance *</label>
                     <input 
                       type="number" step="any" min="0"
                       name="currentBalance" value={formData.currentBalance} onChange={handleChange}
-                      className={`w-full px-4 py-2 rounded-xl border outline-none focus:ring-2 bg-gray-50 ${fieldErrors.currentBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
+                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.currentBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-1">Note</label>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Note</label>
                   <textarea 
                     name="note" value={formData.note} onChange={handleChange} rows={2}
-                    className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 resize-none transition-all"
                     placeholder="Add a note..."
                   />
                 </div>
 
                 {formError && <p className="text-red-600 text-xs font-medium text-center">{formError}</p>}
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                  <button type="button" onClick={closeModal} className="px-5 py-2.5 rounded-full border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                <div className="flex justify-end gap-3 pt-5 border-t border-gray-100">
+                  <button type="button" onClick={closeFormModal} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSaving} className="px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-sm shadow-[0_8px_15px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60">
+                  <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-sm shadow-[0_8px_15px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60">
                     {isSaving ? "Saving..." : (editingAccount ? "Save changes" : "Create account")}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================
+            MODAL 2: XEM CHI TIẾT TÀI KHOẢN (MODAL TRUNG TÂM LỚN)
+        ======================================================== */}
+        {detailAccount && (
+          <div 
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity"
+            onClick={() => setDetailAccount(null)} // Click outside to close
+          >
+            <div 
+              className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200 overflow-hidden"
+              onClick={(e) => e.stopPropagation()} 
+            >
+              
+              <button 
+                onClick={() => setDetailAccount(null)} 
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-1.5 transition-all"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="flex flex-col items-center mb-8 mt-2">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${getIconByType(detailAccount.type).bg} ${getIconByType(detailAccount.type).text}`}>
+                  {getIconByType(detailAccount.type).icon}
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 text-center">{detailAccount.name}</h2>
+                <span className="px-3 py-1 bg-gray-100 text-gray-500 text-[11px] rounded-full uppercase tracking-widest font-bold mt-3">
+                  {detailAccount.type}
+                </span>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-6 border border-gray-200 mb-8 text-center shadow-sm">
+                <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">Total Balance</div>
+                <div className="text-3xl font-black text-gray-900">
+                  {detailAccount.currency === "USD" ? formatUsd(detailAccount.totalBalance) : formatVnd(detailAccount.totalBalance)}
+                </div>
+              </div>
+
+              <div className="space-y-5 text-sm mb-8 px-2">
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                  <span className="text-gray-500 font-medium">Invested Balance</span>
+                  <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.investedBalance) : formatVnd(detailAccount.investedBalance)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                  <span className="text-gray-500 font-medium">Current Balance</span>
+                  <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.currentBalance) : formatVnd(detailAccount.currentBalance)}</span>
+                </div>
+                {detailAccount.brokerAccountNo && detailAccount.brokerAccountNo !== "N/A" && (
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <span className="text-gray-500 font-medium">Broker Account</span>
+                    <span className="font-bold text-gray-900">{detailAccount.brokerAccountNo}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                  <span className="text-gray-500 font-medium">Created On</span>
+                  <span className="font-bold text-gray-900">{formatDate(detailAccount.createdAt)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 font-medium">Last Updated</span>
+                  <span className="font-bold text-gray-900">{formatDate(detailAccount.updatedAt)}</span>
+                </div>
+              </div>
+
+              {detailAccount.note && detailAccount.note !== "N/A" && (
+                <div className="px-2 mt-2">
+                  <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Notes</div>
+                  <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-yellow-800 text-sm italic leading-relaxed">
+                    "{detailAccount.note}"
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
