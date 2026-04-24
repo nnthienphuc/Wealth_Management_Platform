@@ -12,8 +12,6 @@ namespace PersonalPortfolioTracker.Data.Configurations
 
             builder.HasIndex(e => new { e.AccountId, e.TickerId }, "IX_Holdings").IsUnique();
 
-            builder.HasIndex(e => new { e.AccountId, e.TickerId }, "IX_Holdings_Account_Ticker").HasFilter("([IsDeleted]=(0))");
-
             builder.Property(e => e.ID)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("ID");

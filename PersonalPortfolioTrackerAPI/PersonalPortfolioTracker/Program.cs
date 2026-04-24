@@ -8,6 +8,7 @@ using PersonalPortfolioTracker.Data.Repositories;
 using PersonalPortfolioTracker.Services.AccountService;
 using PersonalPortfolioTracker.Services.AuthService;
 using PersonalPortfolioTracker.Services.EmailService;
+using PersonalPortfolioTracker.Services.HoldingService;
 using PersonalPortfolioTracker.Services.TickerService;
 using PersonalPortfolioTracker.Services.TickerTypeService;
 using PersonalPortfolioTrackerAPI.Middlewares;
@@ -102,6 +103,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITickerTypeService, TickerTypeService>();
 builder.Services.AddScoped<ITickerService, TickerService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IHoldingService, HoldingService>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers

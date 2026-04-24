@@ -102,7 +102,7 @@ namespace PersonalPortfolioTracker.Services.TickerTypeService
                 throw new InvalidOperationException($"{dto.Code} is already in use.");
 
             var existingTickerType = await _uow.Repository<TickerTypes>()
-                .FindByCondition(tt => tt.ID == id)
+                .FindByCondition(tt => tt.ID == id, true)
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync();
 
@@ -113,8 +113,6 @@ namespace PersonalPortfolioTracker.Services.TickerTypeService
             existingTickerType.Name = dto.Name;
             existingTickerType.IsDeleted = dto.IsDeleted;
             existingTickerType.UpdatedAt = VietnamTime.Now();
-
-            _uow.Repository<TickerTypes>().Update(existingTickerType);
 
             return await _uow.SaveAsync() > 0;
         }
