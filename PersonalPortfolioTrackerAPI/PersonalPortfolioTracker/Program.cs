@@ -128,8 +128,8 @@ Directory.CreateDirectory(storageRoot);
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(storageRoot),
-    RequestPath = "/media"
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Storage", "TickerNotes")),
+    RequestPath = "/TickerNotes"
 });
 
 app.UseMiddleware<ExceptionMiddleware>();

@@ -6,12 +6,15 @@
         string AccountName,
         Guid TickerID,
         string TickerSymbol,
+        string TickerName,
         string TickerTypeCode,
         decimal InvestmentCost,
         decimal MarketPrice,
         decimal Quantity,
         decimal? TargetBuy,
         decimal? TargetSell,
+        DateTime CreatedAt,
+        DateTime UpdatedAt,
         string? Note);
 
     public record AccountTypeResponse(Guid AccountID, string AccountType, string AccountName);

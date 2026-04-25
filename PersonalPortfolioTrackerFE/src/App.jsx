@@ -14,6 +14,7 @@ import ConfirmResetPasswordPage from "./components/features/auth/ConfirmResetPas
 import InvestorHomePage from "./components/features/portfolio/InvestorHomePage";
 import TickerPage from "./components/features/portfolio/TickerPage";
 import AccountsPage from "./components/features/portfolio/AccountPage";
+import HoldingsPage from "./components/features/portfolio/HoldingsPage";
 
 // --- Shared Components & Layouts ---
 import PublicRoute from "./components/shared/PublicRoute";
@@ -37,6 +38,7 @@ function App() {
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route path="tickers" element={<TickerPage />} />
           <Route path="accounts" element={<AccountsPage />} />
+          <Route path="holdings" element={<HoldingsPage />} />
         </Route>
 
         {/* Default route */}

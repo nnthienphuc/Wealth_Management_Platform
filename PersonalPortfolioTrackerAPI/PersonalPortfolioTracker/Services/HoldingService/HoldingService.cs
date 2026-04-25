@@ -58,12 +58,15 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.Account.Name,
                     tt.TickerId,
                     tt.Ticker.Symbol,
+                    tt.Ticker.Name,
                     tt.Ticker.TickerType.Code,
                     tt.InvestmentCost,
                     tt.Ticker.MarketPrice,
                     tt.Quantity,
                     tt.TargetBuy,
                     tt.TargetSell,
+                    tt.CreatedAt,
+                    tt.UpdatedAt,
                     tt.Note))
                 .ToListAsync();
 
@@ -79,12 +82,15 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.Account.Name,
                     tt.TickerId,
                     tt.Ticker.Symbol,
+                    tt.Ticker.Name,
                     tt.Ticker.TickerType.Code,
                     tt.InvestmentCost,
                     tt.Ticker.MarketPrice,
                     tt.Quantity,
                     tt.TargetBuy,
                     tt.TargetSell,
+                    tt.CreatedAt,
+                    tt.UpdatedAt,
                     tt.Note
                 ))
                 .FirstOrDefaultAsync()

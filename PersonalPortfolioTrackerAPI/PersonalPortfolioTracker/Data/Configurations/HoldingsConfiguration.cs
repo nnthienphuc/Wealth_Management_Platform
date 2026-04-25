@@ -18,7 +18,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.AccountId).HasColumnName("AccountID");
             builder.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             builder.Property(e => e.InvestmentCost).HasColumnType("decimal(28, 8)");
-            builder.Property(e => e.Quantity).HasColumnType("decimal(12, 6)");
+            builder.Property(e => e.Quantity).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.TargetBuy).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.TargetSell).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.TickerId).HasColumnName("TickerID");
