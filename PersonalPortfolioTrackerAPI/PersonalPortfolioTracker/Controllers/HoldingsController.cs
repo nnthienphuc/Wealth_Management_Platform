@@ -33,7 +33,7 @@ namespace PersonalPortfolioTracker.Controllers
         {
             await _service.AddAsync(dto);
 
-            return Ok(new {message = "Holding added succesfully."});
+            return Ok(new {message = "Holding added successfully."});
         }
 
         [HttpPut("{id}")]
@@ -41,7 +41,7 @@ namespace PersonalPortfolioTracker.Controllers
         {
             await _service.UpdateAsync(id, dto);
 
-            return Ok(new { message = "Holding updated succesfully." });
+            return Ok(new { message = "Holding updated successfully." });
         }
 
         [HttpDelete("{id}")]
@@ -49,16 +49,16 @@ namespace PersonalPortfolioTracker.Controllers
         {
             await _service.DeleteAsync(id);
 
-            return Ok(new { message = "Holding soft deleted succesfully." });
+            return Ok(new { message = "Holding soft deleted successfully." });
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id}/restore")]
 
         public async Task<IActionResult> RestoreAsync(Guid id)
         {
             await _service.RestoreAsync(id);
 
-            return Ok(new { message = "Holding restored succesfully." });
+            return Ok(new { message = "Holding restored successfully." });
         }
     }
 }

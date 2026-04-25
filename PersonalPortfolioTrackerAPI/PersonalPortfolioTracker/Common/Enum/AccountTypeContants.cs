@@ -1,6 +1,6 @@
 ﻿namespace PersonalPortfolioTracker.Common.Enum
 {
-    public static class AccountTypeContrants
+    public static class AccountTypeContants
     {
         public const string BANK = "BANK";
         public const string SECURITIES = "SECURITIES";

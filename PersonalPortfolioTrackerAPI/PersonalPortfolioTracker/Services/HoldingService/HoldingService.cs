@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
-using Microsoft.VisualBasic;
-using Org.BouncyCastle.Crypto;
+﻿using Microsoft.EntityFrameworkCore;
 using PersonalPortfolioTracker.Common.Enum;
+using PersonalPortfolioTracker.Common.Exceptions;
 using PersonalPortfolioTracker.Common.Helper;
 using PersonalPortfolioTracker.Data.Entities;
 using PersonalPortfolioTracker.Data.Repositories;
@@ -25,7 +22,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<IEnumerable<AccountTypeResponse>> GetInvestAccount()
         {
-            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeContrants.SECURITIES || tt.Type == AccountTypeContrants.CRYPTO))
+            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeContants.SECURITIES || tt.Type == AccountTypeContants.CRYPTO))
                 .OrderBy(tt => tt.Name)
                 .Select(tt => new AccountTypeResponse(tt.ID, tt.Name))
                 .ToListAsync();
@@ -38,7 +35,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             int pageNumber = 1, 
             int pageSize = 10)
         {
-            var query = _uow.Repository<Holdings>().FindByCondition(tt => tt.AccountId == accountID);
+            var query = _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.AccountId == accountID);
 
             if (isDeleted)
                 query = query.IgnoreQueryFilters().Where(tt => tt.IsDeleted == isDeleted);
@@ -54,7 +51,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
             var items =  await query.OrderBy(tt => tt.Ticker.Symbol)
                 .Skip((pageNumber - 1) * pageSize)
-                .Take(pageNumber)
+                .Take(pageSize)
                 .Select(tt => new HoldingResponse(
                     tt.ID,
                     tt.AccountId,
@@ -71,9 +68,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             return new PagedResponse<HoldingResponse>(items, totalRecords, pageNumber, pageSize);
         }
 
-        public async Task<HoldingResponse> GetByIdAsync(Guid id)
+        public async Task<HoldingResponse> GetByIDAsync(Guid id)
         {
-            return await _uow.Repository<Holdings>().FindByCondition(tt => tt.ID == id)
+            return await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id)
                 .Select(tt => new HoldingResponse
                 (tt.ID,
                     tt.AccountId,
@@ -90,13 +87,13 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                 ?? throw new KeyNotFoundException("Holding does not exist.");
         }
 
-        private async Task<bool> CheckUnique(Guid accountId, Guid tickerId, Guid? excluedId = null)
+        private async Task<bool> CheckUnique(Guid accountId, Guid tickerId, Guid? excludedId = null)
         {
             var query = _uow.Repository<Holdings>().FindByCondition(tt => tt.AccountId == accountId && tt.TickerId == tickerId)
                 .IgnoreQueryFilters();
 
-            if(excluedId.HasValue)
-                query = query.Where(tt => tt.ID != excluedId.Value);
+            if(excludedId.HasValue)
+                query = query.Where(tt => tt.ID != excludedId.Value);
 
             return await query.AnyAsync();
         }
@@ -118,6 +115,8 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<bool> AddAsync(HoldingRequest dto)
         {
+            await VerifyAccountOwnershipAsync(dto.AccountID);
+
             CheckDTO(dto);
 
             if (await CheckUnique(dto.AccountID, dto.TickerID))
@@ -145,7 +144,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<bool> UpdateAsync(Guid id, HoldingRequest dto)
         {
-            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.ID == id, true).FirstOrDefaultAsync()
+            await VerifyAccountOwnershipAsync(dto.AccountID);
+
+            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true).FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Holdings does not exist.");
 
             CheckDTO(dto);
@@ -168,7 +169,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.ID == id, true)
+            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true)
                 .IgnoreQueryFilters().FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Holdings does not exist.");
 
@@ -182,7 +183,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<bool> RestoreAsync(Guid id)
         {
-            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.ID == id, true)
+            var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true)
                 .IgnoreQueryFilters().FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Holdings does not exist.");
 
@@ -193,6 +194,14 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             existingHolding.UpdatedAt = VietnamTime.Now();
 
             return await _uow.SaveAsync() > 0;
+        }
+
+        private async Task VerifyAccountOwnershipAsync(Guid id)
+        {
+            var isOwner = await _uow.Repository<Accounts>().FindByCondition(tt => tt.ID == id && tt.InvestorId == _investorID).AnyAsync();
+
+            if (!isOwner)
+                throw new ForbiddenException("You do not own this account.");
         }
     }
 }
