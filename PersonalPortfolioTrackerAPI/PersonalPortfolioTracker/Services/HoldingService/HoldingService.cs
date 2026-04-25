@@ -22,7 +22,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
         public async Task<IEnumerable<AccountTypeResponse>> GetInvestAccount()
         {
-            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeContants.SECURITIES || tt.Type == AccountTypeContants.CRYPTO))
+            return await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeConstants.SECURITIES || tt.Type == AccountTypeConstants.CRYPTO))
                 .OrderBy(tt => tt.Name)
                 .Select(tt => new AccountTypeResponse(tt.ID, tt.Name))
                 .ToListAsync();
@@ -58,7 +58,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.Account.Name,
                     tt.TickerId,
                     tt.Ticker.Symbol,
+                    tt.Ticker.TickerType.Code,
                     tt.InvestmentCost,
+                    tt.Ticker.MarketPrice,
                     tt.Quantity,
                     tt.TargetBuy,
                     tt.TargetSell,
@@ -77,7 +79,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.Account.Name,
                     tt.TickerId,
                     tt.Ticker.Symbol,
+                    tt.Ticker.TickerType.Code,
                     tt.InvestmentCost,
+                    tt.Ticker.MarketPrice,
                     tt.Quantity,
                     tt.TargetBuy,
                     tt.TargetSell,
@@ -147,7 +151,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             await VerifyAccountOwnershipAsync(dto.AccountID);
 
             var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true).FirstOrDefaultAsync()
-                ?? throw new KeyNotFoundException("Holdings does not exist.");
+                ?? throw new KeyNotFoundException("Holding does not exist.");
 
             CheckDTO(dto);
 
@@ -171,7 +175,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
         {
             var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true)
                 .IgnoreQueryFilters().FirstOrDefaultAsync()
-                ?? throw new KeyNotFoundException("Holdings does not exist.");
+                ?? throw new KeyNotFoundException("Holding does not exist.");
 
             if (existingHolding.IsDeleted)
                 throw new InvalidOperationException("This holding has been deleted before.");
@@ -185,7 +189,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
         {
             var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true)
                 .IgnoreQueryFilters().FirstOrDefaultAsync()
-                ?? throw new KeyNotFoundException("Holdings does not exist.");
+                ?? throw new KeyNotFoundException("Holding does not exist.");
 
             if(!existingHolding.IsDeleted)
                 throw new InvalidOperationException("This holding is already active.");
