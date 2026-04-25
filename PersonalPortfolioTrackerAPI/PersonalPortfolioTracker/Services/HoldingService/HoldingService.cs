@@ -126,14 +126,14 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             {
                 AccountId = dto.AccountID,
                 TickerId = dto.TickerID,
-                TargetBuy = dto.TargetBuy ?? null,
-                TargetSell = dto.TargetSell ?? null,
+                TargetBuy = dto.TargetBuy,
+                TargetSell = dto.TargetSell,
                 InvestmentCost = dto.InvestmentCost,
                 Quantity = dto.Quantity,
                 TotalInvestmentCost = dto.InvestmentCost * dto.Quantity,
                 CreatedAt = VietnamTime.Now(),
                 UpdatedAt = VietnamTime.Now(),
-                Note = dto.Note ?? null,
+                Note = dto.Note,
                 IsDeleted = false
             };
 
@@ -156,13 +156,13 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
             existingHolding.AccountId = dto.AccountID;
             existingHolding.TickerId = dto.TickerID;
-            existingHolding.TargetBuy = dto.TargetBuy ?? null;
-            existingHolding.TargetSell = dto.TargetSell ?? null;
+            existingHolding.TargetBuy = dto.TargetBuy;
+            existingHolding.TargetSell = dto.TargetSell;
             existingHolding.InvestmentCost = dto.InvestmentCost;
             existingHolding.Quantity = dto.Quantity;
             existingHolding.TotalInvestmentCost = dto.InvestmentCost * dto.Quantity;
             existingHolding.UpdatedAt = VietnamTime.Now();
-            existingHolding.Note = dto.Note ?? null;
+            existingHolding.Note = dto.Note;
 
             return await _uow.SaveAsync() > 0;
         }
