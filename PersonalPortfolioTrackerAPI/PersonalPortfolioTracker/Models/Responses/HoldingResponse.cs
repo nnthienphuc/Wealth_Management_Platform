@@ -14,5 +14,5 @@
         decimal? TargetSell,
         string? Note);
 
-    public record AccountTypeResponse(Guid AccountID, string AccountName);
+    public record AccountTypeResponse(Guid AccountID, string AccountType, string AccountName);
 }
