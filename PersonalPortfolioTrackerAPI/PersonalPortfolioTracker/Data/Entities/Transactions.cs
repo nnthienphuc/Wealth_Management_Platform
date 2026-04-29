@@ -32,11 +32,11 @@ public partial class Transactions : BaseEntity
 
     public decimal? RealizedPnLRate { get; set; }
 
-    public decimal PreQuantity { get; set; }
+    public decimal? PreQuantity { get; set; }
 
-    public decimal PreInvestmentCost { get; set; }
+    public decimal? PreInvestmentCost { get; set; }
 
-    public decimal PreTotalInvestmentCost { get; set; }
+    public decimal? PreTotalInvestmentCost { get; set; }
 
     public string? Note { get; set; }
 
