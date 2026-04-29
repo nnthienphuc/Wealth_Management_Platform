@@ -64,7 +64,7 @@ export default function TickerPage() {
     currency: "VND",
   });
 
-  // Xử lý Click Outside cho Custom Dropdown
+  // Click Outside cho Dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -75,7 +75,7 @@ export default function TickerPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Lắng nghe phím ESC để đóng Modal
+  // Phím ESC đóng Modal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") closeFormModal();
@@ -95,9 +95,7 @@ export default function TickerPage() {
         const stockType = data.find(t => t.code.toUpperCase() === "STOCK");
         if (stockType) setSelectedType(stockType.id);
         else if (data.length > 0) setSelectedType(data[0].id);
-      } catch (err) {
-        console.error("Failed to load ticker types", err);
-      }
+      } catch (err) {}
     };
     fetchTypes();
   }, []);
@@ -162,7 +160,7 @@ export default function TickerPage() {
       });
     } else {
       setEditingTicker(null);
-      // Khi Add, ưu tiên type hiện tại đang chọn làm default
+      // Khi Add, tự detect currency dựa theo loại tab đang mở
       const defaultCurrency = currentSelectedTypeObj?.code?.toUpperCase().includes("COIN") || 
                               currentSelectedTypeObj?.code?.toUpperCase().includes("CRYPTO") ? "USD" : "VND";
       setFormData({
@@ -186,18 +184,15 @@ export default function TickerPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Tự động chuyển đổi Currency mặc định dựa trên loại TickerType được chọn trong form
   const handleFormTypeChange = (e) => {
     const typeId = e.target.value;
     const typeObj = tickerTypes.find(t => t.id === typeId);
     let autoCurrency = formData.currency;
-    
     if (typeObj) {
       const code = typeObj.code.toUpperCase();
       if (code.includes("COIN") || code.includes("CRYPTO")) autoCurrency = "USD";
       else autoCurrency = "VND";
     }
-
     setFormData(prev => ({ ...prev, tickerTypeId: typeId, currency: autoCurrency }));
   };
 
@@ -208,7 +203,7 @@ export default function TickerPage() {
       return;
     }
     if (formData.marketPrice && Number(formData.marketPrice) < 0) {
-      setFormError("Market price must be greater than or equal to 0.");
+      setFormError("Market price must be >= 0.");
       return;
     }
 
@@ -257,11 +252,11 @@ export default function TickerPage() {
       <div className="w-full max-w-6xl">
         
         {/* HEADER AREA */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
+            <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3 mb-1">
               Market Tickers
-              {loading && <Loader2 className="animate-spin text-pink-500" size={22} />}
+              {loading && <Loader2 className="animate-spin text-pink-500" size={20} />}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
               Browse supported assets and real-time market prices
@@ -271,17 +266,17 @@ export default function TickerPage() {
           {/* FILTER CONTROLS */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto relative">
             
-            <div className="relative w-full sm:min-w-[180px] sm:w-auto" ref={dropdownRef}>
+            <div className="relative w-full sm:min-w-[160px] sm:w-auto" ref={dropdownRef}>
               <div
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`flex items-center justify-between w-full px-5 py-3 rounded-full border transition-all bg-white text-gray-800 font-semibold text-sm shadow-sm cursor-pointer ${
+                className={`flex items-center justify-between w-full px-5 py-2.5 rounded-full border transition-all bg-white text-gray-800 font-semibold text-[13px] shadow-sm cursor-pointer ${
                   isDropdownOpen ? "border-pink-500 ring-2 ring-pink-200" : "border-pink-200 hover:border-pink-400"
                 }`}
               >
                 {currentSelectedTypeObj ? (
                   <div className="flex items-center gap-2.5">
-                    {getRawIcon(getEnglishTypeCode(currentSelectedTypeObj.code), 18)}
-                    <span>{getEnglishTypeCode(currentSelectedTypeObj.code)}</span>
+                    {getRawIcon(getEnglishTypeCode(currentSelectedTypeObj.code), 16)}
+                    <span>{currentSelectedTypeObj.code}</span>
                   </div>
                 ) : (
                   <span>Select type...</span>
@@ -290,7 +285,7 @@ export default function TickerPage() {
               </div>
 
               {isDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.12)] py-2 z-50 overflow-hidden">
+                <div className="absolute top-full right-0 mt-2 w-full sm:min-w-[200px] bg-white border border-gray-100 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.12)] py-2 z-50 overflow-hidden">
                   {tickerTypes.map((t) => {
                     const engCode = getEnglishTypeCode(t.code);
                     const isSelected = selectedType === t.id;
@@ -302,13 +297,13 @@ export default function TickerPage() {
                           setPageNumber(1);
                           setIsDropdownOpen(false);
                         }}
-                        className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
+                        className={`flex items-center gap-3 px-5 py-2.5 cursor-pointer transition-colors ${
                           isSelected ? "bg-pink-50 text-pink-600" : "hover:bg-gray-50 text-gray-700"
                         }`}
                       >
-                        {getRawIcon(engCode, 18)}
+                        {getRawIcon(engCode, 16)}
                         <span className={`text-sm ${isSelected ? "font-bold" : "font-medium"}`}>
-                          {engCode} <span className="text-gray-400 font-normal">({t.name})</span>
+                          {t.code} <span className="text-gray-400 font-normal text-xs ml-1">({t.name})</span>
                         </span>
                       </div>
                     );
@@ -317,12 +312,12 @@ export default function TickerPage() {
               )}
             </div>
 
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-60">
               <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
               <input
                 type="text"
                 placeholder="Search symbol or name..."
-                className="w-full pl-9 pr-5 py-3 rounded-full border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white text-gray-800 text-sm shadow-sm"
+                className="w-full pl-9 pr-5 py-2.5 rounded-full border border-pink-200 focus:border-pink-500 outline-none transition-all bg-white text-gray-800 text-[13px] shadow-sm"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />
@@ -330,7 +325,7 @@ export default function TickerPage() {
 
             <button
               onClick={() => openFormModal()}
-              className="w-full sm:w-auto whitespace-nowrap px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-sm shadow-md hover:-translate-y-0.5 transition-all"
+              className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
             >
               + ADD TICKER
             </button>
@@ -339,8 +334,8 @@ export default function TickerPage() {
 
         {error && <p className="text-rose-600 text-sm font-medium mb-4 text-center">{error}</p>}
 
-        {/* CARDS GRID */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+        {/* CARDS GRID (THU GỌN - COMPACT MODE) */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
           {!loading && tickers.length === 0 && !error && (
             <p className="text-gray-500 text-sm col-span-full text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200">
               Can't find any matching assets.
@@ -353,46 +348,52 @@ export default function TickerPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-[1.25rem] p-6 shadow-[0_10px_25px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full group"
+                className="bg-white rounded-[1.25rem] p-5 shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full group"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
-                    {getRawIcon(displayTypeCode, 20)}
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                    {getRawIcon(displayTypeCode, 18)}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xl font-black text-gray-900 tracking-tight uppercase truncate">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-lg font-black text-gray-900 tracking-tight uppercase truncate">
                         {t.symbol}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wider">
+                      <span className="text-[9px] font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wider">
                         {displayTypeCode}
                       </span>
                     </div>
 
-                    <div className="relative cursor-help w-max max-w-full">
-                      <p className="text-sm font-medium text-gray-500 truncate leading-snug">
+                    {/* TOOLTIP HIỂN THỊ TÊN ĐẦY ĐỦ */}
+                    <div className="relative group/tooltip cursor-help w-full">
+                      <p className="text-[11px] font-medium text-gray-500 truncate leading-snug">
                         {t.name}
                       </p>
+                      
+                      <div className="absolute left-0 top-5 hidden group-hover/tooltip:block w-max max-w-[240px] bg-gray-800 text-white text-[11px] rounded-lg py-2 px-3 z-50 whitespace-normal shadow-xl leading-relaxed">
+                        {t.name}
+                        <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-100 flex items-end justify-between">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-end justify-between">
                   <div>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Market Price</span>
-                    <span className="text-lg font-black text-gray-900 leading-none">
+                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Market Price</span>
+                    <span className="text-[15px] font-black text-gray-900 leading-none">
                       {formatPrice(t.marketPrice, t.currency)}
                     </span>
                   </div>
                   
-                  {/* ACTIONS THÊM/SỬA Ở ĐÂY (SẼ HIỆN KHI HOVER) */}
-                  <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => { e.stopPropagation(); openFormModal(t); }} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
-                      <Pencil size={14} />
+                  {/* ACTIONS THÊM/SỬA/XÓA */}
+                  <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); openFormModal(t); }} title="Edit" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
+                      <Pencil size={12} />
                     </button>
-                    <button onClick={(e) => handleDelete(t, e)} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
-                      <Trash2 size={14} />
+                    <button onClick={(e) => handleDelete(t, e)} title="Delete" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
@@ -403,11 +404,11 @@ export default function TickerPage() {
 
         {/* PAGINATION */}
         {!loading && totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-10">
+          <div className="flex justify-center items-center gap-4 mt-6 mb-4">
             <button
               disabled={pageNumber === 1}
               onClick={() => setPageNumber(p => Math.max(1, p - 1))}
-              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm"
             >
               Previous
             </button>
@@ -417,7 +418,7 @@ export default function TickerPage() {
             <button
               disabled={pageNumber === totalPages}
               onClick={() => setPageNumber(p => Math.min(totalPages, p + 1))}
-              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="px-4 py-2 rounded-full bg-white border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm"
             >
               Next
             </button>
@@ -439,16 +440,15 @@ export default function TickerPage() {
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-5">
                   
-                  {/* Ticker Type */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Asset Type *</label>
                     <select 
                       name="tickerTypeId" 
                       value={formData.tickerTypeId} 
                       onChange={handleFormTypeChange} 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 cursor-pointer font-medium text-sm"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer font-medium text-sm transition-all"
                     >
                       <option value="">-- Select --</option>
                       {tickerTypes.map((t) => (
@@ -457,21 +457,19 @@ export default function TickerPage() {
                     </select>
                   </div>
 
-                  {/* Currency */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Currency *</label>
                     <select 
                       name="currency" 
                       value={formData.currency} 
                       onChange={handleChange} 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 cursor-pointer font-medium text-sm"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 cursor-pointer font-medium text-sm transition-all"
                     >
                       <option value="VND">VND (₫)</option>
                       <option value="USD">USD ($)</option>
                     </select>
                   </div>
 
-                  {/* Symbol */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Symbol *</label>
                     <input 
@@ -480,13 +478,12 @@ export default function TickerPage() {
                       value={formData.symbol} 
                       onChange={handleChange} 
                       placeholder="e.g., TCB, BTC" 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-bold uppercase" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 text-sm font-bold uppercase transition-all" 
                     />
                   </div>
 
-                  {/* Market Price */}
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Market Price</label>
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Market Price <span className="text-gray-400 font-normal">(Optional)</span></label>
                     <input 
                       type="number" 
                       step="any" 
@@ -494,12 +491,11 @@ export default function TickerPage() {
                       name="marketPrice" 
                       value={formData.marketPrice} 
                       onChange={handleChange} 
-                      placeholder="Optional" 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold" 
+                      placeholder="0.00" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 text-sm font-semibold transition-all" 
                     />
                   </div>
 
-                  {/* Name */}
                   <div className="col-span-2">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Company / Token Name *</label>
                     <input 
@@ -508,7 +504,7 @@ export default function TickerPage() {
                       value={formData.name} 
                       onChange={handleChange} 
                       placeholder="e.g., Techcombank" 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-medium" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 text-sm font-medium transition-all" 
                     />
                   </div>
 
@@ -516,11 +512,11 @@ export default function TickerPage() {
 
                 {formError && <p className="text-rose-600 text-xs font-bold text-center pt-2">{formError}</p>}
 
-                <div className="flex justify-end gap-3 pt-5 border-t border-gray-100 mt-2">
+                <div className="flex justify-end gap-3 pt-5 border-t border-gray-100 mt-4">
                   <button type="button" onClick={closeFormModal} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60">
+                  <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-[0_8px_15px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60">
                     {isSaving ? "Saving..." : "Save Ticker"}
                   </button>
                 </div>
