@@ -1,8 +1,12 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import axiosInstance from "../../../utils/axiosInstance";
-import { getTickerTypeIcon } from "../../../utils/getTickerTypeIcon";
-import { LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign, ChevronDown, Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
+import { 
+  LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign, 
+  ChevronDown, Loader2, Pencil, Trash2, X, Search 
+} from "lucide-react";
 
+// === FORMATTERS ===
 const formatPrice = (price, currency) => {
   if (price == null || isNaN(price)) return "-";
   const num = Number(price);
@@ -46,6 +50,21 @@ export default function TickerPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // === STATES CHO FORM MODAL ===
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingTicker, setEditingTicker] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const [formData, setFormData] = useState({
+    tickerTypeId: "",
+    symbol: "",
+    name: "",
+    marketPrice: "",
+    currency: "VND",
+  });
+
+  // Xử lý Click Outside cho Custom Dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -56,6 +75,16 @@ export default function TickerPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Lắng nghe phím ESC để đóng Modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") closeFormModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Fetch Ticker Types
   useEffect(() => {
     const fetchTypes = async () => {
       try {
@@ -73,6 +102,7 @@ export default function TickerPage() {
     fetchTypes();
   }, []);
 
+  // Fetch Tickers
   const fetchTickers = useCallback(async () => {
     if (!selectedType) return; 
 
@@ -98,7 +128,7 @@ export default function TickerPage() {
         setTotalPages(1);
       }
     } catch (err) {
-      setError("Không thể tải danh sách tài sản từ máy chủ.");
+      setError("Cannot load market assets from the server.");
     } finally {
       setLoading(false);
     }
@@ -118,6 +148,110 @@ export default function TickerPage() {
 
   const currentSelectedTypeObj = tickerTypes.find(t => t.id === selectedType);
 
+  // === MODAL HANDLERS ===
+  const openFormModal = (ticker = null) => {
+    setFormError("");
+    if (ticker) {
+      setEditingTicker(ticker);
+      setFormData({
+        tickerTypeId: ticker.tickerTypeId || selectedType,
+        symbol: ticker.symbol || "",
+        name: ticker.name || "",
+        marketPrice: ticker.marketPrice != null ? String(ticker.marketPrice) : "",
+        currency: ticker.currency || "VND",
+      });
+    } else {
+      setEditingTicker(null);
+      // Khi Add, ưu tiên type hiện tại đang chọn làm default
+      const defaultCurrency = currentSelectedTypeObj?.code?.toUpperCase().includes("COIN") || 
+                              currentSelectedTypeObj?.code?.toUpperCase().includes("CRYPTO") ? "USD" : "VND";
+      setFormData({
+        tickerTypeId: selectedType || (tickerTypes[0] ? tickerTypes[0].id : ""),
+        symbol: "",
+        name: "",
+        marketPrice: "",
+        currency: defaultCurrency,
+      });
+    }
+    setIsFormModalOpen(true);
+  };
+
+  const closeFormModal = () => {
+    setIsFormModalOpen(false);
+    setEditingTicker(null);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Tự động chuyển đổi Currency mặc định dựa trên loại TickerType được chọn trong form
+  const handleFormTypeChange = (e) => {
+    const typeId = e.target.value;
+    const typeObj = tickerTypes.find(t => t.id === typeId);
+    let autoCurrency = formData.currency;
+    
+    if (typeObj) {
+      const code = typeObj.code.toUpperCase();
+      if (code.includes("COIN") || code.includes("CRYPTO")) autoCurrency = "USD";
+      else autoCurrency = "VND";
+    }
+
+    setFormData(prev => ({ ...prev, tickerTypeId: typeId, currency: autoCurrency }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.tickerTypeId || !formData.symbol.trim() || !formData.name.trim()) {
+      setFormError("Type, Symbol, and Name are required.");
+      return;
+    }
+    if (formData.marketPrice && Number(formData.marketPrice) < 0) {
+      setFormError("Market price must be greater than or equal to 0.");
+      return;
+    }
+
+    setIsSaving(true);
+    setFormError("");
+
+    const payload = {
+      tickerTypeId: formData.tickerTypeId,
+      symbol: formData.symbol.trim().toUpperCase(),
+      name: formData.name.trim(),
+      marketPrice: formData.marketPrice === "" ? null : Number(formData.marketPrice),
+      currency: formData.currency,
+    };
+
+    try {
+      let res;
+      if (editingTicker) {
+        res = await axiosInstance.put(`/Tickers/${editingTicker.id}`, payload);
+      } else {
+        res = await axiosInstance.post("/Tickers", payload);
+      }
+      toast.success(res.data?.message || "Ticker saved successfully.");
+      closeFormModal();
+      fetchTickers();
+    } catch (err) {
+      setFormError(err.response?.data?.message || "Failed to save ticker.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (ticker, e) => {
+    e.stopPropagation();
+    if (!window.confirm(`Delete ticker "${ticker.symbol}"? This action cannot be undone.`)) return;
+    try {
+      const res = await axiosInstance.delete(`/Tickers/${ticker.id}`);
+      toast.success(res.data?.message || "Ticker deleted successfully.");
+      fetchTickers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete ticker.");
+    }
+  };
+
   return (
     <div className="p-8 md:p-12 min-h-screen bg-gray-50 flex justify-center">
       <div className="w-full max-w-6xl">
@@ -127,7 +261,6 @@ export default function TickerPage() {
           <div>
             <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
               Market Tickers
-              {/* Spinner xoay mượt mà khi Loading */}
               {loading && <Loader2 className="animate-spin text-pink-500" size={22} />}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
@@ -138,22 +271,22 @@ export default function TickerPage() {
           {/* FILTER CONTROLS */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto relative">
             
-            <div className="relative w-full sm:w-[240px]" ref={dropdownRef}>
+            <div className="relative w-full sm:min-w-[180px] sm:w-auto" ref={dropdownRef}>
               <div
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`flex items-center justify-between w-full px-5 py-3 rounded-2xl border transition-all bg-white text-gray-800 font-semibold text-sm shadow-[0_8px_18px_rgba(236,72,153,0.08)] cursor-pointer ${
+                className={`flex items-center justify-between w-full px-5 py-3 rounded-full border transition-all bg-white text-gray-800 font-semibold text-sm shadow-sm cursor-pointer ${
                   isDropdownOpen ? "border-pink-500 ring-2 ring-pink-200" : "border-pink-200 hover:border-pink-400"
                 }`}
               >
                 {currentSelectedTypeObj ? (
                   <div className="flex items-center gap-2.5">
                     {getRawIcon(getEnglishTypeCode(currentSelectedTypeObj.code), 18)}
-                    <span>{currentSelectedTypeObj.code} ({currentSelectedTypeObj.name})</span>
+                    <span>{getEnglishTypeCode(currentSelectedTypeObj.code)}</span>
                   </div>
                 ) : (
                   <span>Select type...</span>
                 )}
-                <ChevronDown size={18} className={`text-gray-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown size={16} className={`text-gray-400 ml-2 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
               </div>
 
               {isDropdownOpen && (
@@ -166,6 +299,7 @@ export default function TickerPage() {
                         key={t.id}
                         onClick={() => {
                           setSelectedType(t.id);
+                          setPageNumber(1);
                           setIsDropdownOpen(false);
                         }}
                         className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${
@@ -174,7 +308,7 @@ export default function TickerPage() {
                       >
                         {getRawIcon(engCode, 18)}
                         <span className={`text-sm ${isSelected ? "font-bold" : "font-medium"}`}>
-                          {t.code} <span className="text-gray-400 font-normal">({t.name})</span>
+                          {engCode} <span className="text-gray-400 font-normal">({t.name})</span>
                         </span>
                       </div>
                     );
@@ -183,19 +317,29 @@ export default function TickerPage() {
               )}
             </div>
 
-            <input
-              type="text"
-              placeholder="Search symbol or name..."
-              className="w-full sm:w-64 px-5 py-3 rounded-2xl border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white text-gray-800 text-sm shadow-[0_8px_18px_rgba(236,72,153,0.08)]"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
+            <div className="relative w-full sm:w-64">
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
+              <input
+                type="text"
+                placeholder="Search symbol or name..."
+                className="w-full pl-9 pr-5 py-3 rounded-full border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white text-gray-800 text-sm shadow-sm"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={() => openFormModal()}
+              className="w-full sm:w-auto whitespace-nowrap px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-sm shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              + ADD TICKER
+            </button>
           </div>
         </div>
 
-        {error && <p className="text-red-600 text-sm font-medium mb-4">{error}</p>}
+        {error && <p className="text-rose-600 text-sm font-medium mb-4 text-center">{error}</p>}
 
-        {/* CARDS GRID - Thêm hiệu ứng làm mờ khi Loading để chống giật Layout */}
+        {/* CARDS GRID */}
         <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
           {!loading && tickers.length === 0 && !error && (
             <p className="text-gray-500 text-sm col-span-full text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -209,14 +353,16 @@ export default function TickerPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-3xl p-6 shadow-[0_10px_25px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full"
+                className="bg-white rounded-[1.25rem] p-6 shadow-[0_10px_25px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full group"
               >
                 <div className="flex items-start gap-4">
-                  {getTickerTypeIcon(displayTypeCode, 28)}
+                  <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                    {getRawIcon(displayTypeCode, 20)}
+                  </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-lg font-extrabold text-gray-900 tracking-tight uppercase truncate">
+                      <span className="text-xl font-black text-gray-900 tracking-tight uppercase truncate">
                         {t.symbol}
                       </span>
                       <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wider">
@@ -224,24 +370,31 @@ export default function TickerPage() {
                       </span>
                     </div>
 
-                    <div className="relative group cursor-help w-max max-w-full">
-                      <p className="text-xs text-gray-500 truncate leading-snug">
+                    <div className="relative cursor-help w-max max-w-full">
+                      <p className="text-sm font-medium text-gray-500 truncate leading-snug">
                         {t.name}
                       </p>
-                      
-                      <div className="absolute left-0 top-5 hidden group-hover:block w-max max-w-[220px] bg-gray-800 text-white text-[11px] rounded-lg py-2 px-3 z-10 whitespace-normal shadow-lg leading-relaxed">
-                        {t.name}
-                        <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 transform rotate-45"></div>
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-gray-100 flex items-end justify-between">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Market Price</span>
-                  <span className="text-base font-bold text-gray-800">
-                    {formatPrice(t.marketPrice, t.currency)}
-                  </span>
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Market Price</span>
+                    <span className="text-lg font-black text-gray-900 leading-none">
+                      {formatPrice(t.marketPrice, t.currency)}
+                    </span>
+                  </div>
+                  
+                  {/* ACTIONS THÊM/SỬA Ở ĐÂY (SẼ HIỆN KHI HOVER) */}
+                  <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); openFormModal(t); }} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={(e) => handleDelete(t, e)} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -268,6 +421,111 @@ export default function TickerPage() {
             >
               Next
             </button>
+          </div>
+        )}
+
+        {/* ========================================================
+            MODAL: FORM ADD / EDIT TICKER
+        ======================================================== */}
+        {isFormModalOpen && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+            <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200">
+              <button onClick={closeFormModal} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-1.5 transition-all">
+                <X size={20} />
+              </button>
+
+              <h2 className="text-2xl font-black text-gray-900 mb-6">
+                {editingTicker ? "Edit Market Ticker" : "Add Market Ticker"}
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  
+                  {/* Ticker Type */}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Asset Type *</label>
+                    <select 
+                      name="tickerTypeId" 
+                      value={formData.tickerTypeId} 
+                      onChange={handleFormTypeChange} 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 cursor-pointer font-medium text-sm"
+                    >
+                      <option value="">-- Select --</option>
+                      {tickerTypes.map((t) => (
+                        <option key={t.id} value={t.id}>{getEnglishTypeCode(t.code)}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Currency */}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Currency *</label>
+                    <select 
+                      name="currency" 
+                      value={formData.currency} 
+                      onChange={handleChange} 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 cursor-pointer font-medium text-sm"
+                    >
+                      <option value="VND">VND (₫)</option>
+                      <option value="USD">USD ($)</option>
+                    </select>
+                  </div>
+
+                  {/* Symbol */}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Symbol *</label>
+                    <input 
+                      type="text" 
+                      name="symbol" 
+                      value={formData.symbol} 
+                      onChange={handleChange} 
+                      placeholder="e.g., TCB, BTC" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-bold uppercase" 
+                    />
+                  </div>
+
+                  {/* Market Price */}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Market Price</label>
+                    <input 
+                      type="number" 
+                      step="any" 
+                      min="0" 
+                      name="marketPrice" 
+                      value={formData.marketPrice} 
+                      onChange={handleChange} 
+                      placeholder="Optional" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold" 
+                    />
+                  </div>
+
+                  {/* Name */}
+                  <div className="col-span-2">
+                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Company / Token Name *</label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      value={formData.name} 
+                      onChange={handleChange} 
+                      placeholder="e.g., Techcombank" 
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-medium" 
+                    />
+                  </div>
+
+                </div>
+
+                {formError && <p className="text-rose-600 text-xs font-bold text-center pt-2">{formError}</p>}
+
+                <div className="flex justify-end gap-3 pt-5 border-t border-gray-100 mt-2">
+                  <button type="button" onClick={closeFormModal} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60">
+                    {isSaving ? "Saving..." : "Save Ticker"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
