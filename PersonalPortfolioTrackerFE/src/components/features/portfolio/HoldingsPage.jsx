@@ -94,28 +94,29 @@ const markdownComponents = {
 
 export default function HoldingsPage() {
   const [holdings, setHoldings] = useState([]);
-  const [summary, setSummary] = useState(null); // Lưu data từ API /summary
+  const [summary, setSummary] = useState(null); 
   const [accounts, setAccounts] = useState([]); 
+  const [totalRecords, setTotalRecords] = useState(0); 
   
   const [keyword, setKeyword] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState(""); 
   const [pageNumber, setPageNumber] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(6);
 
   const [loading, setLoading] = useState(false);
   const [isTrashView, setIsTrashView] = useState(false);
-  const [onlyOwned, setOnlyOwned] = useState(false);
+  const [isOwned, setIsOwned] = useState(false); 
 
   const [isAccDropdownOpen, setIsAccDropdownOpen] = useState(false);
   const accDropdownRef = useRef(null);
+  const [isFormAccDropdownOpen, setIsFormAccDropdownOpen] = useState(false);
+  const formAccDropdownRef = useRef(null);
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingHolding, setEditingHolding] = useState(null);
   const [noteMode, setNoteMode] = useState("edit"); 
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isFormAccDropdownOpen, setIsFormAccDropdownOpen] = useState(false);
-  const formAccDropdownRef = useRef(null);
   const [detailHolding, setDetailHolding] = useState(null);
   const [isTickerModalOpen, setIsTickerModalOpen] = useState(false);
   const [tickerTypes, setTickerTypes] = useState([]);
@@ -129,6 +130,14 @@ export default function HoldingsPage() {
     accountId: "", tickerId: "", quantity: "", investmentCost: "", targetBuy: "", targetSell: "", note: "",
   });
 
+  // TÍNH TOÁN BIẾN MÔI TRƯỜNG CỦA COMPONENT QUA USEMEMO
+  const currentAccount = useMemo(() => 
+    accounts.find(a => (a.accountID || a.accountId) === selectedAccountId), 
+    [accounts, selectedAccountId]
+  );
+  const isGlobalCryptoAccount = currentAccount?.accountType?.toUpperCase() === "CRYPTO";
+  const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize) || 1, [totalRecords, pageSize]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (accDropdownRef.current && !accDropdownRef.current.contains(event.target)) setIsAccDropdownOpen(false);
@@ -138,18 +147,6 @@ export default function HoldingsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        if (isTickerModalOpen) setIsTickerModalOpen(false);
-        else { setIsFormModalOpen(false); setDetailHolding(null); }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isTickerModalOpen]);
-
-  // Load Accounts
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
@@ -162,7 +159,6 @@ export default function HoldingsPage() {
     fetchAccounts();
   }, []);
 
-  // Load TickerTypes
   useEffect(() => {
     const fetchTypes = async () => {
       try {
@@ -184,6 +180,11 @@ export default function HoldingsPage() {
     setIsAccDropdownOpen(false);
   };
 
+  const handleOwnedToggle = (e) => {
+    setIsOwned(e.target.checked);
+    setPageNumber(1);
+  };
+
   // 1. API GET SUMMARY
   const fetchSummary = useCallback(async () => {
     if (!selectedAccountId || isTrashView) return;
@@ -194,16 +195,16 @@ export default function HoldingsPage() {
   }, [selectedAccountId, isTrashView]);
 
   // 2. API GET PAGED LIST
-  const fetchHoldings = useCallback(async () => {
+  const fetchHoldings = useCallback(async (isSilent = false) => {
     if (!selectedAccountId) return; 
-    setLoading(true);
+    if (!isSilent) setLoading(true);
     try {
-      const trimmed = keyword.trim();
       const res = await axiosInstance.get("/Holdings", {
         params: {
           accountID: selectedAccountId,
-          tickerSymbol: trimmed || undefined,
+          tickerSymbol: keyword.trim() || undefined,
           isDeleted: isTrashView, 
+          isOwned: isOwned,
           pageNumber,
           pageSize
         }
@@ -211,23 +212,35 @@ export default function HoldingsPage() {
       const data = res.data?.result || res.data;
       if (data && data.items) {
         setHoldings(data.items);
-        setTotalPages(Math.ceil(data.totalRecords / pageSize));
+        setTotalRecords(data.totalRecords);
       } else {
-        setHoldings([]); setTotalPages(1);
+        setHoldings([]); setTotalRecords(0);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load holdings.");
+      toast.error("Failed to load holdings.");
     } finally {
       setLoading(false);
     }
-  }, [selectedAccountId, keyword, isTrashView, pageNumber, pageSize]);
+  }, [selectedAccountId, keyword, isTrashView, isOwned, pageNumber, pageSize]);
 
+  // LUỒNG FETCH CHÍNH - Chuyển trang tức thì
   useEffect(() => {
-    fetchSummary();
     fetchHoldings();
-  }, [selectedAccountId, keyword, isTrashView, pageNumber, fetchSummary, fetchHoldings]);
+    fetchSummary();
+  }, [selectedAccountId, isTrashView, isOwned, pageNumber, fetchSummary, fetchHoldings]);
 
-  // Picker search tickers
+  // Debounce riêng cho Search Keyword
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      if (keyword.trim() !== "") {
+        setPageNumber(1);
+        fetchHoldings(true);
+      }
+    }, 500);
+    return () => clearTimeout(delay);
+  }, [keyword]);
+
+  // Ticker Picker search logic
   useEffect(() => {
     if (!isTickerModalOpen || !tickerSearchType) return;
     const delay = setTimeout(async () => {
@@ -243,15 +256,6 @@ export default function HoldingsPage() {
     }, 400);
     return () => clearTimeout(delay);
   }, [tickerSearchType, tickerSearchKeyword, isTickerModalOpen]);
-
-  const currentAccount = accounts.find(a => (a.accountID || a.accountId) === selectedAccountId);
-  const isGlobalCryptoAccount = currentAccount?.accountType?.toUpperCase() === "CRYPTO";
-
-  // Lọc quantity > 0 local cho page hiện tại (vì BE đã filter rồi sếp có thể không cần, nhưng cứ để đây sếp dùng)
-  const displayHoldings = useMemo(() => {
-    if (onlyOwned) return holdings.filter(h => h.quantity > 0);
-    return holdings;
-  }, [holdings, onlyOwned]);
 
   const openFormModal = (holding = null) => {
     setFormError(""); setNoteMode("edit");
@@ -280,9 +284,16 @@ export default function HoldingsPage() {
 
   const closeFormModal = () => { setIsFormModalOpen(false); setEditingHolding(null); };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.accountId || !formData.tickerId) { setFormError("Account and Ticker are required."); return; }
+    if (Number(formData.quantity) < 0 || Number(formData.investmentCost) < 0) { setFormError("Numbers cannot be negative."); return; }
+
     setIsSaving(true);
     const payload = {
       AccountID: formData.accountId,
@@ -296,18 +307,18 @@ export default function HoldingsPage() {
     try {
       if (editingHolding) await axiosInstance.put(`/Holdings/${editingHolding.id || editingHolding.ID}`, payload);
       else await axiosInstance.post("/Holdings", payload);
-      toast.success("Holding saved successfully.");
+      toast.success("Success!");
       closeFormModal();
       fetchHoldings(); fetchSummary();
-    } catch (err) { setFormError(err.response?.data?.message || "Error saving holding."); } finally { setIsSaving(false); }
+    } catch (err) { setFormError(err.response?.data?.message || "Submit failed."); } finally { setIsSaving(false); }
   };
 
   const handleDelete = async (holding, e) => {
     e.stopPropagation();
-    if (!window.confirm(`Move holding "${holding.tickerSymbol}" to recycle bin?`)) return;
+    if (!window.confirm(`Delete ${holding.tickerSymbol}?`)) return;
     try {
       await axiosInstance.delete(`/Holdings/${holding.id || holding.ID}`);
-      toast.success("Holding deleted.");
+      toast.success("Moved to recycle bin.");
       fetchHoldings(); fetchSummary();
     } catch (err) { toast.error("Delete failed."); }
   };
@@ -316,31 +327,29 @@ export default function HoldingsPage() {
     e.stopPropagation();
     try {
       await axiosInstance.put(`/Holdings/${holding.id || holding.ID}/restore`);
-      toast.success("Restored successfully.");
+      toast.success("Restored!");
       fetchHoldings(); fetchSummary();
     } catch (err) { toast.error("Restore failed."); }
   };
+
+  const selectedFormAccount = accounts.find(a => (a.accountID || a.accountId) === formData.accountId);
 
   return (
     <div className="p-8 md:p-12 min-h-screen bg-gray-50 flex justify-center">
       <div className="w-full max-w-6xl">
         
-        {/* HEADER */}
-        <div className="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-              {isTrashView ? "Recycle Bin (Holdings)" : "Ticker Management"}
-              {loading && <Loader2 className="animate-spin text-pink-500" size={20} />}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              {isTrashView ? "Deleted assets. You can restore them anytime." : "Manage your investments and track P&L"}
-            </p>
-          </div>
+        {/* HEADER AREA */}
+        <div className="mb-5">
+          <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
+            Ticker Management
+            {loading && <Loader2 className="animate-spin text-pink-500" size={20} />}
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">Manage your investments and track P&L performance</p>
         </div>
 
-        {/* BẢNG SUMMARY (SERVER-SIDE DATA) */}
+        {/* SUMMARY CARDS */}
         {!isTrashView && summary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm flex flex-col justify-between h-[150px]">
               <div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Invested by type</div>
@@ -380,16 +389,15 @@ export default function HoldingsPage() {
                   </div>
                 ))}
               </div>
-              {isGlobalCryptoAccount && <div className="text-[10px] text-gray-400 mt-auto pt-2 italic">1 USD = {new Intl.NumberFormat("en-US").format(USD_TO_VND)} VND</div>}
             </div>
           </div>
         )}
 
-        {/* TOOLBAR CONTROLS */}
+        {/* TOOLBAR */}
         <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full mb-6">
           <div className="relative w-full sm:w-auto min-w-[140px]" ref={accDropdownRef}>
             <div onClick={() => setIsAccDropdownOpen(!isAccDropdownOpen)} className={`flex items-center justify-between w-full px-4 py-2.5 rounded-full border transition-all bg-white text-gray-800 font-semibold text-[13px] shadow-sm cursor-pointer ${isAccDropdownOpen ? "border-pink-500 ring-2 ring-pink-200" : "border-pink-200 hover:border-pink-400"}`}>
-              {currentAccount ? <div className="flex items-center gap-2">{getAccountIcon(currentAccount.accountType, 16)}<span className="truncate max-w-[100px]">{currentAccount.accountName}</span></div> : <span className="text-gray-400">No Account</span>}
+              {currentAccount ? <div className="flex items-center gap-2">{getAccountIcon(currentAccount.accountType, 16)}<span className="truncate max-w-[100px]">{currentAccount.accountName}</span></div> : <span className="text-gray-400">Account</span>}
               <ChevronDown size={14} className={`text-gray-400 ml-2 transition-transform ${isAccDropdownOpen ? "rotate-180" : ""}`} />
             </div>
             {isAccDropdownOpen && (
@@ -410,26 +418,34 @@ export default function HoldingsPage() {
           </div>
 
           {!isTrashView && (
-            <button disabled={accounts.length === 0} onClick={() => openFormModal()} className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-sm hover:-translate-y-0.5 transition-all">+ ADD HOLDING</button>
+            <button disabled={accounts.length === 0} onClick={() => openFormModal()} className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-sm hover:-translate-y-0.5 transition-all disabled:opacity-50">+ ADD HOLDING</button>
           )}
 
           {!isTrashView && (
-            <label className="flex items-center gap-2 text-[12px] font-medium text-gray-600 cursor-pointer ml-1"><input type="checkbox" checked={onlyOwned} onChange={(e) => setOnlyOwned(e.target.checked)} className="w-4 h-4 rounded text-pink-500 focus:ring-pink-400 border-gray-300"/>Hiện mã đang sở hữu</label>
+            <label className="flex items-center gap-2 text-[12px] font-medium text-gray-600 cursor-pointer ml-1">
+              <input type="checkbox" checked={isOwned} onChange={handleOwnedToggle} className="w-4 h-4 rounded text-pink-500 focus:ring-pink-400 border-gray-300"/>
+              Hiện mã đang sở hữu
+            </label>
+          )}
+
+          {!isTrashView && !loading && (
+            <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-2">
+               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{totalRecords} items</span>
+            </div>
           )}
 
           <div className="ml-auto w-full sm:w-auto">
-            <button onClick={() => setIsTrashView(!isTrashView)} className={`w-full sm:w-auto px-4 py-2.5 rounded-full font-bold text-[13px] flex items-center justify-center border transition-all ${isTrashView ? "bg-gray-800 text-white border-gray-800 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-500 shadow-sm"}`}>{isTrashView ? "Active" : <Trash size={16} />}</button>
+            <button onClick={() => setIsTrashView(!isTrashView)} className={`w-full sm:w-auto px-4 py-2.5 rounded-full font-bold text-[13px] flex items-center justify-center border transition-all ${isTrashView ? "bg-gray-800 text-white border-gray-800 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:bg-red-50 hover:text-red-500 shadow-sm"}`}>{isTrashView ? "Active List" : <Trash size={16} />}</button>
           </div>
         </div>
 
         {/* CARDS GRID */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300 ${loading ? "opacity-40" : "opacity-100"}`}>
-          {displayHoldings.map((h) => {
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300 ${loading ? "opacity-30" : "opacity-100"}`}>
+          {holdings.map((h) => {
             const isCrypto = checkIsCrypto(h.tickerTypeCode);
             const totalInvested = h.investmentCost * h.quantity;
             const marketValue = h.marketPrice * h.quantity; 
             const unrealizedPnL = marketValue - totalInvested;
-            const unrealizedRate = totalInvested > 0 ? unrealizedPnL / totalInvested : 0;
             return (
               <div key={h.id || h.ID} className="bg-white rounded-[1rem] p-5 shadow-sm hover:-translate-y-0.5 transition-all border border-transparent hover:border-pink-100 flex flex-col group cursor-pointer" onClick={() => setDetailHolding(h)}>
                 <div className="flex items-start justify-between mb-3">
@@ -438,14 +454,14 @@ export default function HoldingsPage() {
                     <div className="min-w-0">
                       <div className="text-base font-black text-gray-900 leading-none truncate">{h.tickerSymbol}</div>
                       <div className="relative group/tooltip cursor-help w-max max-w-full mt-0.5">
-                        <div className="text-[11px] font-medium text-gray-500 truncate w-[130px] lg:w-[140px]">{h.tickerName}</div>
-                        <div className="absolute left-0 top-5 hidden group-hover/tooltip:block w-max max-w-[220px] bg-gray-800 text-white text-[11px] rounded-lg py-2 px-3 z-50 shadow-xl">{h.tickerName}</div>
+                        <div className="text-[11px] font-medium text-gray-500 truncate w-[100px] lg:w-[130px]">{h.tickerName}</div>
+                        <div className="absolute left-0 top-5 hidden group-hover/tooltip:block w-max max-w-[220px] bg-gray-800 text-white text-[11px] rounded-lg py-2 px-3 z-50 shadow-xl leading-relaxed">{h.tickerName}</div>
                       </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end shrink-0">
                     <div className="text-[15px] font-black text-gray-900 leading-tight">{formatMoney(h.marketPrice, isCrypto, true)}</div>
-                    <div className={`mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${unrealizedRate >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{formatPercent(unrealizedRate)}</div>
+                    <div className={`mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${unrealizedPnL >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{formatPercent(totalInvested > 0 ? unrealizedPnL / totalInvested : 0)}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-y-2.5 gap-x-3 text-sm mt-1 border-b border-gray-50 pb-3">
@@ -455,7 +471,7 @@ export default function HoldingsPage() {
                   <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Unrealized P&L</span><span className={`font-bold text-[12px] ${getPnLColor(unrealizedPnL)}`}>{formatMoney(unrealizedPnL, isCrypto, true)}</span></div>
                 </div>
                 <div className="flex justify-between items-center pt-2 mt-auto">
-                  <span className="text-[10px] text-gray-400">View details</span>
+                  <span className="text-[10px] text-gray-400 italic">Click for details</span>
                   <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     {isTrashView ? <button onClick={(e) => handleRestore(h, e)} className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><ArchiveRestore size={12} /></button> : <>
                       <button onClick={(e) => { e.stopPropagation(); openFormModal(h); }} className="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-blue-500 flex items-center justify-center"><Pencil size={12} /></button>
@@ -471,17 +487,17 @@ export default function HoldingsPage() {
         {/* PAGINATION */}
         {!loading && totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-6">
-            <button disabled={pageNumber === 1} onClick={() => setPageNumber(p => p - 1)} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[13px] disabled:opacity-50 transition-all">Prev</button>
-            <span className="text-[13px] font-medium">Page <span className="font-bold">{pageNumber}</span> of {totalPages}</span>
-            <button disabled={pageNumber === totalPages} onClick={() => setPageNumber(p => p + 1)} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[13px] disabled:opacity-50 transition-all">Next</button>
+            <button disabled={pageNumber === 1} onClick={() => setPageNumber(p => p - 1)} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[13px] hover:text-pink-500 disabled:opacity-50 transition-all shadow-sm">Prev</button>
+            <span className="text-[13px] font-medium text-gray-600">Page <span className="font-bold text-gray-900">{pageNumber}</span> of {totalPages}</span>
+            <button disabled={pageNumber === totalPages} onClick={() => setPageNumber(p => p + 1)} className="px-4 py-2 rounded-full bg-white border border-gray-200 text-[13px] hover:text-pink-500 disabled:opacity-50 transition-all shadow-sm">Next</button>
           </div>
         )}
 
-        {/* FORM MODAL ADD/EDIT */}
+        {/* MODAL 1: FORM ADD / EDIT */}
         {isFormModalOpen && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-40 p-4 transition-opacity">
-            <div className="bg-white w-full max-w-5xl rounded-[2rem] p-8 h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-              <button onClick={closeFormModal} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-full p-2 transition-all z-10"><X size={24} /></button>
+            <div className="bg-white w-full max-w-5xl rounded-[2rem] p-8 md:p-10 relative animate-in fade-in zoom-in duration-200 h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+              <button onClick={closeFormModal} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all z-10"><X size={24} /></button>
               <h2 className="text-3xl font-black text-gray-900 mb-6 shrink-0">{editingHolding ? "Edit Holding" : "Add Holding"}</h2>
               <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8 flex-1 min-h-0">
@@ -516,7 +532,7 @@ export default function HoldingsPage() {
                   </div>
                   <div className="md:col-span-7 flex flex-col min-h-0 bg-gray-50 rounded-2xl border border-gray-200 p-1">
                     <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl shrink-0"><label className="block text-sm font-bold text-gray-800">Trading Notes (Markdown)</label><div className="flex gap-2 bg-gray-100 p-1 rounded-lg"><button type="button" onClick={() => setNoteMode("edit")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'edit' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500'}`}>Edit</button><button type="button" onClick={() => setNoteMode("preview")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'preview' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500'}`}>Preview</button></div></div>
-                    <div className="flex-1 overflow-hidden p-3 flex flex-col bg-white rounded-b-2xl">{noteMode === "edit" ? <textarea name="note" value={formData.note} onChange={handleChange} className="flex-1 w-full outline-none resize-none font-mono text-[13px] text-gray-700 p-2 custom-scrollbar" placeholder="## Plan..."/> : <div className="flex-1 w-full overflow-y-auto text-[13px] text-gray-800 p-2 custom-scrollbar prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{formData.note || "*No note provided*"}</ReactMarkdown></div>}</div>
+                    <div className="flex-1 overflow-hidden p-3 flex flex-col bg-white rounded-b-2xl">{noteMode === "edit" ? <textarea name="note" value={formData.note} onChange={handleChange} className="flex-1 w-full outline-none resize-none font-mono text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar" placeholder="## Plan..."/> : <div className="flex-1 w-full overflow-y-auto text-[13px] text-gray-800 p-2 custom-scrollbar prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{formData.note || "*No note provided*"}</ReactMarkdown></div>}</div>
                   </div>
                 </div>
                 {formError && <p className="text-rose-600 text-sm font-bold text-center mt-2 shrink-0">{formError}</p>}
@@ -529,7 +545,7 @@ export default function HoldingsPage() {
           </div>
         )}
 
-        {/* MODAL TICKER PICKER */}
+        {/* SUB-MODAL 1.5: TICKER PICKER */}
         {isTickerModalOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 transition-opacity">
             <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-6 md:p-8 relative animate-in fade-in zoom-in duration-200 flex flex-col h-[500px]">
@@ -543,37 +559,55 @@ export default function HoldingsPage() {
               </div>
               <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                 {isSearchingTickers && <div className="flex items-center justify-center py-10"><Loader2 className="animate-spin text-pink-500" /></div>}
-                {tickerSearchResults.map(t => (<div key={t.id} onClick={() => { setFormData(p => ({ ...p, tickerId: t.id })); setSelectedTickerInfo({ id: t.id, symbol: t.symbol, typeCode: t.tickerTypeName, name: t.name }); setIsTickerModalOpen(false); }} className="flex items-center gap-4 p-3.5 rounded-2xl border border-gray-100 hover:border-pink-400 hover:bg-pink-50 cursor-pointer transition-all group"><div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">{getRawIcon(t.tickerTypeName, 22)}</div><div className="flex-1 min-w-0"><div className="font-black text-gray-900 text-base">{t.symbol}</div><div className="text-xs text-gray-500 truncate">{t.name}</div></div><div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2.5 py-1 bg-gray-100 rounded-lg">{t.tickerTypeName}</div></div>))}
+                {tickerSearchResults.map(t => (<div key={t.id} onClick={() => { setFormData(p => ({ ...p, tickerId: t.id })); setSelectedTickerInfo({ id: t.id, symbol: t.symbol, typeCode: t.tickerTypeName, name: t.name }); setIsTickerModalOpen(false); }} className="flex items-center gap-4 p-3.5 rounded-2xl border border-gray-100 hover:border-pink-400 hover:bg-pink-50 cursor-pointer transition-all group"><div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white shadow-sm">{getRawIcon(t.tickerTypeName, 22)}</div><div className="flex-1 min-w-0"><div className="font-black text-gray-900 text-base">{t.symbol}</div><div className="text-xs text-gray-500 truncate">{t.name}</div></div><div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2.5 py-1 bg-gray-100 rounded-lg group-hover:bg-white group-hover:text-pink-50">{t.tickerTypeName}</div></div>))}
               </div>
             </div>
           </div>
         )}
 
-        {/* MODAL VIEW DETAIL */}
+        {/* MODAL 2: VIEW DETAILS */}
         {detailHolding && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity" onClick={() => setDetailHolding(null)}>
             <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setDetailHolding(null)} className="absolute top-6 right-6 z-20 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all"><X size={24} /></button>
-              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100 shadow-sm">
-                <div className="flex items-center gap-5 mb-8"><div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between w-full"><div className="flex items-end gap-3 mb-1"><h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span></div><div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100"><span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span></div></div><div className="text-sm font-semibold text-gray-500 mt-1 truncate">{detailHolding.tickerName}</div></div></div>
+              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 pr-8">
+                  <div className="flex items-center gap-5 w-full">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-end gap-3 mb-1">
+                          <h2 className="text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2>
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span>
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span>
+                        </div>
+                        <div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                          <span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-gray-500 mt-1.5 truncate max-w-md">{detailHolding.tickerName}</div>
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-8 text-sm">
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Quantity</span><span className="font-bold text-gray-900 text-lg">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Avg. Price</span><span className="font-bold text-gray-900 text-lg">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Price</span><span className="font-bold text-gray-900 text-lg">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Total Invested</span><span className="font-bold text-gray-900 text-lg">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Avg. Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Total Invested</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Value</span><span className="font-black text-gray-900 text-xl">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Unrealized P&L</span><span className={`font-black text-xl flex items-center gap-2 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>{formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}<span className="text-[11px] px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-100">{formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}</span></span></div>
+                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Unrealized P&L</span><span className={`font-black text-xl flex items-center gap-2 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>{formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}<span className="text-[11px] px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-50 leading-none">{formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}</span></span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Buy</span><span className="font-bold text-blue-600 text-lg">{detailHolding.targetBuy ? formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Sell</span><span className="font-bold text-rose-600 text-lg">{detailHolding.targetSell ? formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 custom-scrollbar border-t border-gray-100">
-                <span className="text-gray-400 block text-[11px] uppercase font-bold mb-4">Trading Notes & Analysis</span>
+                <span className="text-gray-400 block text-[11px] uppercase font-bold mb-4 pl-1">Trading Notes & Analysis</span>
                 {detailHolding.note && detailHolding.note !== "N/A" ? <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm text-sm text-gray-800 min-h-[200px] prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{detailHolding.note}</ReactMarkdown></div> : <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400 text-sm italic min-h-[200px] flex items-center justify-center">No notes recorded.</div>}
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
