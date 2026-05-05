@@ -60,6 +60,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             (Guid accountID, 
             string? tickerSymbol, 
             bool isDeleted = false, 
+            bool isOwned = false,
             int pageNumber = 1, 
             int pageSize = 6)
         {
@@ -67,6 +68,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
             if (isDeleted)
                 query = query.IgnoreQueryFilters().Where(tt => tt.IsDeleted == isDeleted);
+
+            if (isOwned)
+                query = query.Where(tt => tt.Quantity > 0);
 
             if (!string.IsNullOrWhiteSpace(tickerSymbol))
                 query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));

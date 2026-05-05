@@ -29,9 +29,9 @@ namespace PersonalPortfolioTracker.Controllers
 
         [HttpGet]
         public async Task<IActionResult> FindByConditionAsync([FromQuery] Guid accountID, [FromQuery] string? tickerSymbol, 
-            [FromQuery] bool isDeleted = false, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+            [FromQuery] bool isDeleted = false, [FromQuery] bool isOwned = false, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            return Ok(await _service.FindByConditionAsync(accountID, tickerSymbol, isDeleted, pageNumber, pageSize));
+            return Ok(await _service.FindByConditionAsync(accountID, tickerSymbol, isDeleted, isOwned, pageNumber, pageSize));
         }
 
         [HttpPost]
