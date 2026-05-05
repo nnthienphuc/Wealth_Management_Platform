@@ -37,6 +37,7 @@ const getRawIcon = (code, size = 16) => {
 export default function TickerPage() {
   const [tickers, setTickers] = useState([]);
   const [tickerTypes, setTickerTypes] = useState([]);
+  const [totalRecords, setTotalRecords] = useState(0); // THÊM STATE TOTAL RECORDS
   
   const [keyword, setKeyword] = useState("");
   const [selectedType, setSelectedType] = useState(""); 
@@ -121,9 +122,11 @@ export default function TickerPage() {
       if (data && data.items) {
         setTickers(data.items);
         setTotalPages(Math.ceil(data.totalRecords / pageSize));
+        setTotalRecords(data.totalRecords); // CẬP NHẬT TOTAL RECORDS
       } else {
         setTickers([]);
         setTotalPages(1);
+        setTotalRecords(0); // RESET TOTAL RECORDS
       }
     } catch (err) {
       setError("Cannot load market assets from the server.");
@@ -312,16 +315,23 @@ export default function TickerPage() {
               )}
             </div>
 
-            <div className="relative w-full sm:w-60">
-              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" />
+            <div className="relative w-full sm:w-60 flex items-center">
+              <Search size={14} className="absolute left-4 text-pink-400" />
               <input
                 type="text"
                 placeholder="Search symbol or name..."
-                className="w-full pl-9 pr-5 py-2.5 rounded-full border border-pink-200 focus:border-pink-500 outline-none transition-all bg-white text-gray-800 text-[13px] shadow-sm"
+                className="w-full pl-9 pr-5 py-2.5 rounded-full border border-pink-200 focus:border-pink-500 outline-none transition-all bg-white text-gray-800 text-[13px] shadow-[0_8px_18px_rgba(236,72,153,0.08)]"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />
             </div>
+
+            {/* THÊM TOTAL RECORDS VÀO ĐÂY NHƯ Ý SẾP */}
+            {!loading && (
+              <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{totalRecords} items</span>
+              </div>
+            )}
 
             <button
               onClick={() => openFormModal()}
@@ -334,8 +344,8 @@ export default function TickerPage() {
 
         {error && <p className="text-rose-600 text-sm font-medium mb-4 text-center">{error}</p>}
 
-        {/* CARDS GRID (THU GỌN - COMPACT MODE) */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+        {/* CARDS GRID */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
           {!loading && tickers.length === 0 && !error && (
             <p className="text-gray-500 text-sm col-span-full text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200">
               Can't find any matching assets.
@@ -348,26 +358,25 @@ export default function TickerPage() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-[1.25rem] p-5 shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full group"
+                className="bg-white rounded-[1.25rem] p-6 shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.06)] transition-all duration-200 border border-transparent hover:border-pink-100 flex flex-col justify-between h-full group"
               >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
-                    {getRawIcon(displayTypeCode, 18)}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0">
+                    {getRawIcon(displayTypeCode, 20)}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-lg font-black text-gray-900 tracking-tight uppercase truncate">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xl font-black text-gray-900 tracking-tight uppercase truncate">
                         {t.symbol}
                       </span>
-                      <span className="text-[9px] font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wider">
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full uppercase tracking-wider">
                         {displayTypeCode}
                       </span>
                     </div>
 
-                    {/* TOOLTIP HIỂN THỊ TÊN ĐẦY ĐỦ */}
                     <div className="relative group/tooltip cursor-help w-full">
-                      <p className="text-[11px] font-medium text-gray-500 truncate leading-snug">
+                      <p className="text-sm font-medium text-gray-500 truncate leading-snug">
                         {t.name}
                       </p>
                       
@@ -379,21 +388,20 @@ export default function TickerPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-end justify-between">
+                <div className="mt-6 pt-4 border-t border-gray-100 flex items-end justify-between">
                   <div>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Market Price</span>
-                    <span className="text-[15px] font-black text-gray-900 leading-none">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Market Price</span>
+                    <span className="text-lg font-black text-gray-900 leading-none">
                       {formatPrice(t.marketPrice, t.currency)}
                     </span>
                   </div>
                   
-                  {/* ACTIONS THÊM/SỬA/XÓA */}
-                  <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={(e) => { e.stopPropagation(); openFormModal(t); }} title="Edit" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
-                      <Pencil size={12} />
+                  <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); openFormModal(t); }} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
+                      <Pencil size={14} />
                     </button>
-                    <button onClick={(e) => handleDelete(t, e)} title="Delete" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
-                      <Trash2 size={12} />
+                    <button onClick={(e) => handleDelete(t, e)} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

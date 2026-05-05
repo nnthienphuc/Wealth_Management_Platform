@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axiosInstance from "../../../utils/axiosInstance";
-import { formatDate } from "../../../utils/formatDate"; // Import hàm format date của sếp
+import { formatDate } from "../../../utils/formatDate"; 
 import { toast } from "react-toastify";
 import { 
   PiggyBank, Wallet, Landmark, LineChart, Bitcoin, 
   CreditCard, Pencil, Trash2, X, Loader2, 
-  ArchiveRestore, Trash, Eye 
+  ArchiveRestore, Trash, Eye, Search 
 } from "lucide-react";
 
 const USD_TO_VND = 27000;
@@ -34,9 +34,9 @@ const getIconByType = (type) => {
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState([]);
+  const [totalRecords, setTotalRecords] = useState(0); // THÊM STATE TOTAL RECORDS
   const [keyword, setKeyword] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(12);
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +61,8 @@ export default function AccountsPage() {
     note: "",
   });
 
+  const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize) || 1, [totalRecords, pageSize]);
+
   // Lắng nghe phím ESC để đóng Form/Modal
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -73,8 +75,8 @@ export default function AccountsPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const fetchAccounts = useCallback(async () => {
-    setLoading(true);
+  const fetchAccounts = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const trimmed = keyword.trim();
       const res = await axiosInstance.get("/Accounts", {
@@ -88,10 +90,10 @@ export default function AccountsPage() {
       const data = res.data?.result || res.data;
       if (data && data.items) {
         setAccounts(data.items);
-        setTotalPages(Math.ceil(data.totalRecords / pageSize));
+        setTotalRecords(data.totalRecords); // CẬP NHẬT TOTAL RECORDS
       } else {
         setAccounts([]);
-        setTotalPages(1);
+        setTotalRecords(0); // RESET TOTAL RECORDS
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load accounts.");
@@ -101,16 +103,18 @@ export default function AccountsPage() {
   }, [keyword, isTrashView, pageNumber, pageSize]);
 
   useEffect(() => {
-    const delay = setTimeout(() => {
-      if (pageNumber !== 1) setPageNumber(1);
-      else fetchAccounts();
-    }, 500);
-    return () => clearTimeout(delay);
-  }, [keyword, isTrashView]);
+    fetchAccounts();
+  }, [pageNumber, isTrashView, fetchAccounts]);
 
   useEffect(() => {
-    fetchAccounts();
-  }, [pageNumber, fetchAccounts]);
+    const delay = setTimeout(() => {
+      if (keyword.trim() !== "") {
+        setPageNumber(1);
+        fetchAccounts(true);
+      }
+    }, 500);
+    return () => clearTimeout(delay);
+  }, [keyword]);
 
   const totalVnd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "VND" ? sum + acc.totalBalance : sum, 0);
   const totalUsd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "USD" ? sum + acc.totalBalance : sum, 0);
@@ -250,13 +254,23 @@ export default function AccountsPage() {
 
           {/* SEARCH & ACTIONS */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Search by name..."
-              className="w-full sm:w-64 px-5 py-3 rounded-full border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white text-gray-800 text-sm shadow-[0_8px_18px_rgba(236,72,153,0.08)]"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
+            <div className="relative w-full sm:w-64 flex items-center">
+              <Search size={14} className="absolute left-4 text-pink-400" />
+              <input
+                type="text"
+                placeholder="Search by name..."
+                className="w-full pl-9 pr-5 py-3 rounded-full border border-pink-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all bg-white text-gray-800 text-sm shadow-[0_8px_18px_rgba(236,72,153,0.08)]"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+            </div>
+
+            {/* THÊM TOTAL RECORDS VÀO ĐÂY NHƯ Ý SẾP */}
+            {!isTrashView && !loading && (
+              <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{totalRecords} items</span>
+              </div>
+            )}
             
             <button
               onClick={() => setIsTrashView(!isTrashView)}
