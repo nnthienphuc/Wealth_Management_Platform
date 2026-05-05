@@ -21,6 +21,12 @@ namespace PersonalPortfolioTracker.Controllers
             return Ok(await _service.GetInvestAccount());
         }
 
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummaryAsync([FromQuery] Guid accountId)
+        {
+            return Ok(await _service.GetSummaryAsync(accountId));
+        }
+
         [HttpGet]
         public async Task<IActionResult> FindByConditionAsync([FromQuery] Guid accountID, [FromQuery] string? tickerSymbol, 
             [FromQuery] bool isDeleted = false, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
@@ -53,7 +59,6 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPut("{id}/restore")]
-
         public async Task<IActionResult> RestoreAsync(Guid id)
         {
             await _service.RestoreAsync(id);

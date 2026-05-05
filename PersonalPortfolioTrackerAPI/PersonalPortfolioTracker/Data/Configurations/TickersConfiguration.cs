@@ -14,6 +14,11 @@ namespace PersonalPortfolioTracker.Data.Configurations
 
             builder.HasIndex(e => new { e.TickerTypeId, e.Symbol }, "IX_Tickers_Type").HasFilter("([ISDELETED]=(0))");
 
+            builder.HasIndex(e => new { e.ID, e.TickerTypeId })
+                .HasDatabaseName("IX_Tickers_Summary_Optimized")
+                .IncludeProperties(e => new { e.MarketPrice, e.Symbol })
+                .HasFilter("([IsDeleted]=(0))");
+
             builder.Property(e => e.ID)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("ID");

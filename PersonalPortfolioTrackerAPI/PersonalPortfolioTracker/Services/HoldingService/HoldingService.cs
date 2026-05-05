@@ -28,12 +28,40 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                 .ToListAsync();
         }
 
+        public async Task<SummaryResponse> GetSummaryAsync(Guid accountId)
+        {
+            await VerifyAccountOwnershipAsync(accountId);
+
+            var summaryData = await _uow.Repository<Holdings>()
+                .FindByCondition(tt => tt.AccountId == accountId && tt.Quantity > 0)
+                .GroupBy(tt => tt.Ticker.TickerType.Code)
+                .Select(group => new
+                {
+                    TypeCode = group.Key,
+                    Invested = group.Sum(tt => tt.TotalInvestmentCost),
+                    MarketValue = group.Sum(tt => tt.Quantity * tt.Ticker.MarketPrice),
+                    TickerCount = group.Count(),
+                    TotalQty = group.Sum(tt => tt.Quantity)
+                })
+                .ToListAsync();
+
+            var summaryDict = summaryData.ToDictionary(
+                x => x.TypeCode,
+                x => new SummaryByType(x.Invested, x.MarketValue, x.TickerCount, x.TotalQty)
+            );
+
+            decimal totalInvestedAll = summaryData.Sum(x => x.Invested);
+            decimal totalMarketValueAll = summaryData.Sum(x => x.MarketValue);
+
+            return new SummaryResponse(summaryDict, totalInvestedAll, totalMarketValueAll);
+        }
+
         public async Task<PagedResponse<HoldingResponse>> FindByConditionAsync
             (Guid accountID, 
             string? tickerSymbol, 
             bool isDeleted = false, 
             int pageNumber = 1, 
-            int pageSize = 10)
+            int pageSize = 12)
         {
             var query = _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.AccountId == accountID);
 
