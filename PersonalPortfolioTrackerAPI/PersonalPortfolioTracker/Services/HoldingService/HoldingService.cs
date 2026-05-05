@@ -61,7 +61,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             string? tickerSymbol, 
             bool isDeleted = false, 
             int pageNumber = 1, 
-            int pageSize = 12)
+            int pageSize = 6)
         {
             var query = _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.AccountId == accountID);
 
