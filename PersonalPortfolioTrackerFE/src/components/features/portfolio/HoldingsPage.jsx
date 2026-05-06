@@ -278,7 +278,6 @@ export default function HoldingsPage() {
 
   const closeFormModal = () => { setIsFormModalOpen(false); setEditingHolding(null); };
 
-  // KHÔI PHỤC HÀM HANDLE CHANGE BỊ THIẾU Ở BẢN TRƯỚC
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -552,7 +551,7 @@ export default function HoldingsPage() {
                 </div>
                 {formError && <p className="text-rose-600 text-sm font-bold text-center mt-2 shrink-0">{formError}</p>}
                 <div className="shrink-0 flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100">
-                  <button type="button" onClick={closeFormModal} className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-bold text-sm">Cancel</button>
+                  <button type="button" onClick={closeFormModal} className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors">Cancel</button>
                   <button type="submit" disabled={isSaving} className="px-8 py-3 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-[0_8px_15px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{isSaving ? "Saving..." : "Save Holding"}</button>
                 </div>
               </form>
@@ -586,20 +585,47 @@ export default function HoldingsPage() {
             <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setDetailHolding(null)} className="absolute top-6 right-6 z-20 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all"><X size={24} /></button>
               <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100 shadow-sm">
-                <div className="flex items-center gap-5 mb-8"><div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between w-full"><div className="flex items-end gap-3 mb-1"><h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span></div><div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100"><span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span></div></div><div className="text-sm font-semibold text-gray-500 mt-1 truncate">{detailHolding.tickerName}</div></div></div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-8 text-sm">
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Quantity</span><span className="font-bold text-gray-900 text-lg">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Avg. Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Total Invested</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Value</span><span className="font-black text-gray-900 text-xl">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Unrealized P&L</span><span className={`font-black text-xl flex items-center gap-2 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>{formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}<span className="text-[11px] px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-100">{formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}</span></span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Buy</span><span className="font-bold text-blue-600 text-lg">{detailHolding.targetBuy ? formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Sell</span><span className="font-bold text-rose-600 text-lg">{detailHolding.targetSell ? formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 pr-8">
+                  <div className="flex items-center gap-5 w-full">
+                    <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-end gap-3 mb-1">
+                          <h2 className="text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2>
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span>
+                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span>
+                        </div>
+                        <div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                          <span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-gray-500 mt-1.5 truncate max-w-md">{detailHolding.tickerName}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* LƯU Ý GIAO DIỆN VIEW DETAIL (KHÔNG SỬA GÌ) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-4 text-sm mt-2">
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Quantity</span><span className="font-bold text-gray-900 text-[15px]">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Avg. Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Total Invested</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Value</span><span className="font-black text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Unrealized P&L</span>
+                    <span className={`font-black text-[15px] flex flex-wrap items-center gap-1.5 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>
+                      {formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"}`}>
+                        {formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}
+                      </span>
+                    </span>
+                  </div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Buy</span><span className="font-bold text-blue-600 text-[15px]">{detailHolding.targetBuy ? formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Sell</span><span className="font-bold text-rose-600 text-[15px]">{detailHolding.targetSell ? formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 custom-scrollbar border-t border-gray-100">
-                <span className="text-gray-400 block text-[11px] uppercase font-bold mb-4">Trading Notes & Analysis</span>
+                <span className="text-gray-400 block text-[11px] uppercase tracking-widest font-bold mb-4 pl-1">Trading Notes & Analysis</span>
                 {detailHolding.note && detailHolding.note !== "N/A" ? <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm text-sm text-gray-800 min-h-[200px] prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{detailHolding.note}</ReactMarkdown></div> : <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400 text-sm italic min-h-[200px] flex items-center justify-center">No notes recorded.</div>}
               </div>
             </div>
