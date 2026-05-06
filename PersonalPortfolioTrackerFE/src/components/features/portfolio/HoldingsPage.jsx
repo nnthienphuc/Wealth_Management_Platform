@@ -130,7 +130,6 @@ export default function HoldingsPage() {
     accountId: "", tickerId: "", quantity: "", investmentCost: "", targetBuy: "", targetSell: "", note: "",
   });
 
-  // TÍNH TOÁN BIẾN MÔI TRƯỜNG CỦA COMPONENT QUA USEMEMO
   const currentAccount = useMemo(() => 
     accounts.find(a => (a.accountID || a.accountId) === selectedAccountId), 
     [accounts, selectedAccountId]
@@ -185,7 +184,6 @@ export default function HoldingsPage() {
     setPageNumber(1);
   };
 
-  // 1. API GET SUMMARY
   const fetchSummary = useCallback(async () => {
     if (!selectedAccountId || isTrashView) return;
     try {
@@ -194,7 +192,6 @@ export default function HoldingsPage() {
     } catch (err) { console.error("Summary load failed", err); }
   }, [selectedAccountId, isTrashView]);
 
-  // 2. API GET PAGED LIST
   const fetchHoldings = useCallback(async (isSilent = false) => {
     if (!selectedAccountId) return; 
     if (!isSilent) setLoading(true);
@@ -223,13 +220,11 @@ export default function HoldingsPage() {
     }
   }, [selectedAccountId, keyword, isTrashView, isOwned, pageNumber, pageSize]);
 
-  // LUỒNG FETCH CHÍNH - Chuyển trang tức thì
   useEffect(() => {
     fetchHoldings();
     fetchSummary();
   }, [selectedAccountId, isTrashView, isOwned, pageNumber, fetchSummary, fetchHoldings]);
 
-  // Debounce riêng cho Search Keyword
   useEffect(() => {
     const delay = setTimeout(() => {
       if (keyword.trim() !== "") {
@@ -240,7 +235,6 @@ export default function HoldingsPage() {
     return () => clearTimeout(delay);
   }, [keyword]);
 
-  // Ticker Picker search logic
   useEffect(() => {
     if (!isTickerModalOpen || !tickerSearchType) return;
     const delay = setTimeout(async () => {
@@ -284,6 +278,7 @@ export default function HoldingsPage() {
 
   const closeFormModal = () => { setIsFormModalOpen(false); setEditingHolding(null); };
 
+  // KHÔI PHỤC HÀM HANDLE CHANGE BỊ THIẾU Ở BẢN TRƯỚC
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -291,26 +286,39 @@ export default function HoldingsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.accountId || !formData.tickerId) { setFormError("Account and Ticker are required."); return; }
-    if (Number(formData.quantity) < 0 || Number(formData.investmentCost) < 0) { setFormError("Numbers cannot be negative."); return; }
-
+    if (!editingHolding && (!formData.accountId || !formData.tickerId)) { 
+      setFormError("Account and Ticker are required."); 
+      return; 
+    }
+    
     setIsSaving(true);
-    const payload = {
-      AccountID: formData.accountId,
-      TickerID: formData.tickerId,
-      InvestmentCost: Number(formData.investmentCost),
-      Quantity: Number(formData.quantity),
-      TargetBuy: formData.targetBuy === "" ? null : Number(formData.targetBuy),
-      TargetSell: formData.targetSell === "" ? null : Number(formData.targetSell),
-      Note: formData.note.trim() || null,
-    };
     try {
-      if (editingHolding) await axiosInstance.put(`/Holdings/${editingHolding.id || editingHolding.ID}`, payload);
-      else await axiosInstance.post("/Holdings", payload);
+      if (editingHolding) {
+        const updatePayload = {
+          TargetBuy: formData.targetBuy === "" ? null : Number(formData.targetBuy),
+          TargetSell: formData.targetSell === "" ? null : Number(formData.targetSell),
+          Note: formData.note.trim() || null,
+        };
+        await axiosInstance.put(`/Holdings/${editingHolding.id || editingHolding.ID}`, updatePayload);
+      } else {
+        const addPayload = {
+          AccountID: formData.accountId,
+          TickerID: formData.tickerId,
+          TargetBuy: formData.targetBuy === "" ? null : Number(formData.targetBuy),
+          TargetSell: formData.targetSell === "" ? null : Number(formData.targetSell),
+          Note: formData.note.trim() || null,
+        };
+        await axiosInstance.post("/Holdings", addPayload);
+      }
       toast.success("Success!");
       closeFormModal();
-      fetchHoldings(); fetchSummary();
-    } catch (err) { setFormError(err.response?.data?.message || "Submit failed."); } finally { setIsSaving(false); }
+      fetchHoldings(); 
+      fetchSummary();
+    } catch (err) { 
+      setFormError(err.response?.data?.message || "Submit failed."); 
+    } finally { 
+      setIsSaving(false); 
+    }
   };
 
   const handleDelete = async (holding, e) => {
@@ -320,7 +328,7 @@ export default function HoldingsPage() {
       await axiosInstance.delete(`/Holdings/${holding.id || holding.ID}`);
       toast.success("Moved to recycle bin.");
       fetchHoldings(); fetchSummary();
-    } catch (err) { toast.error("Delete failed."); }
+    } catch (err) { toast.error(err.response?.data?.message || "Delete failed."); }
   };
 
   const handleRestore = async (holding, e) => {
@@ -471,7 +479,7 @@ export default function HoldingsPage() {
                   <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Unrealized P&L</span><span className={`font-bold text-[12px] ${getPnLColor(unrealizedPnL)}`}>{formatMoney(unrealizedPnL, isCrypto, true)}</span></div>
                 </div>
                 <div className="flex justify-between items-center pt-2 mt-auto">
-                  <span className="text-[10px] text-gray-400 italic">Click for details</span>
+                  <span className="text-[10px] text-gray-400 font-medium italic">Click for details</span>
                   <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     {isTrashView ? <button onClick={(e) => handleRestore(h, e)} className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><ArchiveRestore size={12} /></button> : <>
                       <button onClick={(e) => { e.stopPropagation(); openFormModal(h); }} className="w-7 h-7 rounded-full border border-gray-200 text-gray-500 hover:text-blue-500 flex items-center justify-center"><Pencil size={12} /></button>
@@ -505,11 +513,11 @@ export default function HoldingsPage() {
                     <div>
                       <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Account *</label>
                       <div className="relative w-full" ref={formAccDropdownRef}>
-                        <div onClick={() => setIsFormAccDropdownOpen(!isFormAccDropdownOpen)} className="flex items-center justify-between w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 bg-gray-50 cursor-pointer">
+                        <div onClick={() => !editingHolding && setIsFormAccDropdownOpen(!isFormAccDropdownOpen)} className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border border-gray-200 ${editingHolding ? 'bg-gray-100 cursor-not-allowed opacity-70' : 'focus:border-pink-400 bg-gray-50 cursor-pointer'}`}>
                           {selectedFormAccount ? <div className="flex items-center gap-2 overflow-hidden">{getAccountIcon(selectedFormAccount.accountType, 18)}<span className="truncate text-sm font-semibold">{selectedFormAccount.accountName}</span></div> : <span className="text-gray-400 text-sm">Select Account...</span>}
                           <ChevronDown size={16} className="text-gray-400 shrink-0" />
                         </div>
-                        {isFormAccDropdownOpen && (
+                        {!editingHolding && isFormAccDropdownOpen && (
                           <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg py-1 z-50 max-h-48 overflow-y-auto custom-scrollbar">
                             {accounts.map((acc) => (<div key={acc.accountID || acc.accountId} onClick={() => { setFormData(p => ({ ...p, accountId: acc.accountID || acc.accountId })); setIsFormAccDropdownOpen(false); }} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-pink-50">{getAccountIcon(acc.accountType, 16)}<span className="text-sm font-medium text-gray-700 truncate">{acc.accountName}</span></div>))}
                           </div>
@@ -518,27 +526,34 @@ export default function HoldingsPage() {
                     </div>
                     <div>
                       <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Ticker *</label>
-                      <button type="button" onClick={() => setIsTickerModalOpen(true)} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border bg-gray-50 transition-colors ${selectedTickerInfo ? "border-pink-400 ring-2 ring-pink-100" : "border-gray-200 hover:border-pink-300"}`}>
+                      <button type="button" onClick={() => !editingHolding && setIsTickerModalOpen(true)} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${editingHolding ? 'bg-gray-100 cursor-not-allowed opacity-70 border-gray-200' : (selectedTickerInfo ? 'border-pink-400 ring-2 ring-pink-100 bg-gray-50' : 'border-gray-200 hover:border-pink-300 bg-gray-50')}`} disabled={!!editingHolding}>
                         {selectedTickerInfo ? <div className="flex items-center gap-3 overflow-hidden"><div className="text-pink-500">{getRawIcon(selectedTickerInfo.typeCode, 20)}</div><div className="flex flex-col items-start min-w-0"><span className="font-black text-gray-900 text-base truncate">{selectedTickerInfo.symbol}</span><span className="text-[10px] font-semibold text-gray-500 truncate max-w-full">{selectedTickerInfo.name}</span></div></div> : <span className="text-gray-400 text-sm font-medium">Click to Search Symbol</span>}
                         <Search size={16} className="text-gray-400" />
                       </button>
                     </div>
-                    <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Quantity *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold" /></div>
-                    <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Average Cost *</label><input type="number" step="any" min="0" name="investmentCost" value={formData.investmentCost} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold" /></div>
+
+                    {/* HIỂN THỊ KHI UPDATE, ẨN KHI ADD */}
+                    {editingHolding && (
+                      <>
+                        <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Quantity (Auto-calculated)</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-sm font-semibold text-gray-500 cursor-not-allowed" /></div>
+                        <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Average Cost (Auto-calculated)</label><input type="number" step="any" min="0" name="investmentCost" value={formData.investmentCost} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-sm font-semibold text-gray-500 cursor-not-allowed" /></div>
+                      </>
+                    )}
+                    
                     <div className="grid grid-cols-2 gap-4">
                       <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Buy</label><input type="number" step="any" min="0" name="targetBuy" value={formData.targetBuy} onChange={handleChange} placeholder="(Optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-blue-600" /></div>
                       <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Sell</label><input type="number" step="any" min="0" name="targetSell" value={formData.targetSell} onChange={handleChange} placeholder="(Optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-rose-600" /></div>
                     </div>
                   </div>
                   <div className="md:col-span-7 flex flex-col min-h-0 bg-gray-50 rounded-2xl border border-gray-200 p-1">
-                    <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl shrink-0"><label className="block text-sm font-bold text-gray-800">Trading Notes (Markdown)</label><div className="flex gap-2 bg-gray-100 p-1 rounded-lg"><button type="button" onClick={() => setNoteMode("edit")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'edit' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500'}`}>Edit</button><button type="button" onClick={() => setNoteMode("preview")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'preview' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500'}`}>Preview</button></div></div>
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl shrink-0"><label className="block text-sm font-bold text-gray-800">Trading Notes (Markdown)</label><div className="flex gap-2 bg-gray-100 p-1 rounded-lg"><button type="button" onClick={() => setNoteMode("edit")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'edit' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>Edit</button><button type="button" onClick={() => setNoteMode("preview")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'preview' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>Preview</button></div></div>
                     <div className="flex-1 overflow-hidden p-3 flex flex-col bg-white rounded-b-2xl">{noteMode === "edit" ? <textarea name="note" value={formData.note} onChange={handleChange} className="flex-1 w-full outline-none resize-none font-mono text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar" placeholder="## Plan..."/> : <div className="flex-1 w-full overflow-y-auto text-[13px] text-gray-800 p-2 custom-scrollbar prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{formData.note || "*No note provided*"}</ReactMarkdown></div>}</div>
                   </div>
                 </div>
                 {formError && <p className="text-rose-600 text-sm font-bold text-center mt-2 shrink-0">{formError}</p>}
                 <div className="shrink-0 flex justify-end gap-3 pt-6 mt-4 border-t border-gray-100">
                   <button type="button" onClick={closeFormModal} className="px-6 py-3 rounded-full border border-gray-200 text-gray-700 font-bold text-sm">Cancel</button>
-                  <button type="submit" disabled={isSaving} className="px-8 py-3 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-lg disabled:opacity-60">{isSaving ? "Saving..." : "Save Holding"}</button>
+                  <button type="submit" disabled={isSaving} className="px-8 py-3 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-sm shadow-[0_8px_15px_rgba(236,72,153,0.3)] hover:-translate-y-0.5 transition-all disabled:opacity-60">{isSaving ? "Saving..." : "Save Holding"}</button>
                 </div>
               </form>
             </div>
@@ -570,38 +585,21 @@ export default function HoldingsPage() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity" onClick={() => setDetailHolding(null)}>
             <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setDetailHolding(null)} className="absolute top-6 right-6 z-20 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all"><X size={24} /></button>
-              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 pr-8">
-                  <div className="flex items-center gap-5 w-full">
-                    <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-end gap-3 mb-1">
-                          <h2 className="text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2>
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span>
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span>
-                        </div>
-                        <div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                          <span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span>
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium text-gray-500 mt-1.5 truncate max-w-md">{detailHolding.tickerName}</div>
-                    </div>
-                  </div>
-                </div>
+              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100 shadow-sm">
+                <div className="flex items-center gap-5 mb-8"><div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div><div className="min-w-0 flex-1"><div className="flex items-center justify-between w-full"><div className="flex items-end gap-3 mb-1"><h2 className="text-3xl md:text-4xl font-black text-gray-900 leading-none truncate">{detailHolding.tickerSymbol}</h2><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.accountName}</span><span className="px-2.5 py-1 bg-gray-100 text-gray-500 text-[10px] rounded-full uppercase tracking-widest font-bold mb-0.5">{detailHolding.tickerTypeCode}</span></div><div className="hidden md:flex items-center gap-3 text-[11px] font-medium text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100"><span>Created: <strong className="text-gray-600">{formatDate(detailHolding.createdAt)}</strong></span><span>•</span><span>Updated: <strong className="text-gray-600">{formatDate(detailHolding.updatedAt)}</strong></span></div></div><div className="text-sm font-semibold text-gray-500 mt-1 truncate">{detailHolding.tickerName}</div></div></div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-8 text-sm">
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Quantity</span><span className="font-bold text-gray-900 text-lg">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Avg. Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Price</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Total Invested</span><span className="font-bold text-gray-900 text-base">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Market Value</span><span className="font-black text-gray-900 text-xl">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Unrealized P&L</span><span className={`font-black text-xl flex items-center gap-2 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>{formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}<span className="text-[11px] px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-50 leading-none">{formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}</span></span></div>
+                  <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Unrealized P&L</span><span className={`font-black text-xl flex items-center gap-2 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>{formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}<span className="text-[11px] px-1.5 py-0.5 rounded text-emerald-600 bg-emerald-50 border border-emerald-100">{formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}</span></span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Buy</span><span className="font-bold text-blue-600 text-lg">{detailHolding.targetBuy ? formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
                   <div><span className="text-gray-400 block text-[11px] uppercase font-bold mb-1.5">Target Sell</span><span className="font-bold text-rose-600 text-lg">{detailHolding.targetSell ? formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 custom-scrollbar border-t border-gray-100">
-                <span className="text-gray-400 block text-[11px] uppercase font-bold mb-4 pl-1">Trading Notes & Analysis</span>
+                <span className="text-gray-400 block text-[11px] uppercase font-bold mb-4">Trading Notes & Analysis</span>
                 {detailHolding.note && detailHolding.note !== "N/A" ? <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm text-sm text-gray-800 min-h-[200px] prose prose-sm max-w-none"><ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{detailHolding.note}</ReactMarkdown></div> : <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200 text-gray-400 text-sm italic min-h-[200px] flex items-center justify-center">No notes recorded.</div>}
               </div>
             </div>

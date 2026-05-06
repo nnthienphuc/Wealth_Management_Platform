@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using PersonalPortfolioTracker.Common.Enum;
 using PersonalPortfolioTracker.Common.Exceptions;
 using PersonalPortfolioTracker.Common.Helper;
@@ -141,26 +142,15 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             return await query.AnyAsync();
         }
 
-        private void CheckDTO (HoldingRequest dto)
+        public async Task<bool> AddAsync(HoldingCreateRequest dto)
         {
-            if (dto.InvestmentCost < 0)
-                throw new ArgumentException("Investment cost must be greater than or equal to 0.");
-
-            if (dto.Quantity < 0)
-                throw new ArgumentException("Quantity must be greater than or equal to 0.");
+            await VerifyAccountOwnershipAsync(dto.AccountID);
 
             if (dto.TargetBuy.HasValue && dto.TargetBuy < 0)
                 throw new ArgumentException("Target buy must be greater than or equal to 0.");
 
             if (dto.TargetSell.HasValue && dto.TargetSell < 0)
                 throw new ArgumentException("Target sell must be greater than or equal to 0.");
-        }
-
-        public async Task<bool> AddAsync(HoldingRequest dto)
-        {
-            await VerifyAccountOwnershipAsync(dto.AccountID);
-
-            CheckDTO(dto);
 
             if (await CheckUnique(dto.AccountID, dto.TickerID))
                 throw new InvalidOperationException("Holding with this account and ticker already exists.");
@@ -171,9 +161,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                 TickerId = dto.TickerID,
                 TargetBuy = dto.TargetBuy,
                 TargetSell = dto.TargetSell,
-                InvestmentCost = dto.InvestmentCost,
-                Quantity = dto.Quantity,
-                TotalInvestmentCost = dto.InvestmentCost * dto.Quantity,
+                InvestmentCost = 0,
+                Quantity = 0,
+                TotalInvestmentCost = 0,
                 CreatedAt = VietnamTime.Now(),
                 UpdatedAt = VietnamTime.Now(),
                 Note = dto.Note,
@@ -185,25 +175,19 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             return await _uow.SaveAsync() > 0;
         }
 
-        public async Task<bool> UpdateAsync(Guid id, HoldingRequest dto)
+        public async Task<bool> UpdateAsync(Guid id, HoldingUpdateRequest dto)
         {
-            await VerifyAccountOwnershipAsync(dto.AccountID);
-
             var existingHolding = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.ID == id, true).FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException("Holding does not exist.");
 
-            CheckDTO(dto);
+            if (dto.TargetBuy.HasValue && dto.TargetBuy < 0)
+                throw new ArgumentException("Target buy must be greater than or equal to 0.");
 
-            if (await CheckUnique(dto.AccountID, dto.TickerID, id))
-                throw new InvalidOperationException("Holding with this account and ticker already exists.");
+            if (dto.TargetSell.HasValue && dto.TargetSell < 0)
+                throw new ArgumentException("Target sell must be greater than or equal to 0.");
 
-            existingHolding.AccountId = dto.AccountID;
-            existingHolding.TickerId = dto.TickerID;
             existingHolding.TargetBuy = dto.TargetBuy;
             existingHolding.TargetSell = dto.TargetSell;
-            existingHolding.InvestmentCost = dto.InvestmentCost;
-            existingHolding.Quantity = dto.Quantity;
-            existingHolding.TotalInvestmentCost = dto.InvestmentCost * dto.Quantity;
             existingHolding.UpdatedAt = VietnamTime.Now();
             existingHolding.Note = dto.Note;
 
@@ -218,6 +202,9 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
             if (existingHolding.IsDeleted)
                 throw new InvalidOperationException("This holding has been deleted before.");
+
+            if (existingHolding.InvestmentCost > 0 || existingHolding.Quantity > 0 || existingHolding.TotalInvestmentCost > 0)
+                throw new InvalidOperationException("Cannot delete this holding because of its investment cost.");
 
             _uow.Repository<Holdings>().Delete(existingHolding);
 

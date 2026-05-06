@@ -35,7 +35,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddAsync([FromBody] HoldingRequest dto)
+        public async Task<IActionResult> AddAsync([FromBody] HoldingCreateRequest dto)
         {
             await _service.AddAsync(dto);
 
@@ -43,7 +43,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] HoldingRequest dto)
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] HoldingUpdateRequest dto)
         {
             await _service.UpdateAsync(id, dto);
 

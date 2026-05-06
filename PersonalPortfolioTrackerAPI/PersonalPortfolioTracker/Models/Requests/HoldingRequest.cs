@@ -2,11 +2,14 @@
 
 namespace PersonalPortfolioTracker.Models.Requests
 {
-    public record HoldingRequest([Required] Guid AccountID,
+    public record HoldingCreateRequest([Required] Guid AccountID,
         [Required] Guid TickerID,
-        [Required] decimal InvestmentCost,
-        [Required] decimal Quantity, 
         decimal? TargetBuy, 
         decimal? TargetSell, 
+        string? Note);
+
+    public record HoldingUpdateRequest(
+        decimal? TargetBuy,
+        decimal? TargetSell,
         string? Note);
 }
