@@ -35,6 +35,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
             var summaryData = await _uow.Repository<Holdings>()
                 .FindByCondition(tt => tt.AccountId == accountId && tt.Quantity > 0)
                 .GroupBy(tt => tt.Ticker.TickerType.Code)
+                .OrderBy(group => group.Key)
                 .Select(group => new
                 {
                     TypeCode = group.Key,
