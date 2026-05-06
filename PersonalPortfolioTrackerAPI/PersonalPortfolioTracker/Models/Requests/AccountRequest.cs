@@ -7,7 +7,6 @@ namespace PersonalPortfolioTracker.Models.Requests
         [Required, StringLength(10)] string Type,
         string? BrokerAccountNo,
         [Required, StringLength(10)] string Currency,
-        [Required]  decimal InvestedBalance,
         [Required] decimal CurrentBalance,
         string? Note);
 }

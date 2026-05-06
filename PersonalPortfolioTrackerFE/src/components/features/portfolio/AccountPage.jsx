@@ -34,7 +34,7 @@ const getIconByType = (type) => {
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState([]);
-  const [totalRecords, setTotalRecords] = useState(0); // THÊM STATE TOTAL RECORDS
+  const [totalRecords, setTotalRecords] = useState(0); 
   const [keyword, setKeyword] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize] = useState(12);
@@ -48,22 +48,20 @@ export default function AccountsPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // State cho Detail Modal (Xem chi tiết)
   const [detailAccount, setDetailAccount] = useState(null);
 
+  // Đã gỡ investedBalance
   const [formData, setFormData] = useState({
     name: "",
     type: "BANK",
     brokerAccountNo: "",
     currency: "VND",
-    investedBalance: 0,
     currentBalance: 0,
     note: "",
   });
 
   const totalPages = useMemo(() => Math.ceil(totalRecords / pageSize) || 1, [totalRecords, pageSize]);
 
-  // Lắng nghe phím ESC để đóng Form/Modal
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -90,10 +88,10 @@ export default function AccountsPage() {
       const data = res.data?.result || res.data;
       if (data && data.items) {
         setAccounts(data.items);
-        setTotalRecords(data.totalRecords); // CẬP NHẬT TOTAL RECORDS
+        setTotalRecords(data.totalRecords); // CẬP NHẬT TỔNG SỐ
       } else {
         setAccounts([]);
-        setTotalRecords(0); // RESET TOTAL RECORDS
+        setTotalRecords(0); // RESET TỔNG SỐ
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load accounts.");
@@ -130,7 +128,6 @@ export default function AccountsPage() {
         type: account.type || "BANK",
         brokerAccountNo: account.brokerAccountNo !== "N/A" ? account.brokerAccountNo : "",
         currency: account.currency || "VND",
-        investedBalance: account.investedBalance || 0,
         currentBalance: account.currentBalance || 0,
         note: account.note !== "N/A" ? account.note : "",
       });
@@ -138,7 +135,7 @@ export default function AccountsPage() {
       setEditingAccount(null);
       setFormData({
         name: "", type: "BANK", brokerAccountNo: "", currency: "VND",
-        investedBalance: 0, currentBalance: 0, note: "",
+        currentBalance: 0, note: "",
       });
     }
     setIsFormModalOpen(true);
@@ -158,7 +155,6 @@ export default function AccountsPage() {
   const validateForm = () => {
     const errs = {};
     if (!formData.name.trim()) errs.name = "Account Name is required.";
-    if (Number(formData.investedBalance) < 0) errs.investedBalance = "Must be >= 0.";
     if (Number(formData.currentBalance) < 0) errs.currentBalance = "Must be >= 0.";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -170,13 +166,15 @@ export default function AccountsPage() {
 
     setIsSaving(true);
     setFormError("");
+    
+    // Gửi payload bỏ investedBalance
     const payload = {
-      ...formData,
       name: formData.name.trim(),
+      type: formData.type,
       brokerAccountNo: formData.brokerAccountNo.trim() || null,
-      note: formData.note.trim() || null,
-      investedBalance: Number(formData.investedBalance),
+      currency: formData.currency,
       currentBalance: Number(formData.currentBalance),
+      note: formData.note.trim() || null,
     };
 
     try {
@@ -186,7 +184,7 @@ export default function AccountsPage() {
       } else {
         res = await axiosInstance.post("/Accounts", payload);
       }
-      toast.success(res.data?.message || "Account saved successfully.", { toastId: "acc-save" });
+      toast.success(res.data?.message || "Account saved successfully.");
       closeFormModal();
       fetchAccounts();
     } catch (err) {
@@ -201,10 +199,10 @@ export default function AccountsPage() {
     if (!window.confirm(`Move account "${account.name}" to recycle bin?`)) return;
     try {
       const res = await axiosInstance.delete(`/Accounts/${account.id}`);
-      toast.success(res.data?.message || "Account moved to recycle bin.", { toastId: "acc-del" });
+      toast.success(res.data?.message || "Account moved to recycle bin.");
       fetchAccounts();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete account.", { toastId: "acc-del-err" });
+      toast.error(err.response?.data?.message || "Failed to delete account.");
     }
   };
 
@@ -212,10 +210,10 @@ export default function AccountsPage() {
     if (e) e.stopPropagation();
     try {
       const res = await axiosInstance.put(`/Accounts/${account.id}/restore`);
-      toast.success(res.data?.message || "Account restored successfully.", { toastId: "acc-res" });
+      toast.success(res.data?.message || "Account restored successfully.");
       fetchAccounts();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to restore account.", { toastId: "acc-res-err" });
+      toast.error(err.response?.data?.message || "Failed to restore account.");
     }
   };
 
@@ -265,7 +263,7 @@ export default function AccountsPage() {
               />
             </div>
 
-            {/* THÊM TOTAL RECORDS VÀO ĐÂY NHƯ Ý SẾP */}
+            {/* TOTAL RECORDS BÊN CẠNH THANH SEARCH */}
             {!isTrashView && !loading && (
               <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1">
                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{totalRecords} items</span>
@@ -448,14 +446,7 @@ export default function AccountsPage() {
                     />
                   </div>
 
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Invested Balance *</label>
-                    <input 
-                      type="number" step="any" min="0"
-                      name="investedBalance" value={formData.investedBalance} onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.investedBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
-                    />
-                  </div>
+                  {/* FIELD INVESTED BALANCE ĐÃ ĐƯỢC GỠ BỎ */}
 
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Current Balance *</label>

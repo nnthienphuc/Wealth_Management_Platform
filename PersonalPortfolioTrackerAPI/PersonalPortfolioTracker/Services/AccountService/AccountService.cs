@@ -105,9 +105,9 @@ namespace PersonalPortfolioTracker.Services.AccountService
                 Type = dto.Type,
                 BrokerAccountNo = dto.BrokerAccountNo ?? null,
                 Currency = dto.Currency,
-                InvestedBalance = dto.InvestedBalance,
                 CurrentBalance = dto.CurrentBalance,
-                TotalBalance = dto.InvestedBalance + dto.CurrentBalance,
+                InvestedBalance = 0,
+                TotalBalance = dto.CurrentBalance,
                 CreatedAt = VietnamTime.Now(),
                 UpdatedAt = VietnamTime.Now(),
                 Note = dto.Note ?? null,
@@ -137,9 +137,8 @@ namespace PersonalPortfolioTracker.Services.AccountService
             existingAccount.Type = dto.Type;
             existingAccount.BrokerAccountNo = dto.BrokerAccountNo ?? null;
             existingAccount.Currency = dto.Currency;
-            existingAccount.InvestedBalance = dto.InvestedBalance;
             existingAccount.CurrentBalance = dto.CurrentBalance;
-            existingAccount.TotalBalance = dto.InvestedBalance + dto.CurrentBalance;
+            existingAccount.TotalBalance = existingAccount.InvestedBalance + dto.CurrentBalance;
             existingAccount.UpdatedAt = VietnamTime.Now();
             existingAccount.Note = dto.Note ?? null;
 
@@ -186,8 +185,6 @@ namespace PersonalPortfolioTracker.Services.AccountService
                 throw new ArgumentException("Type is required.");
             if (string.IsNullOrWhiteSpace(dto.Currency))
                 throw new ArgumentException("Currency is required.");
-            if (dto.InvestedBalance < 0)
-                throw new ArgumentException("Invested balance must be greater than or equal to 0.");
             if (dto.CurrentBalance < 0)
                 throw new ArgumentException("Current balance must be greater than or equal to 0.");
         }
