@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PersonalPortfolioTracker.Data;
@@ -37,7 +38,12 @@ var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? builder.Co
 // Kết nối DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PortfolioTrackerContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    options.UseSqlServer(connectionString);
+    // Chỉ hiển thị tham số SQL (thay thế dấu ?) khi ở môi trường Development
+    if (builder.Environment.IsDevelopment())
+        options.EnableSensitiveDataLogging();
+});
 
 builder.Services.AddCors(options =>
 {

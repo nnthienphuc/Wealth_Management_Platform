@@ -81,7 +81,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             var normalizedEmail = request.Email.Trim().ToLowerInvariant();
 
             var existingInvestor = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.Email == normalizedEmail).IgnoreQueryFilters().FirstOrDefaultAsync();
+                .FindByCondition(i => i.Email == normalizedEmail, true).IgnoreQueryFilters().FirstOrDefaultAsync();
 
             if (existingInvestor == null)
                 throw new KeyNotFoundException("Entered email is not available, please create new account to use our service.");
@@ -114,8 +114,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
             }
 
             existingInvestor.LastLoginAt = VietnamTime.Now();
-
-            _uow.Repository<Investors>().Update(existingInvestor);
 
             await _uow.SaveAsync();
 
@@ -153,7 +151,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (string.IsNullOrWhiteSpace(email))
                 throw new UnauthorizedAccessException("Google account has no email.");
 
-            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.Email == email).IgnoreQueryFilters().FirstOrDefaultAsync();
+            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.Email == email, true).IgnoreQueryFilters().FirstOrDefaultAsync();
 
             if (investor == null)
             {
@@ -169,8 +167,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 };
 
                 _uow.Repository<Investors>().Create(investor);
-
-                await _uow.SaveAsync();
             }
 
             if (investor.IsDeleted)
@@ -184,7 +180,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
             }
 
             investor.LastLoginAt = VietnamTime.Now();
-            _uow.Repository<Investors>().Update(investor);
 
             await _uow.SaveAsync();
 
@@ -199,7 +194,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
         public async Task<bool> ChangePasswordAsync(ClaimsPrincipal user, ChangePasswordRequest dto)
         {
             var existingInvestor = await _uow.Repository<Investors>()
-                .FindByCondition(i => i.ID == (CurrentUserHelper.GetInvestorId(user))).FirstOrDefaultAsync();
+                .FindByCondition(i => i.ID == (CurrentUserHelper.GetInvestorId(user)), true).FirstOrDefaultAsync();
 
             if (existingInvestor == null)
                 throw new UnauthorizedAccessException("Invalid account.");
@@ -215,8 +210,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
             existingInvestor.HashPassword = hashPassword;
 
             existingInvestor.UpdatedAt = VietnamTime.Now();
-
-            _uow.Repository<Investors>().Update(existingInvestor);
 
             return await _uow.SaveAsync() > 0;
         }
@@ -277,7 +270,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
                 var investorId = Guid.Parse(investorIdClaim.Value);
                 var investor = await _uow.Repository<Investors>()
-                    .FindByCondition(i => i.ID == investorId).FirstOrDefaultAsync();
+                    .FindByCondition(i => i.ID == investorId, true).FirstOrDefaultAsync();
                 if (investor == null)
                     throw new KeyNotFoundException("Account not found.");
 
@@ -292,8 +285,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
                 investor.HashPassword = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
                 investor.UpdatedAt = VietnamTime.Now();
-
-                _uow.Repository<Investors>().Update(investor);
 
                 return await _uow.SaveAsync() > 0;
             }
@@ -324,7 +315,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 throw new UnauthorizedAccessException("Invalid or expired token.");
 
             var investorId = Guid.Parse(investorIdClaim.Value);
-            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.ID == investorId).FirstOrDefaultAsync();
+            var investor = await _uow.Repository<Investors>().FindByCondition(i => i.ID == investorId, true).FirstOrDefaultAsync();
             if (investor == null)
                 throw new KeyNotFoundException("Account not found.");
 
@@ -333,7 +324,6 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             investor.IsActivated = true;
             investor.UpdatedAt = VietnamTime.Now();
-            _uow.Repository<Investors>().Update(investor);
 
             return await _uow.SaveAsync() > 0;
         }
