@@ -8,18 +8,16 @@ namespace PersonalPortfolioTracker.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Transactions> builder)
         {
-            // BẮT BUỘC: Global Query Filter để luôn lọc các dòng chưa bị xóa
-            builder.HasQueryFilter(t => !t.IsDeleted);
+            // BẮT BUỘC: Global Query Filter để luôn lọc các dòng chưa bị xóa
+            builder.HasQueryFilter(t => !t.IsDeleted);
 
-            builder.HasIndex(e => new { e.AccountId, e.TickerId, e.TransactionType }, "IX_Transactions_Filter").HasFilter("([IsDeleted]=(0))");
-
-            builder.HasIndex(e => new { e.AccountId, e.TradeDate }, "IX_Transactions_Timeline")
-                    .IsDescending(false, true)
-                    .HasFilter("([IsDeleted]=(0))");
+            builder.HasIndex(e => new { e.AccountId, e.TradeDate, e.CreatedAt, e.TransactionType, e.TickerId }, "IX_Transactions_Filter")
+                .IncludeProperties(e => new { e.Price, e.Quantity, e.NetAmount, e.RealizedPnL })
+                .HasFilter("([IsDeleted]=(0))");
 
             builder.Property(e => e.ID)
-                    .HasDefaultValueSql("(newid())")
-                    .HasColumnName("ID");
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("ID");
             builder.Property(e => e.AccountId).HasColumnName("AccountID");
             builder.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())");
             builder.Property(e => e.Fee).HasColumnType("decimal(28, 8)");
@@ -28,11 +26,11 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.NetAmount).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.Note).HasMaxLength(1000);
             builder.Property(e => e.Pit)
-                    .HasColumnType("decimal(28, 8)")
-                    .HasColumnName("PIT");
+                .HasColumnType("decimal(28, 8)")
+                .HasColumnName("PIT");
             builder.Property(e => e.PitRate)
-                    .HasColumnType("decimal(12, 6)")
-                    .HasColumnName("PITRate");
+                .HasColumnType("decimal(12, 6)")
+                .HasColumnName("PITRate");
             builder.Property(e => e.PreInvestmentCost).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.PreQuantity).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.PreTotalInvestmentCost).HasColumnType("decimal(28, 8)");
@@ -40,23 +38,23 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.Quantity).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.RealizedPnL).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.RealizedPnLRate)
-                    .HasColumnType("decimal(12, 6)")
-                    .HasColumnName("RealizedPnLRate");
+                .HasColumnType("decimal(12, 6)")
+                .HasColumnName("RealizedPnLRate");
             builder.Property(e => e.TickerId).HasColumnName("TickerID");
             builder.Property(e => e.TradeDate).HasDefaultValueSql("(CONVERT([date],sysdatetime()))");
             builder.Property(e => e.TransactionType)
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
+                .HasMaxLength(20)
+                .IsUnicode(false);
 
             builder.HasOne(d => d.Account).WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.AccountId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Transactions_Accounts");
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Transactions_Accounts");
 
             builder.HasOne(d => d.Ticker).WithMany(p => p.Transactions)
-                    .HasForeignKey(d => d.TickerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Transactions_Tickers");
+                .HasForeignKey(d => d.TickerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Transactions_Tickers");
         }
     }
 }

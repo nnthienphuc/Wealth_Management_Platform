@@ -1,10 +1,11 @@
 ﻿namespace PersonalPortfolioTracker.Models.Responses
 {
     public record TransactionResponse(
+        Guid ID,
         Guid AccountID,
         string AccountName,
         Guid TickerID,
-        Guid TickerSymbol,
+        string TickerSymbol,
         string TransactionType,
         decimal? Price,
         decimal? Quantity,
@@ -17,9 +18,12 @@
         DateOnly TradeDate,
         decimal? RealizedPnL,
         decimal? RealizedPnLRate,
+        
+        // Audit track
         decimal? PreQuantity,
         decimal? PreInvestmentCost,
         decimal? PreTotalInvestmentCost,
+
         string? Note,
         DateTime CreatedAt
         );

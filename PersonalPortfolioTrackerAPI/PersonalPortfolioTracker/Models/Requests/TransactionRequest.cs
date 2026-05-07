@@ -2,7 +2,7 @@
 
 namespace PersonalPortfolioTracker.Models.Requests
 {
-    public record TransactionRequest([Required] Guid AccountID,
+    public record TransactionCreateRequest([Required] Guid AccountID,
         [Required] Guid TickerID,
         [Required, StringLength(20)] string TransactionType,
         decimal? Price,
@@ -10,7 +10,11 @@ namespace PersonalPortfolioTracker.Models.Requests
         decimal? GrossAmount,
         decimal? FeeRate,
         decimal? PITRate,
-        decimal? NetAmount,
+        DateOnly TradeDate,
         string? Note
         );
+
+    public record TransactionUpdateRequest(
+       string? Note
+       );
 }

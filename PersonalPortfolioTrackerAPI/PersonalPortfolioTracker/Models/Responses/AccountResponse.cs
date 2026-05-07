@@ -14,4 +14,6 @@
         DateTime UpdatedAt,
         string? Note
     );
+
+    public record AccountTypeResponse(Guid AccountID, string AccountType, string AccountName);
 }

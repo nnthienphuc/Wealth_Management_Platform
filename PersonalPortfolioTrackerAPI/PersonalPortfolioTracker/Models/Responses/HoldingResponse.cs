@@ -17,8 +17,6 @@
         DateTime UpdatedAt,
         string? Note);
 
-    public record AccountTypeResponse(Guid AccountID, string AccountType, string AccountName);
-
     public record SummaryByType( decimal TotalInvested, decimal TotalMarketValue, int TotalTicker, decimal TotalQuantity);
 
     public record SummaryResponse(Dictionary<string, SummaryByType> SummaryByTypeList, decimal TotalInvestedList, decimal TotalMarketValueList);
