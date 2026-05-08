@@ -12,7 +12,6 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.HasQueryFilter(t => !t.IsDeleted);
 
             builder.HasIndex(e => new { e.AccountId, e.TradeDate, e.CreatedAt, e.TransactionType, e.TickerId }, "IX_Transactions_Filter")
-                .IncludeProperties(e => new { e.Price, e.Quantity, e.NetAmount, e.RealizedPnL })
                 .HasFilter("([IsDeleted]=(0))");
 
             builder.Property(e => e.ID)
@@ -25,10 +24,10 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.GrossAmount).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.NetAmount).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.Note).HasMaxLength(1000);
-            builder.Property(e => e.Pit)
+            builder.Property(e => e.PIT)
                 .HasColumnType("decimal(28, 8)")
                 .HasColumnName("PIT");
-            builder.Property(e => e.PitRate)
+            builder.Property(e => e.PITRate)
                 .HasColumnType("decimal(12, 6)")
                 .HasColumnName("PITRate");
             builder.Property(e => e.PreInvestmentCost).HasColumnType("decimal(28, 8)");

@@ -20,9 +20,9 @@ public partial class Transactions : BaseEntity
 
     public decimal? FeeRate { get; set; }
 
-    public decimal? Pit { get; set; }
+    public decimal? PIT { get; set; }
 
-    public decimal? PitRate { get; set; }
+    public decimal? PITRate { get; set; }
 
     public decimal? NetAmount { get; set; }
 
