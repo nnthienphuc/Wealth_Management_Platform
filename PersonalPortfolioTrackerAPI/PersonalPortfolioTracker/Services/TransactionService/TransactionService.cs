@@ -54,7 +54,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             if (fromDate.HasValue && toDate.HasValue)
                 query = query.Where(tt => tt.TradeDate >= fromDate.Value &&  tt.TradeDate <= toDate.Value);
 
-            var totalRecords = query.Count();
+            var totalRecords = await query.CountAsync();
 
             pageNumber = pageNumber < 1 ? 1 : pageNumber;
 
@@ -142,35 +142,32 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     var oldTotalInvestmentCost = existingHolding.TotalInvestmentCost;
 
                     var newQuantity = existingHolding.Quantity + (decimal)dto.Quantity;
-                    var newInvestmentCost = Math.Round((oldTotalInvestmentCost + (decimal)netAmount) / newQuantity);
-                    var newTotalInvestmentCost = newInvestmentCost * newQuantity;
+                    var newTotalInvestmentCost = oldTotalInvestmentCost + netAmount;
+                    var newInvestmentCost = newTotalInvestmentCost / newQuantity;
 
                     existingHolding.Quantity = newQuantity;
-                    existingHolding.InvestmentCost = newInvestmentCost;
-                    existingHolding.TotalInvestmentCost = newTotalInvestmentCost;
+                    existingHolding.InvestmentCost = (decimal)newInvestmentCost;
+                    existingHolding.TotalInvestmentCost = (decimal)newTotalInvestmentCost;
 
-                    existingAccount.InvestedBalance += (newTotalInvestmentCost - oldTotalInvestmentCost);
-                    existingAccount.TotalBalance += (newTotalInvestmentCost - oldTotalInvestmentCost);
+                    existingAccount.InvestedBalance += ((decimal)newTotalInvestmentCost - oldTotalInvestmentCost);
+                    existingAccount.TotalBalance += (decimal)netAmount;
                 }
                 else
                 {
-                    var investmentCost = Math.Round((decimal)netAmount / (decimal)dto.Quantity);
-                    var totalInvestmentCost = investmentCost * dto.Quantity;
-
                     var newHolding = new Holdings
                     {
                         AccountId = dto.AccountID,
                         TickerId = dto.TickerID,
-                        InvestmentCost = investmentCost,
+                        InvestmentCost = (decimal)netAmount / (decimal)dto.Quantity,
                         Quantity = (decimal)dto.Quantity,
-                        TotalInvestmentCost = (decimal)totalInvestmentCost,
+                        TotalInvestmentCost = (decimal)netAmount,
                         CreatedAt = VietnamTime.Now(),
                         UpdatedAt = VietnamTime.Now(),
                         IsDeleted = false
                     };
 
-                    existingAccount.InvestedBalance += (decimal)totalInvestmentCost;
-                    existingAccount.TotalBalance += (decimal)totalInvestmentCost;
+                    existingAccount.InvestedBalance += (decimal)netAmount;
+                    existingAccount.TotalBalance += (decimal)netAmount;
                 }
                 
                 existingAccount.UpdatedAt = VietnamTime.Now();
@@ -223,23 +220,28 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 _uow.Repository<Transactions>().Create(newTrans);
 
+                decimal withdrawTotalInvestmentCost;
+
                 if (existingHolding.Quantity == dto.Quantity)
                 {
+                    withdrawTotalInvestmentCost = existingHolding.TotalInvestmentCost;
+
                     existingHolding.Quantity = 0;
                     existingHolding.InvestmentCost = 0;
                     existingHolding.TotalInvestmentCost = 0;
                 }
                 else
                 {
-                    var newQuantity = existingHolding.Quantity - (decimal)dto.Quantity;
-                    existingHolding.Quantity = newQuantity;
-                    existingHolding.TotalInvestmentCost = existingHolding.InvestmentCost * newQuantity;
+                    withdrawTotalInvestmentCost = existingHolding.InvestmentCost * dto.Quantity.Value;
+
+                    existingHolding.Quantity -= dto.Quantity.Value;
+                    existingHolding.TotalInvestmentCost -= withdrawTotalInvestmentCost;
                 }
 
                 existingHolding.UpdatedAt = VietnamTime.Now();
 
-                existingAccount.InvestedBalance -= (existingHolding.InvestmentCost * (decimal)dto.Quantity);
-                existingAccount.TotalBalance -= (existingHolding.InvestmentCost * (decimal)dto.Quantity);
+                existingAccount.InvestedBalance -= withdrawTotalInvestmentCost;
+                existingAccount.TotalBalance -= withdrawTotalInvestmentCost;
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
@@ -276,7 +278,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 var newQuantity = existingHolding.Quantity + dto.Quantity;
                 existingHolding.Quantity = (decimal)newQuantity;
-                existingHolding.InvestmentCost = Math.Round((decimal)existingHolding?.TotalInvestmentCost / (decimal)newQuantity);
+                existingHolding.InvestmentCost = (decimal)existingHolding?.TotalInvestmentCost / (decimal)newQuantity;
 
                 await _uow.CommitAsync();
             }
@@ -284,9 +286,52 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             {
                 await _uow.BeginTransactionAsync();
 
+                var PIT = dto.GrossAmount * dto.PITRate;
+
+                var netAmount = dto.GrossAmount - PIT;
+                
+                var newTrans = new Transactions
+                {
+                    AccountId = dto.AccountID,
+                    TickerId = dto.TickerID,
+                    TransactionType = TransactionTypes.DIVIDEND_CASH,
+                    Price = 0,
+                    Quantity = 0,
+                    GrossAmount = dto.GrossAmount,
+                    Fee = 0,
+                    FeeRate = 0,
+                    PITRate = dto.PITRate,
+                    PIT = PIT,
+                    NetAmount = netAmount,
+                    TradeDate = dto.TradeDate,
+                    RealizedPnL = 0,
+                    RealizedPnLRate = 0,
+                    PreQuantity = existingHolding?.Quantity,
+                    PreInvestmentCost = existingHolding?.InvestmentCost,
+                    PreTotalInvestmentCost = existingHolding?.TotalInvestmentCost,
+                    Note = dto.Note,
+                    CreatedAt = VietnamTime.Now(),
+                    IsDeleted = false,
+                };
+
+                _uow.Repository<Transactions>().Create(newTrans);
 
                 await _uow.CommitAsync();
             }
+
+            return true;
+        }
+
+        public async Task<bool> UpdateAsync(Guid id, TransactionUpdateRequest dto)
+        {
+            var existingTransaction = await _uow.Repository<Transactions>().FindByCondition(tt => tt.ID == id && dto.AccountID == tt.AccountId, true).IgnoreQueryFilters().FirstOrDefaultAsync() ?? throw new KeyNotFoundException("Invalid transaction.");
+
+            if (existingTransaction.IsDeleted)
+                throw new InvalidOperationException("This transaction has been deleted.");
+
+            existingTransaction.Note = dto.Note;
+
+            return await _uow.SaveAsync() > 0;
         }
     }
 }

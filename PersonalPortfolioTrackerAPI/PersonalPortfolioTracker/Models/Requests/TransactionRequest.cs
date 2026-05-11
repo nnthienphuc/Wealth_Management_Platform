@@ -15,6 +15,8 @@ namespace PersonalPortfolioTracker.Models.Requests
         );
 
     public record TransactionUpdateRequest(
+        [Required] Guid AccountID,
+        [Required] Guid TickerID,
        string? Note
        );
 }
