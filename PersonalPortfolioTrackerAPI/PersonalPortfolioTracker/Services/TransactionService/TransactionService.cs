@@ -32,7 +32,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
         {
             await CheckOwnerAccount(accountID);
 
-            var query = _uow.Repository<Transactions>().FindByCondition(tt => tt.AccountId == accountID);
+            var query = _uow.Repository<Transactions>().FindByCondition(tt => tt.AccountId == accountID && (tt.TransactionType == TransactionTypes.BUY || tt.TransactionType == TransactionTypes.SELL));
 
             if (!string.IsNullOrWhiteSpace(tickerSymbol))
                 query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));
