@@ -29,6 +29,24 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<SummaryTransactionResponse>> SummaryTransactionAsync(Guid accountID, string transactionType, string? tickerSymbol, DateOnly? fromDate, DateOnly? toDate)
+        {
+            await CheckOwnerAccount(accountID);
+
+            var query = _uow.Repository<Transactions>().FindByCondition(tt => tt.AccountId == accountID);
+
+            if (transactionType.ToUpperInvariant() != TransactionTypes.ALL_TYPE)
+                query = query.Where(tt => tt.TransactionType == transactionType);
+
+            if (!string.IsNullOrWhiteSpace(tickerSymbol))
+                query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));
+
+            if (fromDate.HasValue && toDate.HasValue)
+                query = query.Where(tt => tt.TradeDate >= fromDate.Value && tt.TradeDate <= toDate.Value);
+
+            return await query.GroupBy(tt => tt.TransactionType).OrderBy(group => group.Key).Select(group => new SummaryTransactionResponse(group.Key, group.Sum(tt => tt.NetAmount ?? 0), group.Count())).ToListAsync();
+        }
+
         private async Task<bool> CheckOwnerAccount(Guid accountID)
         {
             var existingAccount = await _uow.Repository<Accounts>().FindByCondition(tt => tt.ID == accountID && tt.InvestorId == _investorID).AnyAsync();
@@ -107,7 +125,10 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 var fee = (dto.FeeRate / 100) * grossAmount;
                 var netAmount = grossAmount + fee;
 
-                var newTrans = new Transactions
+                if (existingAccount.CurrentBalance < netAmount)
+                    throw new InvalidOperationException("The current balance in this account is insufficient to execute this BUY order.");
+
+                    var newTrans = new Transactions
                 {
                     AccountId = dto.AccountID,
                     TickerId = dto.TickerID,
@@ -149,8 +170,8 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     existingHolding.InvestmentCost = (decimal)newInvestmentCost;
                     existingHolding.TotalInvestmentCost = (decimal)newTotalInvestmentCost;
 
-                    existingAccount.InvestedBalance += ((decimal)newTotalInvestmentCost - oldTotalInvestmentCost);
-                    existingAccount.TotalBalance += (decimal)netAmount;
+                    existingAccount.InvestedBalance = existingAccount.InvestedBalance + (netAmount ?? 0);
+                    existingAccount.CurrentBalance = existingAccount.CurrentBalance - (decimal)newTotalInvestmentCost + oldTotalInvestmentCost;
                 }
                 else
                 {
@@ -167,7 +188,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     };
 
                     existingAccount.InvestedBalance += (decimal)netAmount;
-                    existingAccount.TotalBalance += (decimal)netAmount;
+                    existingAccount.CurrentBalance -= (decimal)netAmount;
                 }
                 
                 existingAccount.UpdatedAt = VietnamTime.Now();
@@ -176,7 +197,10 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             }
             else if (dto.TransactionType.ToUpperInvariant() == TransactionTypes.SELL)
             {
-                if (dto.Quantity > existingHolding?.Quantity)
+                if (existingHolding == null || existingHolding.Quantity == 0)
+                    throw new InvalidOperationException("You do not own this ticker to sell.");
+
+                if (dto.Quantity > existingHolding.Quantity)
                     throw new InvalidOperationException("The quantity sold must not exceed the quantity currently held.");
 
                 await _uow.BeginTransactionAsync();
@@ -241,13 +265,17 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 existingHolding.UpdatedAt = VietnamTime.Now();
 
                 existingAccount.InvestedBalance -= withdrawTotalInvestmentCost;
-                existingAccount.TotalBalance -= withdrawTotalInvestmentCost;
+                existingAccount.CurrentBalance += (netAmount ?? 0);
+                existingAccount.TotalBalance = existingAccount.TotalBalance - withdrawTotalInvestmentCost + (netAmount ?? 0);
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
             }
             else if (dto.TransactionType.ToUpperInvariant() == TransactionTypes.DIVIDEND_TICKER)
             {
+                if (existingHolding == null)
+                    throw new InvalidOperationException("You do not own this ticker to receive dividends.");
+
                 await _uow.BeginTransactionAsync();
 
                 var newTrans = new Transactions
@@ -279,6 +307,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 var newQuantity = existingHolding.Quantity + dto.Quantity;
                 existingHolding.Quantity = (decimal)newQuantity;
                 existingHolding.InvestmentCost = (decimal)existingHolding?.TotalInvestmentCost / (decimal)newQuantity;
+                existingHolding.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
             }
@@ -286,7 +315,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             {
                 await _uow.BeginTransactionAsync();
 
-                var PIT = dto.GrossAmount * dto.PITRate;
+                var PIT = dto.GrossAmount * dto.PITRate / 100;
 
                 var netAmount = dto.GrossAmount - PIT;
                 
@@ -315,6 +344,10 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 };
 
                 _uow.Repository<Transactions>().Create(newTrans);
+
+                existingAccount.CurrentBalance += (netAmount ?? 0);
+                existingAccount.TotalBalance += (netAmount ?? 0);
+                existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
             }

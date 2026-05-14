@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
 using PersonalPortfolioTracker.Common.Controller;
 using PersonalPortfolioTracker.Models.Requests;
 using PersonalPortfolioTracker.Services.TransactionService;
@@ -19,6 +18,12 @@ namespace PersonalPortfolioTracker.Controllers
         public async Task<IActionResult> GetInvestAccount()
         {
             return Ok(await _service.GetInvestmentAccount());
+        }
+
+        [HttpGet("summary")]
+        public async Task<IActionResult> SummaryTransactionAsync([FromQuery] Guid accountID, [FromQuery] string transactionType, [FromQuery] string? tickerSymbol, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate)
+        {
+            return Ok(await _service.SummaryTransactionAsync(accountID, transactionType, tickerSymbol, fromDate, toDate));
         }
 
         [HttpGet]

@@ -27,4 +27,6 @@
         string? Note,
         DateTime CreatedAt
         );
+
+    public record SummaryTransactionResponse(string Type, decimal TotalValue, int NumberOfTransactions);
 }

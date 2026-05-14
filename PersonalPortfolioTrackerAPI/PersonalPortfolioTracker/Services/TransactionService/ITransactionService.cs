@@ -5,6 +5,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 {
     public interface ITransactionService
     {
+        Task<IEnumerable<SummaryTransactionResponse>> SummaryTransactionAsync(Guid accountID, string transactionType, string? tickerSymbol, DateOnly? fromDate, DateOnly? toDate);
         Task<IEnumerable<AccountTypeResponse>> GetInvestmentAccount();
         Task<PagedResponse<TransactionResponse>> FindByConditionAsync(Guid accountID, string transactionType, string? tickerSymbol, DateOnly? fromDate, DateOnly? toDate, int pageNumber = 1, int pageSize = 10);
         Task<TransactionResponse> GetByIdAsync(Guid id);
