@@ -164,14 +164,16 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                     var newQuantity = existingHolding.Quantity + (decimal)dto.Quantity;
                     var newTotalInvestmentCost = oldTotalInvestmentCost + netAmount;
-                    var newInvestmentCost = newTotalInvestmentCost / newQuantity;
+                    var newInvestmentCost = Math.Round((decimal)newTotalInvestmentCost / newQuantity, 2);
 
                     existingHolding.Quantity = newQuantity;
-                    existingHolding.InvestmentCost = (decimal)newInvestmentCost;
+                    existingHolding.InvestmentCost = newInvestmentCost;
                     existingHolding.TotalInvestmentCost = (decimal)newTotalInvestmentCost;
 
-                    existingAccount.InvestedBalance = existingAccount.InvestedBalance + (netAmount ?? 0);
-                    existingAccount.CurrentBalance = existingAccount.CurrentBalance - (decimal)newTotalInvestmentCost + oldTotalInvestmentCost;
+                    existingAccount.InvestedBalance += netAmount.Value;
+                    existingAccount.CurrentBalance -= netAmount.Value;
+
+                    existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
                 }
                 else
                 {
@@ -179,7 +181,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     {
                         AccountId = dto.AccountID,
                         TickerId = dto.TickerID,
-                        InvestmentCost = (decimal)netAmount / (decimal)dto.Quantity,
+                        InvestmentCost = Math.Round((decimal)netAmount / (decimal)dto.Quantity, 2),
                         Quantity = (decimal)dto.Quantity,
                         TotalInvestmentCost = (decimal)netAmount,
                         CreatedAt = VietnamTime.Now(),
@@ -189,6 +191,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                     existingAccount.InvestedBalance += (decimal)netAmount;
                     existingAccount.CurrentBalance -= (decimal)netAmount;
+                    existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
                 }
                 
                 existingAccount.UpdatedAt = VietnamTime.Now();
@@ -256,7 +259,16 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 }
                 else
                 {
+                    /* old
                     withdrawTotalInvestmentCost = existingHolding.InvestmentCost * dto.Quantity.Value;
+
+                    existingHolding.Quantity -= dto.Quantity.Value;
+                    existingHolding.TotalInvestmentCost -= withdrawTotalInvestmentCost;
+                    */
+
+                    // Trừ theo tỷ lệ phần trăm (Proportion) thay vì lấy Quantity * AverageCost
+                    decimal proportion = dto.Quantity.Value / existingHolding.Quantity;
+                    withdrawTotalInvestmentCost = Math.Round(existingHolding.TotalInvestmentCost * proportion, 0);
 
                     existingHolding.Quantity -= dto.Quantity.Value;
                     existingHolding.TotalInvestmentCost -= withdrawTotalInvestmentCost;
@@ -266,7 +278,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 existingAccount.InvestedBalance -= withdrawTotalInvestmentCost;
                 existingAccount.CurrentBalance += (netAmount ?? 0);
-                existingAccount.TotalBalance = existingAccount.TotalBalance - withdrawTotalInvestmentCost + (netAmount ?? 0);
+                existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
@@ -304,9 +316,11 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 _uow.Repository<Transactions>().Create(newTrans);
 
+                var oldTotalInvestmentCost = existingHolding.TotalInvestmentCost;
                 var newQuantity = existingHolding.Quantity + dto.Quantity;
+
                 existingHolding.Quantity = (decimal)newQuantity;
-                existingHolding.InvestmentCost = (decimal)existingHolding?.TotalInvestmentCost / (decimal)newQuantity;
+                existingHolding.InvestmentCost = Math.Round(existingHolding.TotalInvestmentCost / (decimal)newQuantity, 2);
                 existingHolding.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
@@ -346,7 +360,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 _uow.Repository<Transactions>().Create(newTrans);
 
                 existingAccount.CurrentBalance += (netAmount ?? 0);
-                existingAccount.TotalBalance += (netAmount ?? 0);
+                existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
