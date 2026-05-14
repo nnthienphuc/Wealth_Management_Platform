@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using PersonalPortfolioTracker.Common.Enum;
 using PersonalPortfolioTracker.Common.Helper;
 using PersonalPortfolioTracker.Data.Entities;
@@ -29,14 +28,11 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<SummaryTransactionResponse>> SummaryTransactionAsync(Guid accountID, string transactionType, string? tickerSymbol, DateOnly? fromDate, DateOnly? toDate)
+        public async Task<IEnumerable<SummaryTransactionResponse>> SummaryTransactionAsync(Guid accountID, string? tickerSymbol, DateOnly? fromDate, DateOnly? toDate)
         {
             await CheckOwnerAccount(accountID);
 
             var query = _uow.Repository<Transactions>().FindByCondition(tt => tt.AccountId == accountID);
-
-            if (transactionType.ToUpperInvariant() != TransactionTypes.ALL_TYPE)
-                query = query.Where(tt => tt.TransactionType == transactionType);
 
             if (!string.IsNullOrWhiteSpace(tickerSymbol))
                 query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));

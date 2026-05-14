@@ -21,9 +21,9 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpGet("summary")]
-        public async Task<IActionResult> SummaryTransactionAsync([FromQuery] Guid accountID, [FromQuery] string transactionType, [FromQuery] string? tickerSymbol, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate)
+        public async Task<IActionResult> SummaryTransactionAsync([FromQuery] Guid accountID, [FromQuery] string? tickerSymbol, [FromQuery] DateOnly? fromDate, [FromQuery] DateOnly? toDate)
         {
-            return Ok(await _service.SummaryTransactionAsync(accountID, transactionType, tickerSymbol, fromDate, toDate));
+            return Ok(await _service.SummaryTransactionAsync(accountID, tickerSymbol, fromDate, toDate));
         }
 
         [HttpGet]
