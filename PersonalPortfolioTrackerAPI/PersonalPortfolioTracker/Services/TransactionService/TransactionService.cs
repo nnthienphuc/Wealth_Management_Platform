@@ -38,7 +38,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));
 
             if (fromDate.HasValue && toDate.HasValue)
-                query = query.Where(tt => tt.TradeDate >= fromDate.Value && tt.TradeDate <= toDate.Value).OrderDescending();
+                query = query.Where(tt => tt.TradeDate >= fromDate.Value && tt.TradeDate <= toDate.Value);
 
             return await query.GroupBy(tt => tt.TransactionType).OrderBy(group => group.Key).Select(group => new SummaryTransactionResponse(group.Key, group.Sum(tt => tt.NetAmount ?? 0), group.Count())).ToListAsync();
         }

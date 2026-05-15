@@ -134,13 +134,16 @@ export default function TransactionPage() {
 
     try {
       const trimmed = keyword.trim();
-      
+      const isDateValid = fromDate && toDate;
+      const validFromDate = isDateValid ? fromDate : undefined;
+      const validToDate = isDateValid ? toDate : undefined;
+
       const summaryPromise = axiosInstance.get("/Transaction/summary", {
-        params: { accountID: selectedAccountId, transactionType: filterType, tickerSymbol: trimmed || undefined, fromDate: fromDate || undefined, toDate: toDate || undefined }
+        params: { accountID: selectedAccountId, tickerSymbol: trimmed || undefined, fromDate: validFromDate, toDate: validToDate }
       });
 
       const listPromise = axiosInstance.get("/Transaction", {
-        params: { accountID: selectedAccountId, transactionType: filterType, tickerSymbol: trimmed || undefined, fromDate: fromDate || undefined, toDate: toDate || undefined, pageNumber, pageSize }
+        params: { accountID: selectedAccountId, transactionType: filterType, tickerSymbol: trimmed || undefined, fromDate: validFromDate, toDate: validToDate, pageNumber, pageSize }
       });
 
       const [summaryRes, listRes] = await Promise.all([summaryPromise, listPromise]);
@@ -155,7 +158,8 @@ export default function TransactionPage() {
         setTransactions([]); setTotalRecords(0);
       }
     } catch (err) {
-      toast.error("Failed to fetch transactions.");
+      // ĐÃ SỬA: Bắt đúng message lỗi từ BE nếu có, thay vì hardcode
+      toast.error(err.response?.data?.message || "Failed to fetch transactions.");
     } finally {
       setLoading(false);
     }
@@ -282,7 +286,8 @@ export default function TransactionPage() {
       closeFormModal();
       fetchTransactionsData();
     } catch (err) { 
-      setFormError(err.response?.data?.message || "Submit failed."); 
+      // ĐÃ SỬA: Lấy lỗi chi tiết từ BE
+      setFormError(err.response?.data?.message || "Submit failed. Check server logs."); 
     } finally { 
       setIsSaving(false); 
     }
@@ -355,7 +360,6 @@ export default function TransactionPage() {
             <option value="DIVIDEND_TICKER">Dividend (Ticker)</option>
           </select>
 
-          {/* SỬA LỖI SEARCH BAR TẠI ĐÂY */}
           <div className="relative w-full xl:w-[180px] shrink-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-pink-400" />
             <input type="text" placeholder="Search ticker..." className="w-full pl-8 pr-3 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[13px] shadow-sm focus:border-pink-500 transition-colors" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
@@ -372,7 +376,6 @@ export default function TransactionPage() {
             )}
           </div>
 
-          {/* SỬA LỖI HÀNG NGANG TOTAL ITEMS & ADD BUTTON TẠI ĐÂY */}
           <div className="ml-auto w-full xl:w-auto flex items-center justify-end gap-3 shrink-0">
             {!loading && (
               <div className="hidden md:flex items-center px-2 border-l border-gray-200">
@@ -381,7 +384,6 @@ export default function TransactionPage() {
                 </span>
               </div>
             )}
-
             <button onClick={() => openFormModal()} className="w-full xl:w-auto whitespace-nowrap px-5 py-2 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-[12px] shadow-sm hover:-translate-y-0.5 transition-all">
               + ADD TRANSACTION
             </button>
