@@ -36,7 +36,7 @@ const getTransactionBadge = (type) => {
     case "BUY": return <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded uppercase tracking-widest border border-emerald-100">BUY</span>;
     case "SELL": return <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded uppercase tracking-widest border border-rose-100">SELL</span>;
     case "DIVIDEND_CASH": return <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded uppercase tracking-widest border border-blue-100">CASH DIV</span>;
-    case "DIVIDEND_TICKER": return <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-black rounded uppercase tracking-widest border border-purple-100">STOCK DIV</span>;
+    case "DIVIDEND_TICKER": return <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-black rounded uppercase tracking-widest border border-purple-100">TICKER DIV</span>;
     default: return <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-black rounded uppercase tracking-widest">{type}</span>;
   }
 };

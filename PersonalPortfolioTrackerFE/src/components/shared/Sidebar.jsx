@@ -72,7 +72,7 @@ export default function Sidebar() {
     {
       section: "Settings", 
       items: [
-        { label: "Investor Profile", path: "/investor/investor-profile", icon: <UserRound size={18} /> },
+        // { label: "Investor Profile", path: "/investor/investor-profile", icon: <UserRound size={18} /> },
         { label: "Change Password", path: "/investor/change-password", icon: <LockKeyhole size={18} /> },
       ],
     },
