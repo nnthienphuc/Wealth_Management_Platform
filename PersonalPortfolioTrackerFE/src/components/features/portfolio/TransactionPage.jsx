@@ -33,11 +33,11 @@ const formatPercent = (rate) => {
 
 const getTransactionBadge = (type) => {
   switch (type?.toUpperCase()) {
-    case "BUY": return <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded uppercase tracking-widest border border-emerald-100">BUY</span>;
-    case "SELL": return <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-black rounded uppercase tracking-widest border border-rose-100">SELL</span>;
-    case "DIVIDEND_CASH": return <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded uppercase tracking-widest border border-blue-100">CASH DIV</span>;
-    case "DIVIDEND_TICKER": return <span className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-black rounded uppercase tracking-widest border border-purple-100">TICKER DIV</span>;
-    default: return <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-black rounded uppercase tracking-widest">{type}</span>;
+    case "BUY": return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[11px] font-black rounded uppercase tracking-widest border border-emerald-100">BUY</span>;
+    case "SELL": return <span className="px-3 py-1 bg-rose-50 text-rose-600 text-[11px] font-black rounded uppercase tracking-widest border border-rose-100">SELL</span>;
+    case "DIVIDEND_CASH": return <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[11px] font-black rounded uppercase tracking-widest border border-blue-100">CASH DIV</span>;
+    case "DIVIDEND_TICKER": return <span className="px-3 py-1 bg-purple-50 text-purple-600 text-[11px] font-black rounded uppercase tracking-widest border border-purple-100">STOCK DIV</span>;
+    default: return <span className="px-3 py-1 bg-gray-100 text-gray-600 text-[11px] font-black rounded uppercase tracking-widest">{type}</span>;
   }
 };
 
@@ -64,7 +64,7 @@ export default function TransactionPage() {
   const [toDate, setToDate] = useState("");
   
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(4); // SẾP YÊU CẦU SET PAGE SIZE = 4
+  const [pageSize] = useState(4); 
   const [loading, setLoading] = useState(false);
 
   // Dropdowns UI
@@ -355,7 +355,8 @@ export default function TransactionPage() {
             <option value="DIVIDEND_TICKER">Dividend (Ticker)</option>
           </select>
 
-          <div className="relative w-full xl:flex-1 xl:max-w-xs">
+          {/* SỬA LỖI SEARCH BAR TẠI ĐÂY */}
+          <div className="relative w-full xl:w-[180px] shrink-0">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-pink-400" />
             <input type="text" placeholder="Search ticker..." className="w-full pl-8 pr-3 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[13px] shadow-sm focus:border-pink-500 transition-colors" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
           </div>
@@ -371,8 +372,17 @@ export default function TransactionPage() {
             )}
           </div>
 
-          <div className="ml-auto w-full xl:w-auto">
-            <button onClick={() => openFormModal()} className="w-full whitespace-nowrap px-5 py-2 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-[12px] shadow-sm hover:-translate-y-0.5 transition-all">
+          {/* SỬA LỖI HÀNG NGANG TOTAL ITEMS & ADD BUTTON TẠI ĐÂY */}
+          <div className="ml-auto w-full xl:w-auto flex items-center justify-end gap-3 shrink-0">
+            {!loading && (
+              <div className="hidden md:flex items-center px-2 border-l border-gray-200">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap pl-1">
+                  {totalRecords} items
+                </span>
+              </div>
+            )}
+
+            <button onClick={() => openFormModal()} className="w-full xl:w-auto whitespace-nowrap px-5 py-2 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-bold text-[12px] shadow-sm hover:-translate-y-0.5 transition-all">
               + ADD TRANSACTION
             </button>
           </div>
