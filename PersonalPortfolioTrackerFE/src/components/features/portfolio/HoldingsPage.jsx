@@ -50,6 +50,12 @@ const formatPercent = (rate) => {
   return `${sign}${percent.toFixed(2)}%`;
 };
 
+// Hàm mới: Tính % chênh lệch giữa Target và Avg Price
+const calculateTargetDiffPercent = (target, avgPrice) => {
+  if (!target || !avgPrice || avgPrice === 0) return null;
+  return (target - avgPrice) / avgPrice;
+};
+
 const getPnLColor = (value) => {
   if (value > 0) return "text-emerald-500";
   if (value < 0) return "text-rose-500";
@@ -531,7 +537,6 @@ export default function HoldingsPage() {
                       </button>
                     </div>
 
-                    {/* HIỂN THỊ KHI UPDATE, ẨN KHI ADD */}
                     {editingHolding && (
                       <>
                         <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Quantity (Auto-calculated)</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-sm font-semibold text-gray-500 cursor-not-allowed" /></div>
@@ -579,12 +584,12 @@ export default function HoldingsPage() {
           </div>
         )}
 
-        {/* MODAL 2: VIEW DETAILS */}
+        {/* MODAL 2: VIEW DETAILS VỚI TARGET DIFF % */}
         {detailHolding && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity" onClick={() => setDetailHolding(null)}>
             <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <button onClick={() => setDetailHolding(null)} className="absolute top-6 right-6 z-20 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all"><X size={24} /></button>
-              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100 shadow-sm">
+              <div className="p-8 pb-6 shrink-0 bg-white z-10 border-b border-gray-100">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8 pr-8">
                   <div className="flex items-center gap-5 w-full">
                     <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">{getRawIcon(detailHolding.tickerTypeCode, 28)}</div>
@@ -604,7 +609,7 @@ export default function HoldingsPage() {
                   </div>
                 </div>
                 
-                {/* LƯU Ý GIAO DIỆN VIEW DETAIL (KHÔNG SỬA GÌ) */}
+                {/* LƯỚI CHI TIẾT CÓ TÍNH % CHO TARGET */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-4 text-sm mt-2">
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Quantity</span><span className="font-bold text-gray-900 text-[15px]">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Avg. Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
@@ -612,7 +617,10 @@ export default function HoldingsPage() {
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Total Invested</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Value</span><span className="font-black text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Unrealized P&L</span>
+                  
+                  {/* P&L */}
+                  <div>
+                    <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Unrealized P&L</span>
                     <span className={`font-black text-[15px] flex flex-wrap items-center gap-1.5 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>
                       {formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}
                       <span className={`text-[10px] px-1.5 py-0.5 rounded border ${((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"}`}>
@@ -620,8 +628,37 @@ export default function HoldingsPage() {
                       </span>
                     </span>
                   </div>
-                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Buy</span><span className="font-bold text-blue-600 text-[15px]">{detailHolding.targetBuy ? formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
-                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Sell</span><span className="font-bold text-rose-600 text-[15px]">{detailHolding.targetSell ? formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true) : "-"}</span></div>
+
+                  {/* TARGET BUY */}
+                  <div>
+                    <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Buy</span>
+                    {detailHolding.targetBuy ? (
+                      <span className="font-bold text-blue-600 text-[15px] flex items-center gap-1.5">
+                        {formatMoney(detailHolding.targetBuy, checkIsCrypto(detailHolding.tickerTypeCode), true)}
+                        {detailHolding.investmentCost > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-blue-50 text-blue-600 border-blue-100 font-bold">
+                            {formatPercent(calculateTargetDiffPercent(detailHolding.targetBuy, detailHolding.investmentCost))}
+                          </span>
+                        )}
+                      </span>
+                    ) : "-"}
+                  </div>
+
+                  {/* TARGET SELL */}
+                  <div>
+                    <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Sell</span>
+                    {detailHolding.targetSell ? (
+                      <span className="font-bold text-rose-600 text-[15px] flex items-center gap-1.5">
+                        {formatMoney(detailHolding.targetSell, checkIsCrypto(detailHolding.tickerTypeCode), true)}
+                        {detailHolding.investmentCost > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border bg-rose-50 text-rose-600 border-rose-100 font-bold">
+                            {formatPercent(calculateTargetDiffPercent(detailHolding.targetSell, detailHolding.investmentCost))}
+                          </span>
+                        )}
+                      </span>
+                    ) : "-"}
+                  </div>
+
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-gray-50/50 p-8 custom-scrollbar border-t border-gray-100">
