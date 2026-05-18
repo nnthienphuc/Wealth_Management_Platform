@@ -108,7 +108,7 @@ export default function TransactionPage() {
     const fetchInitData = async () => {
       try {
         const [accRes, typeRes] = await Promise.all([
-          axiosInstance.get("/Transaction/invest-account"),
+          axiosInstance.get("/Transactions/invest-account"),
           axiosInstance.get("/TickerTypes")
         ]);
         const accData = accRes.data?.result || accRes.data || [];
@@ -138,11 +138,11 @@ export default function TransactionPage() {
       const validFromDate = isDateValid ? fromDate : undefined;
       const validToDate = isDateValid ? toDate : undefined;
 
-      const summaryPromise = axiosInstance.get("/Transaction/summary", {
+      const summaryPromise = axiosInstance.get("/Transactions/summary", {
         params: { accountID: selectedAccountId, tickerSymbol: trimmed || undefined, fromDate: validFromDate, toDate: validToDate }
       });
 
-      const listPromise = axiosInstance.get("/Transaction", {
+      const listPromise = axiosInstance.get("/Transactions", {
         params: { accountID: selectedAccountId, transactionType: filterType, tickerSymbol: trimmed || undefined, fromDate: validFromDate, toDate: validToDate, pageNumber, pageSize }
       });
 
@@ -265,7 +265,7 @@ export default function TransactionPage() {
           TickerID: formData.tickerId,
           Note: formData.note.trim() || null,
         };
-        await axiosInstance.put(`/Transaction/${editingTransaction.id || editingTransaction.ID}`, updatePayload);
+        await axiosInstance.put(`/Transactions/${editingTransaction.id || editingTransaction.ID}`, updatePayload);
         toast.success("Transaction note updated.");
       } else {
         const addPayload = {
@@ -280,7 +280,7 @@ export default function TransactionPage() {
           TradeDate: formData.tradeDate,
           Note: formData.note.trim() || null,
         };
-        await axiosInstance.post("/Transaction", addPayload);
+        await axiosInstance.post("/Transactions", addPayload);
         toast.success("Transaction created successfully.");
       }
       closeFormModal();
