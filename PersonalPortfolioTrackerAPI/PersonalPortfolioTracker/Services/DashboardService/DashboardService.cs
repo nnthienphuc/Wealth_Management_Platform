@@ -22,29 +22,36 @@ namespace PersonalPortfolioTracker.Services.DashboardService
         public async Task<DashboardResponse> DashboardResponseAsync()
         {
             # region Queries
-            var accounts = await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && tt.IsDeleted == false).Select(tt => new
-            {
-                tt.Name,
-                tt.InvestedBalance,
-                tt.CurrentBalance,
-                tt.TotalBalance,
-                tt.Currency
+            var accounts = await _uow.Repository<Accounts>()
+                .FindByCondition(tt => tt.InvestorId == _investorID && tt.IsDeleted == false)
+                .Select(tt => new
+                {
+                    tt.Name,
+                    tt.Type,
+                    tt.InvestedBalance,
+                    tt.CurrentBalance,
+                    tt.TotalBalance,
+                    tt.Currency
+                }).ToListAsync();
 
-            }).ToListAsync();
-
-            var holdings = await _uow.Repository<Holdings>().FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.IsDeleted == false)
+            var holdings = await _uow.Repository<Holdings>()
+                .FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.IsDeleted == false)
+                .OrderByDescending(tt => (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100)
                 .Select(tt => new
                 {
                     tt.Ticker.Symbol,
-                    tt.Account.Name,
-                    tt.TotalInvestmentCost,
+                    AccountName = tt.Account.Name,
+                    //tt.TotalInvestmentCost,
                     TotalMarketValue = tt.Quantity * tt.Ticker.MarketPrice,
                     UnrealizedPnL = (tt.Ticker.MarketPrice - tt.InvestmentCost) * tt.Quantity,
                     UnrealizedPnLRate = (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100,
                     tt.Ticker.Currency
-                }).ToListAsync();
+                })
+                .ToListAsync();
 
-            var realizedPnLs = await _uow.Repository<Transactions>().FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.SELL || tt.TransactionType == TransactionTypes.DIVIDEND_CASH)).GroupBy(tt => tt.TransactionType)
+            var realizedPnLs = await _uow.Repository<Transactions>()
+                .FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.SELL || tt.TransactionType == TransactionTypes.DIVIDEND_CASH))
+                .GroupBy(tt => tt.TransactionType)
                 .Select(group => new{
                     group.Key,
                     NetAmount = group.Sum(tt => tt.NetAmount),
@@ -52,8 +59,10 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 })
                 .ToListAsync();
 
-            var recentTransactions = await _uow.Repository<Transactions>().FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.BUY || tt.TransactionType == TransactionTypes.SELL))
+            var recentTransactions = await _uow.Repository<Transactions>()
+                .FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.BUY || tt.TransactionType == TransactionTypes.SELL))
                 .OrderByDescending(tt => tt.TradeDate)
+                .ThenByDescending(tt => tt.CreatedAt)
                 .Take(10)
                 .Select(tt => new
                 {
@@ -96,6 +105,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             {
                 if (realizedPnL.Key == TransactionTypes.SELL)
                     totalRealizedPnL += (realizedPnL.NetAmount ?? 0);
+
                 else
                     totalRealizedPnL += (realizedPnL.RealizedPnL ?? 0);
             }
@@ -120,15 +130,57 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
             #endregion
 
+            #region Allocation By Accounts
+            List<DashboardAllocationByAccount> dashboardAllocationByAccounts = [];
+            foreach (var account in accounts)
+            {
+                if (account.Type != AccountTypeConstants.CRYPTO && account.Type != AccountTypeConstants.SECURITIES)
+                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, account.TotalBalance));
+
+                else if(account.Type == AccountTypeConstants.CRYPTO)
+                {
+                    var totalBalance = account.CurrentBalance;
+
+                    foreach(var holding in holdings)
+                    {
+                        if (holding.AccountName == account.Name)
+                        {
+                            totalBalance += holding.TotalMarketValue;
+                        }
+                    }
+
+                    totalBalance *= USD_TO_VND;
+
+                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
+                }
+
+                else if (account.Type == AccountTypeConstants.SECURITIES)
+                {
+                    var totalBalance = account.CurrentBalance;
+
+                    foreach (var holding in holdings)
+                    {
+                        if (holding.AccountName == account.Name)
+                        {
+                            totalBalance += holding.TotalMarketValue;
+                        }
+                    }
+
+                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
+                }
+            }
+
+            #endregion
+
             #region Allocation By Tickers
             List<DashboardAllocationByTicker> tickerList = [];
 
             foreach (var ticker in holdings)
             {
                 if (ticker.Currency == CurrencyConstants.USD)
-                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.Name, ticker.TotalMarketValue * USD_TO_VND));
+                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.AccountName, ticker.TotalMarketValue * USD_TO_VND));
                 else
-                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.Name, ticker.TotalMarketValue));
+                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.AccountName, ticker.TotalMarketValue));
             }
 
             #endregion
@@ -137,7 +189,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             List<DashboardTopPerformers> topPerformers = [];
 
             foreach (var topPerformer in holdings)
-                topPerformers.Add(new DashboardTopPerformers(topPerformer.Symbol, topPerformer.Name, topPerformer.TotalMarketValue, topPerformer.Currency, topPerformer.UnrealizedPnLRate));
+                topPerformers.Add(new DashboardTopPerformers(topPerformer.Symbol, topPerformer.AccountName, topPerformer.TotalMarketValue, topPerformer.Currency, topPerformer.UnrealizedPnLRate));
 
             #endregion
 
@@ -149,7 +201,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
             #endregion
 
-            return new DashboardResponse(new DashboardZone1(totalPortfolio, cashBalance, unrealizedPnL, totalRealizedPnL), tickerList, topPerformers, topRecentTransactions);
+            return new DashboardResponse(new DashboardZone1(totalPortfolio, cashBalance, unrealizedPnL, totalRealizedPnL), dashboardAllocationByAccounts, tickerList, topPerformers, topRecentTransactions);
         }
     }
 }
