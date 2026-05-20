@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace PersonalPortfolioTracker.Models.Responses
 {
-    public record DashboardZone1(decimal PortfolioValue, decimal CashBalance, decimal UnrealizedPnL, decimal RealizedPnL);
+    public record DashboardZone1(decimal PortfolioValue, decimal CashBalance, decimal UnrealizedPnL, decimal UnrealizedPnLRate, decimal RealizedPnL);
     public record DashboardAllocationByAccount(string Name, decimal TotalBalance);
     public record DashboardAllocationByTicker(string Symbol, string AccountName, decimal TotalMarketValue);    
     public record DashboardTopPerformers(string Symbol, string AccountName, decimal TotalMarketValue, string Currency, decimal UnrealizedPnLRate);

@@ -40,7 +40,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 {
                     tt.Ticker.Symbol,
                     AccountName = tt.Account.Name,
-                    //tt.TotalInvestmentCost,
+                    tt.TotalInvestmentCost,
                     TotalMarketValue = tt.Quantity * tt.Ticker.MarketPrice,
                     UnrealizedPnL = (tt.Ticker.MarketPrice - tt.InvestmentCost) * tt.Quantity,
                     UnrealizedPnLRate = tt.InvestmentCost == 0 ? 0 : (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100,
@@ -77,112 +77,86 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
             #endregion
 
-            #region Zone1
-            decimal cashBalance = 0;
+            #region Zone 1: Summary Calculations
+            decimal cashBalance = accounts.Sum(a => a.Currency == CurrencyConstants.USD ? a.TotalBalance * USD_TO_VND : a.TotalBalance);
 
-            foreach (var account in accounts)
-            {
-                if (account.Currency == CurrencyConstants.USD)
-                    cashBalance += (account.TotalBalance * USD_TO_VND);
+            decimal unrealizedPnL = holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.UnrealizedPnL * USD_TO_VND : h.UnrealizedPnL);
 
-                else
-                    cashBalance += account.TotalBalance;
-            }
+            // Tính tổng vốn để ra được % PnL toàn danh mục
+            decimal totalInvested = holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.TotalInvestmentCost * USD_TO_VND : h.TotalInvestmentCost);
+            decimal unrealizedPnLRate = totalInvested == 0 ? 0 : (unrealizedPnL / totalInvested) * 100;
 
-            decimal unrealizedPnL = 0;
+            decimal totalRealizedPnL = realizedPnLs.Sum(r => r.Key == TransactionTypes.SELL ? (r.RealizedPnL ?? 0) : (r.NetAmount ?? 0));
 
-            foreach (var holding in holdings)
-            {
-                if (holding.Currency == CurrencyConstants.USD)
-                    unrealizedPnL += (holding.UnrealizedPnL * USD_TO_VND);
-                else
-                    unrealizedPnL += holding.UnrealizedPnL;
-            }
+            decimal totalPortfolio = accounts.Sum(a => a.Currency == CurrencyConstants.USD ? a.CurrentBalance * USD_TO_VND : a.CurrentBalance)
+                                   + holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.TotalMarketValue * USD_TO_VND : h.TotalMarketValue);
+            #endregion
 
-            decimal totalRealizedPnL = 0;
+            #region Allocation By Accounts ver1
+            //List<DashboardAllocationByAccount> dashboardAllocationByAccounts = [];
+            //foreach (var account in accounts)
+            //{
+            //    if (account.Type != AccountTypeConstants.CRYPTO && account.Type != AccountTypeConstants.SECURITIES)
+            //        dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, account.TotalBalance));
 
-            foreach (var realizedPnL in realizedPnLs)
-            {
-                if (realizedPnL.Key == TransactionTypes.SELL)
-                    totalRealizedPnL += (realizedPnL.RealizedPnL ?? 0);
+            //    else if(account.Currency == CurrencyConstants.USD)
+            //    {
+            //        var totalBalance = account.CurrentBalance;
 
-                else
-                    totalRealizedPnL += (realizedPnL.NetAmount ?? 0);
-            }
+            //        foreach(var holding in holdings)
+            //        {
+            //            if (holding.AccountName == account.Name)
+            //            {
+            //                totalBalance += holding.TotalMarketValue;
+            //            }
+            //        }
 
-            decimal totalPortfolio = 0;
-            foreach (var account in accounts)
-            {
-                if (account.Currency == CurrencyConstants.VND)
-                    totalPortfolio += account.CurrentBalance;
-                else
-                    totalPortfolio += (account.CurrentBalance * USD_TO_VND);
+            //        totalBalance *= USD_TO_VND;
 
-            }
-                
-            foreach (var holding in holdings)
-            {
-                if (holding.Currency == CurrencyConstants.USD)
-                    totalPortfolio += (holding.TotalMarketValue * USD_TO_VND);
-                else
-                    totalPortfolio += holding.TotalMarketValue;
-            }
+            //        dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
+            //    }
+
+            //    else if (account.Currency == CurrencyConstants.VND)
+            //    {
+            //        var totalBalance = account.CurrentBalance;
+
+            //        foreach (var holding in holdings)
+            //        {
+            //            if (holding.AccountName == account.Name)
+            //            {
+            //                totalBalance += holding.TotalMarketValue;
+            //            }
+            //        }
+
+            //        dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
+            //    }
+            //}
 
             #endregion
 
-            #region Allocation By Accounts
-            List<DashboardAllocationByAccount> dashboardAllocationByAccounts = [];
+            #region Allocation By Accounts Ver2
+            var dashboardAllocationByAccounts = new List<DashboardAllocationByAccount>();
             foreach (var account in accounts)
             {
-                if (account.Type != AccountTypeConstants.CRYPTO && account.Type != AccountTypeConstants.SECURITIES)
-                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, account.TotalBalance));
+                var accountMarketValue = holdings.Where(h => h.AccountName == account.Name).Sum(h => h.TotalMarketValue);
 
-                else if(account.Type == AccountTypeConstants.CRYPTO)
+                var accountTotalVal = account.CurrentBalance + accountMarketValue;
+
+                if (account.Currency == CurrencyConstants.USD)
                 {
-                    var totalBalance = account.CurrentBalance;
-
-                    foreach(var holding in holdings)
-                    {
-                        if (holding.AccountName == account.Name)
-                        {
-                            totalBalance += holding.TotalMarketValue;
-                        }
-                    }
-
-                    totalBalance *= USD_TO_VND;
-
-                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
+                    accountTotalVal *= USD_TO_VND;
                 }
 
-                else if (account.Type == AccountTypeConstants.SECURITIES)
-                {
-                    var totalBalance = account.CurrentBalance;
-
-                    foreach (var holding in holdings)
-                    {
-                        if (holding.AccountName == account.Name)
-                        {
-                            totalBalance += holding.TotalMarketValue;
-                        }
-                    }
-
-                    dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, totalBalance));
-                }
+                dashboardAllocationByAccounts.Add(new DashboardAllocationByAccount(account.Name, accountTotalVal));
             }
-
             #endregion
 
             #region Allocation By Tickers
-            List<DashboardAllocationByTicker> tickerList = [];
-
-            foreach (var ticker in holdings)
-            {
-                if (ticker.Currency == CurrencyConstants.USD)
-                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.AccountName, ticker.TotalMarketValue * USD_TO_VND));
-                else
-                    tickerList.Add(new DashboardAllocationByTicker(ticker.Symbol, ticker.AccountName, ticker.TotalMarketValue));
-            }
-
+            var tickerList = holdings.Select(t => new DashboardAllocationByTicker(
+                t.Symbol,
+                t.AccountName,
+                t.Currency == CurrencyConstants.USD ? t.TotalMarketValue * USD_TO_VND : t.TotalMarketValue
+            )).ToList();
             #endregion
 
             #region Top Performers
@@ -201,7 +175,12 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
             #endregion
 
-            return new DashboardResponse(new DashboardZone1(totalPortfolio, cashBalance, unrealizedPnL, totalRealizedPnL), dashboardAllocationByAccounts, tickerList, topPerformers, topRecentTransactions);
+            return new DashboardResponse(
+                new DashboardZone1(totalPortfolio, cashBalance, unrealizedPnL, Math.Round(unrealizedPnLRate, 2), totalRealizedPnL),
+                    dashboardAllocationByAccounts,
+                    tickerList,
+                    topPerformers,
+                    topRecentTransactions);
         }
     }
 }
