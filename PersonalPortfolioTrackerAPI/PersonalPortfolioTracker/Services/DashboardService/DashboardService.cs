@@ -35,8 +35,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 }).ToListAsync();
 
             var holdings = await _uow.Repository<Holdings>()
-                .FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.IsDeleted == false)
-                .OrderByDescending(tt => (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100)
+                .FindByCondition(tt => tt.Account.InvestorId == _investorID && tt.Quantity > 0 && tt.IsDeleted == false)
                 .Select(tt => new
                 {
                     tt.Ticker.Symbol,
@@ -44,9 +43,10 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                     //tt.TotalInvestmentCost,
                     TotalMarketValue = tt.Quantity * tt.Ticker.MarketPrice,
                     UnrealizedPnL = (tt.Ticker.MarketPrice - tt.InvestmentCost) * tt.Quantity,
-                    UnrealizedPnLRate = (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100,
+                    UnrealizedPnLRate = tt.InvestmentCost == 0 ? 0 : (tt.Ticker.MarketPrice - tt.InvestmentCost) / tt.InvestmentCost * 100,
                     tt.Ticker.Currency
                 })
+                .OrderByDescending(x => x.UnrealizedPnLRate)
                 .ToListAsync();
 
             var realizedPnLs = await _uow.Repository<Transactions>()
@@ -104,10 +104,10 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             foreach (var realizedPnL in realizedPnLs)
             {
                 if (realizedPnL.Key == TransactionTypes.SELL)
-                    totalRealizedPnL += (realizedPnL.NetAmount ?? 0);
+                    totalRealizedPnL += (realizedPnL.RealizedPnL ?? 0);
 
                 else
-                    totalRealizedPnL += (realizedPnL.RealizedPnL ?? 0);
+                    totalRealizedPnL += (realizedPnL.NetAmount ?? 0);
             }
 
             decimal totalPortfolio = 0;
