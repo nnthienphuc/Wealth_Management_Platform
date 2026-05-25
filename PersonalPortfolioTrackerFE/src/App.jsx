@@ -16,6 +16,7 @@ import TickerPage from "./components/features/portfolio/TickerPage";
 import AccountsPage from "./components/features/portfolio/AccountPage";
 import HoldingsPage from "./components/features/portfolio/HoldingsPage";
 import TransactionPage from "./components/features/portfolio/TransactionPage";
+import DashboardPage from "./components/features/portfolio/DashboardPage";
 
 // --- Shared Components & Layouts ---
 import PublicRoute from "./components/shared/PublicRoute";
@@ -41,6 +42,7 @@ function App() {
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="holdings" element={<HoldingsPage />} />
           <Route path="transactions" element={<TransactionPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
         </Route>
 
         {/* Default route */}
