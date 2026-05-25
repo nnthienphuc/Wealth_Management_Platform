@@ -7,7 +7,7 @@ namespace PersonalPortfolioTracker.Models.Responses
     public record DashboardAllocationByAccount(string Name, decimal TotalBalance);
     public record DashboardAllocationByTicker(string Symbol, string AccountName, decimal TotalMarketValue);    
     public record DashboardTopPerformers(string Symbol, string AccountName, decimal TotalMarketValue, string Currency, decimal UnrealizedPnLRate);
-    public record DashboardRecentBuyAndSellTransactions(string Symbol, string TransactionType, decimal Quantity, decimal Price, decimal NetAmount, string Currency);
+    public record DashboardRecentBuyAndSellTransactions(string Symbol, string TransactionType, decimal Quantity, decimal Price, decimal NetAmount, string Currency, DateOnly TradeDate);
     public record DashboardResponse(DashboardZone1 Zone1,
         List<DashboardAllocationByAccount> AccountsList,
         List<DashboardAllocationByTicker> TickerList,

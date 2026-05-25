@@ -63,7 +63,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 .FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.BUY || tt.TransactionType == TransactionTypes.SELL))
                 .OrderByDescending(tt => tt.TradeDate)
                 .ThenByDescending(tt => tt.CreatedAt)
-                .Take(10)
+                .Take(8)
                 .Select(tt => new
                 {
                     tt.Ticker.Symbol,
@@ -71,6 +71,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                     tt.Quantity,
                     tt.Price,
                     tt.NetAmount,
+                    tt.TradeDate,
                     tt.Ticker.Currency
                 })
                 .ToListAsync();
@@ -78,18 +79,18 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             #endregion
 
             #region Zone 1: Summary Calculations
-            decimal cashBalance = accounts.Sum(a => a.Currency == CurrencyConstants.USD ? a.TotalBalance * USD_TO_VND : a.TotalBalance);
+            decimal cashBalance = accounts.Sum(a => a.Currency.ToUpperInvariant() == CurrencyConstants.USD ? a.TotalBalance * USD_TO_VND : a.TotalBalance);
 
-            decimal unrealizedPnL = holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.UnrealizedPnL * USD_TO_VND : h.UnrealizedPnL);
+            decimal unrealizedPnL = holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.UnrealizedPnL * USD_TO_VND : h.UnrealizedPnL);
 
             // Tính tổng vốn để ra được % PnL toàn danh mục
-            decimal totalInvested = holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.TotalInvestmentCost * USD_TO_VND : h.TotalInvestmentCost);
+            decimal totalInvested = holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.TotalInvestmentCost * USD_TO_VND : h.TotalInvestmentCost);
             decimal unrealizedPnLRate = totalInvested == 0 ? 0 : (unrealizedPnL / totalInvested) * 100;
 
             decimal totalRealizedPnL = realizedPnLs.Sum(r => r.Key == TransactionTypes.SELL ? (r.RealizedPnL ?? 0) : (r.NetAmount ?? 0));
 
-            decimal totalPortfolio = accounts.Sum(a => a.Currency == CurrencyConstants.USD ? a.CurrentBalance * USD_TO_VND : a.CurrentBalance)
-                                   + holdings.Sum(h => h.Currency == CurrencyConstants.USD ? h.TotalMarketValue * USD_TO_VND : h.TotalMarketValue);
+            decimal totalPortfolio = accounts.Sum(a => a.Currency.ToUpperInvariant() == CurrencyConstants.USD ? a.CurrentBalance * USD_TO_VND : a.CurrentBalance)
+                                   + holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.TotalMarketValue * USD_TO_VND : h.TotalMarketValue);
             #endregion
 
             #region Allocation By Accounts ver1
@@ -142,7 +143,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
                 var accountTotalVal = account.CurrentBalance + accountMarketValue;
 
-                if (account.Currency == CurrencyConstants.USD)
+                if (account.Currency.ToUpperInvariant() == CurrencyConstants.USD)
                 {
                     accountTotalVal *= USD_TO_VND;
                 }
@@ -155,7 +156,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             var tickerList = holdings.Select(t => new DashboardAllocationByTicker(
                 t.Symbol,
                 t.AccountName,
-                t.Currency == CurrencyConstants.USD ? t.TotalMarketValue * USD_TO_VND : t.TotalMarketValue
+                t.Currency.ToUpperInvariant() == CurrencyConstants.USD ? t.TotalMarketValue * USD_TO_VND : t.TotalMarketValue
             )).ToList();
             #endregion
 
@@ -171,7 +172,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             List<DashboardRecentBuyAndSellTransactions> topRecentTransactions = [];
 
             foreach (var trans in recentTransactions)
-                topRecentTransactions.Add(new DashboardRecentBuyAndSellTransactions(trans.Symbol, trans.TransactionType, trans.Quantity ?? 0, trans.Price ?? 0, trans.NetAmount ?? 0, trans.Currency));
+                topRecentTransactions.Add(new DashboardRecentBuyAndSellTransactions(trans.Symbol, trans.TransactionType, trans.Quantity ?? 0, trans.Price ?? 0, trans.NetAmount ?? 0, trans.Currency, trans.TradeDate));
 
             #endregion
 
