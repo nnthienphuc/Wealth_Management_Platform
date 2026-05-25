@@ -52,7 +52,7 @@ export default function Sidebar() {
     {
       section: "Overview",
       items: [
-        { label: "Dashboard", path: "/investor/dashboard", icon: <LayoutDashboard size={18} /> },
+        { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={18} /> },
       ],
     },
     {
