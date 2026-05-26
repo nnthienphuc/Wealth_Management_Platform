@@ -4,10 +4,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
-COPY *.csproj ./
+COPY PersonalPortfolioTracker.csproj .
 RUN dotnet restore
 
-COPY . ./
+COPY . .
 RUN dotnet publish -c Release -o /app/publish
 
 # ----------------------------
@@ -18,9 +18,8 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# API LISTEN 503
 EXPOSE 5034
 ENV ASPNETCORE_URLS=http://+:5034
 ENV ASPNETCORE_ENVIRONMENT=Production
 
-ENTRYPOINT ["dotnet", "PersonalPortfolioTrackerAPI.dll"]
+ENTRYPOINT ["dotnet", "PersonalPortfolioTracker.dll"]
