@@ -47,7 +47,6 @@ const checkIsCrypto = (typeCode) => {
   return code.includes("USD") || code.includes("COIN") || code.includes("CRYPTO") || code.includes("TIỀN ẢO");
 };
 
-const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /* ================= Component ================= */
@@ -134,53 +133,81 @@ export default function Dashboard() {
 
   const { zone1, topPerformers, recentTransactions } = data;
 
+  // HÀM EXPORT PDF ĐÃ ĐƯỢC FIX LỖI TRIỆT ĐỂ
   const handleExportPdf = async () => {
     try {
       toast.info("Exporting PDF...");
       setIsExporting(true);
-      await nextFrame(); await nextFrame(); await sleep(250);
-      if (document?.fonts?.ready) await document.fonts.ready;
+      
+      // Chờ giao diện render lại (Mở rộng toàn bộ scrollbar thành overflow-visible)
+      await sleep(500); 
+
+      try {
+        if (document?.fonts?.ready) await document.fonts.ready;
+      } catch (fontErr) {
+        console.warn("Skipped fonts check", fontErr);
+      }
 
       const pdf = new jsPDF("p", "mm", "a4");
       const marginX = 8, marginY = 8;
       const pageHeight = pdf.internal.pageSize.getHeight();
       let currentY = marginY;
 
-      const blocks = [headerRef.current, topCardsRef.current, allocAccountRef.current, allocTickerRef.current, topPerformersRef.current, recentTxRef.current];
+      const blocks = [
+        headerRef.current, 
+        topCardsRef.current, 
+        allocAccountRef.current, 
+        allocTickerRef.current, 
+        topPerformersRef.current, 
+        recentTxRef.current
+      ].filter(Boolean); // Đảm bảo ref không bị null
 
       for (let el of blocks) {
-        if (!el) continue;
-        const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+        if (el.offsetWidth === 0 || el.offsetHeight === 0) continue;
+
+        const canvas = await html2canvas(el, { 
+          scale: 2, 
+          useCORS: true, 
+          backgroundColor: "#ffffff",
+          logging: false // Tắt log html2canvas để tránh nặng trình duyệt
+        });
+        
         const imgWidth = pdf.internal.pageSize.getWidth() - marginX * 2;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        if (currentY + imgHeight > pageHeight - marginY) { pdf.addPage(); currentY = marginY; }
+        if (currentY + imgHeight > pageHeight - marginY) { 
+          pdf.addPage(); 
+          currentY = marginY; 
+        }
+        
         pdf.addImage(canvas.toDataURL("image/png"), "PNG", marginX, currentY, imgWidth, imgHeight);
         currentY += imgHeight + 4;
       }
       pdf.save(`Dashboard_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success("Export PDF success!");
-    } catch (err) { toast.error("Export PDF failed."); } 
-    finally { setIsExporting(false); }
+    } catch (err) { 
+      console.error("PDF Export failed:", err);
+      toast.error("Export PDF failed: " + (err.message || "Unknown error")); 
+    } finally { 
+      setIsExporting(false); 
+    }
   };
 
   const AllocationBlock = ({ title, items, total, chartData }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-pink-50 flex flex-col h-full">
-      <h3 className="text-sm font-semibold text-gray-500 text-center mb-6">{title}</h3>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50 flex flex-col h-full">
+      <h3 className="text-sm font-semibold text-gray-500 text-center mb-4">{title}</h3>
       {items.length === 0 ? <div className="text-sm text-gray-400 text-center">No data.</div> : (
-        <div className="flex flex-col xl:flex-row gap-8 items-center xl:items-center flex-1">
-          <div className="w-62 h-62 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-stretch flex-1">
+          <div className="w-52 h-52 shrink-0">
             <Pie data={chartData} options={commonPieOptions} />
           </div>
-          
-          {/* Tăng chiều cao phần danh sách tương ứng để cân đối với biểu đồ */}
-          <div className={`flex-1 min-w-[240px] bg-white rounded-xl border border-gray-100 p-3 ${isExporting ? "overflow-visible" : "max-h-72 overflow-y-auto custom-scrollbar pr-1"}`}>
+          <div className={`flex-1 min-w-[220px] bg-white rounded-xl border border-gray-100 p-2 ${isExporting ? "overflow-visible h-auto" : "max-h-[220px] overflow-y-auto custom-scrollbar pr-1"}`}>
             {items.map((x, idx) => (
-              <div key={idx} className={`grid grid-cols-[12px_1fr_auto] gap-4 items-center p-3 text-xs ${idx !== items.length - 1 ? 'border-b border-gray-50' : ''}`}>
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: x.color }} />
+              <div key={idx} className={`grid grid-cols-[12px_1fr_auto] gap-3 items-center p-2 text-xs ${idx !== items.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: x.color }} />
                 <div className="truncate">
                   <div className="font-bold text-gray-800 truncate">{x.label}</div>
-                  <div className="text-gray-500 text-[11px] mt-0.5">{vnd(x.value)}</div>
+                  <div className="text-gray-500 text-[10px] mt-0.5">{vnd(x.value)}</div>
                 </div>
                 <div className="font-extrabold text-gray-800 text-right">{hideAmounts ? "**" : formatPercent2(total > 0 ? (x.value / total) * 100 : 0)}</div>
               </div>
@@ -235,11 +262,11 @@ export default function Dashboard() {
 
         {/* ALLOCATION PIE CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div ref={allocAccountRef} className="flex"><AllocationBlock title="Allocation by Account" items={accountList} total={accountTotal} chartData={accountChartData} /></div>
-          <div ref={allocTickerRef} className="flex"><AllocationBlock title="Allocation by Ticker" items={tickerList} total={tickerTotal} chartData={tickerChartData} /></div>
+          <div ref={allocAccountRef} className="h-full"><AllocationBlock title="Allocation by Account" items={accountList} total={accountTotal} chartData={accountChartData} /></div>
+          <div ref={allocTickerRef} className="h-full"><AllocationBlock title="Allocation by Ticker" items={tickerList} total={tickerTotal} chartData={tickerChartData} /></div>
         </div>
 
-        {/* TOP PERFORMERS & TRANSACTIONS (Fixed Height & Scrollable) */}
+        {/* TOP PERFORMERS & TRANSACTIONS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           
           {/* TOP PERFORMERS */}
@@ -248,7 +275,8 @@ export default function Dashboard() {
             {!topPerformers || topPerformers.length === 0 ? (
               <div className="text-sm text-gray-400 flex-1">No holdings yet.</div> 
             ) : (
-              <div className={`overflow-auto custom-scrollbar pr-2 flex-1 ${isExporting ? "" : "max-h-[340px]"}`}>
+              // XÓA SCROLLBAR KHI EXPORT BẰNG OVERFLOW-VISIBLE
+              <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[340px]"}`}>
                 <table className="w-full text-sm text-left relative">
                   <thead className="text-xs text-gray-500 font-semibold sticky top-0 bg-white z-10">
                     <tr>
@@ -288,7 +316,7 @@ export default function Dashboard() {
              {!recentTransactions || recentTransactions.length === 0 ? (
                <div className="text-sm text-gray-400 flex-1">No transactions yet.</div> 
              ) : (
-               <div className={`overflow-auto custom-scrollbar pr-2 flex-1 ${isExporting ? "" : "max-h-[340px]"}`}>
+               <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[340px]"}`}>
                  <table className="w-full text-sm">
                    <tbody className="divide-y divide-gray-50">
                      {recentTransactions.map((t, i) => {
@@ -303,7 +331,7 @@ export default function Dashboard() {
                              <div className="text-xs text-gray-400 mt-0.5">{formatTradingDate(t.tradeDate)}</div>
                            </td>
                            <td className="py-2.5 text-right">
-                             <div className="text-gray-700 font-medium">{t.quantity ? Number(t.quantity).toFixed(4) : '-'} - {isCrypto ? usd(t.price) : hideAmounts ? moneyMask : `${formatPriceVnd(t.price)} VND`}</div>
+                             <div className="text-gray-700 font-medium">{t.quantity ? Number(t.quantity).toFixed(4) : '-'} @ {isCrypto ? usd(t.price) : hideAmounts ? moneyMask : `${formatPriceVnd(t.price)} VND`}</div>
                              <div className={`text-xs font-bold mt-0.5 ${isInflow ? 'text-emerald-600' : 'text-rose-600'}`}>
                                {isInflow ? '+' : '-'}{isCrypto ? usd(absAmount) : vnd(absAmount)}
                              </div>
@@ -316,7 +344,6 @@ export default function Dashboard() {
                </div>
              )}
           </div>
-
         </div>
 
       </div>
