@@ -229,9 +229,9 @@ export default function Dashboard() {
             <button onClick={() => setHideAmounts(!hideAmounts)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-pink-500 transition-colors">
               {hideAmounts ? <FaEyeSlash /> : <FaEye />}
             </button>
-            <button onClick={handleExportPdf} disabled={isExporting} className="px-5 py-2.5 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 text-white text-sm font-bold shadow-lg hover:-translate-y-0.5 transition-transform disabled:opacity-70">
+            {/* <button onClick={handleExportPdf} disabled={isExporting} className="px-5 py-2.5 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 text-white text-sm font-bold shadow-lg hover:-translate-y-0.5 transition-transform disabled:opacity-70">
               Export PDF
-            </button>
+            </button> */}
           </div>
         </div>
 
