@@ -1,5 +1,5 @@
 # Stage 1: Build app with Node
-FROM node:18 AS build
+FROM node:20 AS build
 WORKDIR /app
 
 # Copy deps first for better caching + avoid host node_modules issues

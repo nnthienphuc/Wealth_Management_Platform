@@ -1,25 +1,25 @@
 services:
   api:
-    container_name: ppt-api
+    container_name: ppt-api-v2
     build:
-      context: ./PersonalPortfolioTrackerAPI
+      context: ./PersonalPortfolioTrackerAPI/PersonalPortfolioTracker
     ports:
-      - "5033:5033"
+      - "5034:5034"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: "http://+:5033"
+      ASPNETCORE_URLS: "http://+:5034"
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       SMTP_USERNAME: ${SMTP_USERNAME}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       ConnectionStrings__DefaultConnection: ${DB_CONNECTION}
     volumes:
-      - ./Storage:/app/Storage
+      - ./PersonalPortfolioTrackerAPI/PersonalPortfolioTracker/Storage:/app/Storage
   frontend:
-    container_name: ppt-fe
+    container_name: ppt-fe-v2
     build:
       context: ./PersonalPortfolioTrackerFE
       dockerfile: Dockerfile
     ports:
-      - "5175:80"
+      - "5176:80"
     depends_on:
       - api
