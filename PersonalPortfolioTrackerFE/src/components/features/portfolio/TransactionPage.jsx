@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { 
   Loader2, Pencil, X, Search, ChevronDown, 
   LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign,
-  Clock, History, Receipt
+  Clock, History, Receipt, ShieldCheck
 } from "lucide-react";
 
 // === FORMATTERS & HELPERS ===
@@ -36,7 +36,7 @@ const getTransactionBadge = (type) => {
     case "BUY": return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[11px] font-black rounded uppercase tracking-widest border border-emerald-100">BUY</span>;
     case "SELL": return <span className="px-3 py-1 bg-rose-50 text-rose-600 text-[11px] font-black rounded uppercase tracking-widest border border-rose-100">SELL</span>;
     case "DIVIDEND_CASH": return <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[11px] font-black rounded uppercase tracking-widest border border-blue-100">CASH DIV</span>;
-    case "DIVIDEND_TICKER": return <span className="px-3 py-1 bg-purple-50 text-purple-600 text-[11px] font-black rounded uppercase tracking-widest border border-purple-100">STOCK DIV</span>;
+    case "DIVIDEND_TICKER": return <span className="px-3 py-1 bg-purple-50 text-purple-600 text-[11px] font-black rounded uppercase tracking-widest border border-purple-100">TICKER DIV</span>;
     default: return <span className="px-3 py-1 bg-gray-100 text-gray-600 text-[11px] font-black rounded uppercase tracking-widest">{type}</span>;
   }
 };
@@ -73,6 +73,7 @@ export default function TransactionPage() {
 
   // Form & Detail Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false); // Thêm state quản lý Review
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [detailTransaction, setDetailTransaction] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -158,7 +159,6 @@ export default function TransactionPage() {
         setTransactions([]); setTotalRecords(0);
       }
     } catch (err) {
-      // ĐÃ SỬA: Bắt đúng message lỗi từ BE nếu có, thay vì hardcode
       toast.error(err.response?.data?.message || "Failed to fetch transactions.");
     } finally {
       setLoading(false);
@@ -216,6 +216,7 @@ export default function TransactionPage() {
   // MODAL HANDLERS
   const openFormModal = (trans = null) => {
     setFormError("");
+    setIsReviewMode(false); // Đảm bảo reset trạng thái review
     if (trans) {
       setEditingTransaction(trans);
       setFormData({
@@ -243,7 +244,11 @@ export default function TransactionPage() {
     setIsFormModalOpen(true);
   };
 
-  const closeFormModal = () => { setIsFormModalOpen(false); setEditingTransaction(null); };
+  const closeFormModal = () => { 
+    setIsFormModalOpen(false); 
+    setEditingTransaction(null); 
+    setIsReviewMode(false); 
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -251,7 +256,7 @@ export default function TransactionPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!editingTransaction && (!formData.accountId || !formData.tickerId)) {
       setFormError("Account and Ticker are required."); return;
     }
@@ -286,7 +291,6 @@ export default function TransactionPage() {
       closeFormModal();
       fetchTransactionsData();
     } catch (err) { 
-      // ĐÃ SỬA: Lấy lỗi chi tiết từ BE
       setFormError(err.response?.data?.message || "Submit failed. Check server logs."); 
     } finally { 
       setIsSaving(false); 
@@ -546,115 +550,165 @@ export default function TransactionPage() {
         )}
 
         {/* ========================================================
-            MODAL 2: FORM ADD / EDIT (DYNAMIC)
+            MODAL 2: FORM ADD / EDIT (DYNAMIC) CÓ REVIEW STEP
         ======================================================== */}
         {isFormModalOpen && (
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
             <div className="bg-white w-full max-w-lg rounded-[2rem] p-8 relative animate-in fade-in zoom-in duration-200 shadow-2xl">
               <button onClick={closeFormModal} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 rounded-full p-2 transition-all z-10"><X size={20} /></button>
               
-              <h2 className="text-2xl font-black text-gray-900 mb-6 shrink-0">
-                {editingTransaction ? "Edit Transaction Note" : "New Transaction"}
-              </h2>
+              {!isReviewMode && (
+                <h2 className="text-2xl font-black text-gray-900 mb-6 shrink-0">
+                  {editingTransaction ? "Edit Transaction Note" : "New Transaction"}
+                </h2>
+              )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Sử dụng onSubmit để HTML5 tự động Validate. Nếu không lỗi, chặn submit mặc định và đổi mode */}
+              <form onSubmit={(!editingTransaction && !isReviewMode) ? (e) => { e.preventDefault(); setIsReviewMode(true); } : handleSubmit} className="space-y-4">
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Account *</label>
-                    <select 
-                      name="accountId" value={formData.accountId} onChange={handleChange} 
-                      disabled={!!editingTransaction}
-                      className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400'}`}
-                    >
-                      <option value="">-- Select --</option>
-                      {accounts.map(acc => <option key={acc.accountID || acc.accountId} value={acc.accountID || acc.accountId}>{acc.accountName}</option>)}
-                    </select>
-                  </div>
+                {!isReviewMode ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Account *</label>
+                        <select 
+                          name="accountId" value={formData.accountId} onChange={handleChange} required
+                          disabled={!!editingTransaction}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400'}`}
+                        >
+                          <option value="">-- Select --</option>
+                          {accounts.map(acc => <option key={acc.accountID || acc.accountId} value={acc.accountID || acc.accountId}>{acc.accountName}</option>)}
+                        </select>
+                      </div>
 
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Ticker *</label>
-                    <button 
-                      type="button" 
-                      onClick={() => !editingTransaction && setIsTickerModalOpen(true)}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 hover:border-pink-300'}`}
-                      disabled={!!editingTransaction}
-                    >
-                      <span className="truncate">{selectedTickerInfo ? selectedTickerInfo.symbol : "Search Symbol..."}</span>
-                      {!editingTransaction && <Search size={14} className="text-gray-400 shrink-0" />}
-                    </button>
-                  </div>
-                </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Ticker *</label>
+                        <button 
+                          type="button" 
+                          onClick={() => !editingTransaction && setIsTickerModalOpen(true)}
+                          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 hover:border-pink-300'}`}
+                          disabled={!!editingTransaction}
+                        >
+                          <span className="truncate">{selectedTickerInfo ? selectedTickerInfo.symbol : "Search Symbol..."}</span>
+                          {!editingTransaction && <Search size={14} className="text-gray-400 shrink-0" />}
+                        </button>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Transaction Type *</label>
-                    <select 
-                      name="transactionType" value={formData.transactionType} onChange={handleChange}
-                      disabled={!!editingTransaction}
-                      className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400'}`}
-                    >
-                      <option value="BUY">BUY</option>
-                      <option value="SELL">SELL</option>
-                      <option value="DIVIDEND_CASH">CASH DIVIDEND</option>
-                      <option value="DIVIDEND_TICKER">TICKER DIVIDEND</option>
-                    </select>
-                  </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Transaction Type *</label>
+                        <select 
+                          name="transactionType" value={formData.transactionType} onChange={handleChange} required
+                          disabled={!!editingTransaction}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400'}`}
+                        >
+                          <option value="BUY">BUY</option>
+                          <option value="SELL">SELL</option>
+                          <option value="DIVIDEND_CASH">CASH DIVIDEND</option>
+                          <option value="DIVIDEND_TICKER">TICKER DIVIDEND</option>
+                        </select>
+                      </div>
 
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Trade Date *</label>
-                    <input 
-                      type="date" name="tradeDate" value={formData.tradeDate} onChange={handleChange}
-                      disabled={!!editingTransaction}
-                      className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400 cursor-pointer'}`}
-                    />
-                  </div>
-                </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Trade Date *</label>
+                        <input 
+                          type="date" name="tradeDate" value={formData.tradeDate} onChange={handleChange} required
+                          disabled={!!editingTransaction}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? 'bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed' : 'bg-gray-50 border-gray-200 focus:border-pink-400 cursor-pointer'}`}
+                        />
+                      </div>
+                    </div>
 
-                {/* FIELDS DYNAMIC THEO TYPE (CHỈ HIỆN KHI ADD) */}
-                {!editingTransaction && (
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50/50 border border-gray-100 rounded-2xl">
-                    
-                    {(formData.transactionType === "BUY" || formData.transactionType === "SELL") && (
-                      <>
-                        <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Price *</label><input type="number" step="any" min="0" name="price" value={formData.price} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                        <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                        <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Fee Rate (%)</label><input type="number" step="any" min="0" name="feeRate" value={formData.feeRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                        {formData.transactionType === "SELL" && (
-                          <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                    {/* FIELDS DYNAMIC THEO TYPE (CHỈ HIỆN KHI ADD) */}
+                    {!editingTransaction && (
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50/50 border border-gray-100 rounded-2xl">
+                        
+                        {(formData.transactionType === "BUY" || formData.transactionType === "SELL") && (
+                          <>
+                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Price *</label><input type="number" step="any" min="0" name="price" value={formData.price} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Fee Rate (%)</label><input type="number" step="any" min="0" name="feeRate" value={formData.feeRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            {formData.transactionType === "SELL" && (
+                              <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            )}
+                          </>
                         )}
-                      </>
+
+                        {formData.transactionType === "DIVIDEND_CASH" && (
+                          <>
+                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Gross Amount *</label><input type="number" step="any" min="0" name="grossAmount" value={formData.grossAmount} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                          </>
+                        )}
+
+                        {formData.transactionType === "DIVIDEND_TICKER" && (
+                          <div className="col-span-2"><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity Added *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                        )}
+                      </div>
                     )}
 
-                    {formData.transactionType === "DIVIDEND_CASH" && (
-                      <>
-                        <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Gross Amount *</label><input type="number" step="any" min="0" name="grossAmount" value={formData.grossAmount} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                        <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                      </>
-                    )}
+                    {/* NOTE (Cho phép sửa) */}
+                    <div>
+                      <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Note</label>
+                      <textarea 
+                        name="note" value={formData.note} onChange={handleChange} rows="2"
+                        placeholder="Optional details..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm resize-none"
+                      />
+                    </div>
 
-                    {formData.transactionType === "DIVIDEND_TICKER" && (
-                      <div className="col-span-2"><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity Added *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                    )}
+                    {formError && <p className="text-rose-600 text-xs font-bold text-center pt-1">{formError}</p>}
+
+                    <div className="flex justify-end gap-3 pt-5 mt-2 border-t border-gray-100">
+                      <button type="button" onClick={closeFormModal} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-bold text-[13px] hover:bg-gray-50">Cancel</button>
+                      <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-[13px] shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60">
+                        {isSaving ? "Saving..." : (editingTransaction ? "Save Transaction" : "Review & Save")}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  // BƯỚC REVIEW 
+                  <div className="animate-in fade-in zoom-in duration-200">
+                    <h2 className="text-2xl font-black text-gray-900 mb-6 shrink-0 flex items-center gap-2">
+                      <ShieldCheck className="text-emerald-500" /> Confirm Details
+                    </h2>
+
+                    <div className="bg-gray-50 p-5 rounded-2xl space-y-3 text-[13px] text-gray-700 border border-gray-100">
+                      <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Account:</span> <span className="font-bold text-gray-900">{accounts.find(a => (a.accountID || a.accountId) === formData.accountId)?.accountName}</span></div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Ticker:</span> <span className="font-bold text-gray-900">{selectedTickerInfo?.symbol}</span></div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Type:</span> <span className="font-bold text-gray-900">{formData.transactionType}</span></div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Trade Date:</span> <span className="font-bold text-gray-900">{formatDate(formData.tradeDate)}</span></div>
+                      
+                      {formData.transactionType !== "DIVIDEND_TICKER" && (
+                        <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Gross Amount:</span> <span className="font-bold text-gray-900">{formatMoney(formData.grossAmount, isGlobalCryptoAccount, true)}</span></div>
+                      )}
+                      {["BUY", "SELL"].includes(formData.transactionType) && (
+                        <>
+                          <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Price:</span> <span className="font-bold text-gray-900">{formatMoney(formData.price, isGlobalCryptoAccount, true)}</span></div>
+                          <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Quantity:</span> <span className="font-bold text-gray-900">{formatQuantity(formData.quantity, isGlobalCryptoAccount)}</span></div>
+                          <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Fee Rate:</span> <span className="font-bold text-gray-900">{formData.feeRate}%</span></div>
+                        </>
+                      )}
+                      {["SELL", "DIVIDEND_CASH"].includes(formData.transactionType) && (
+                        <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">PIT Rate:</span> <span className="font-bold text-gray-900">{formData.pitRate}%</span></div>
+                      )}
+                      {formData.transactionType === "DIVIDEND_TICKER" && (
+                        <div className="flex justify-between border-b border-gray-100 pb-2"><span className="font-semibold text-gray-500">Quantity Added:</span> <span className="font-bold text-gray-900">{formatQuantity(formData.quantity, isGlobalCryptoAccount)}</span></div>
+                      )}
+                      {formData.note && (
+                        <div className="flex flex-col gap-1 pt-1"><span className="font-semibold text-gray-500">Note:</span> <span className="italic text-gray-600 bg-white p-3 rounded-xl border border-gray-100">{formData.note}</span></div>
+                      )}
+                    </div>
+                    
+                    {formError && <p className="text-rose-600 text-xs font-bold text-center pt-3">{formError}</p>}
+                    
+                    <div className="flex justify-end gap-3 pt-5 mt-4 border-t border-gray-100">
+                      <button type="button" onClick={() => setIsReviewMode(false)} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-bold text-[13px] hover:bg-gray-50 transition-colors">Back to Edit</button>
+                      <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 text-white font-black text-[13px] shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60">{isSaving ? "Saving..." : "Confirm & Save"}</button>
+                    </div>
                   </div>
                 )}
-
-                {/* NOTE (Cho phép sửa) */}
-                <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Note</label>
-                  <textarea 
-                    name="note" value={formData.note} onChange={handleChange} rows="2"
-                    placeholder="Optional details..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm resize-none"
-                  />
-                </div>
-
-                {formError && <p className="text-rose-600 text-xs font-bold text-center pt-1">{formError}</p>}
-
-                <div className="flex justify-end gap-3 pt-5 mt-2 border-t border-gray-100">
-                  <button type="button" onClick={closeFormModal} className="px-6 py-2.5 rounded-full border border-gray-200 text-gray-700 font-bold text-[13px] hover:bg-gray-50">Cancel</button>
-                  <button type="submit" disabled={isSaving} className="px-7 py-2.5 rounded-full bg-gradient-to-r from-rose-400 to-pink-500 text-white font-black text-[13px] shadow-md hover:-translate-y-0.5 transition-all disabled:opacity-60">{isSaving ? "Saving..." : "Save Transaction"}</button>
-                </div>
               </form>
             </div>
           </div>
