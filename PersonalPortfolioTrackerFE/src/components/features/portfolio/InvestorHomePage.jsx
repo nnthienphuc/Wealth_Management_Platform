@@ -281,7 +281,7 @@ export default function Dashboard() {
           {/* RECENT TRANSACTIONS */}
           <div ref={recentTxRef} className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50 flex flex-col">
              <div className="shrink-0 mb-4">
-               <h3 className="text-sm font-semibold text-gray-500 mb-1">Recent Transactions</h3>
+               <h3 className="text-sm font-semibold text-gray-500 mb-1">8 Recent BUY/SELL Transactions</h3>
                <p className="text-xs text-gray-400">Latest trading activity</p>
              </div>
              
