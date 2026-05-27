@@ -25,9 +25,7 @@ namespace PersonalPortfolioTracker.Data.Configurations
             builder.Property(e => e.CurrentBalance).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.InvestedBalance).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.InvestorId).HasColumnName("InvestorID");
-            builder.Property(e => e.Name)
-                .HasMaxLength(50)
-                .IsUnicode(false);
+            builder.Property(e => e.Name).HasMaxLength(50);
             builder.Property(e => e.Note).HasMaxLength(1000);
             builder.Property(e => e.TotalBalance).HasColumnType("decimal(28, 8)");
             builder.Property(e => e.Type)
