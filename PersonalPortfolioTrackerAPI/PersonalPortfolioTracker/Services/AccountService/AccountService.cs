@@ -185,8 +185,6 @@ namespace PersonalPortfolioTracker.Services.AccountService
                 throw new ArgumentException("Type is required.");
             if (string.IsNullOrWhiteSpace(dto.Currency))
                 throw new ArgumentException("Currency is required.");
-            if (dto.CurrentBalance < 0)
-                throw new ArgumentException("Current balance must be greater than or equal to 0.");
         }
 
     }

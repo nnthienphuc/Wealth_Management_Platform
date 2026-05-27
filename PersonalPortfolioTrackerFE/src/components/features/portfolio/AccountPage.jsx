@@ -155,7 +155,6 @@ export default function AccountsPage() {
   const validateForm = () => {
     const errs = {};
     if (!formData.name.trim()) errs.name = "Account Name is required.";
-    if (Number(formData.currentBalance) < 0) errs.currentBalance = "Must be >= 0.";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -446,12 +445,10 @@ export default function AccountsPage() {
                     />
                   </div>
 
-                  {/* FIELD INVESTED BALANCE ĐÃ ĐƯỢC GỠ BỎ */}
-
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Current Balance *</label>
                     <input 
-                      type="number" step="any" min="0"
+                      type="number" step="any"
                       name="currentBalance" value={formData.currentBalance} onChange={handleChange}
                       className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.currentBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
                     />
