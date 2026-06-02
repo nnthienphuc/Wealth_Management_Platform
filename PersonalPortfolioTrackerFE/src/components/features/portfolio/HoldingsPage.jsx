@@ -450,7 +450,7 @@ export default function HoldingsPage() {
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300 ${loading ? "opacity-30" : "opacity-100"}`}>
           {holdings.map((h) => {
             const isCrypto = checkIsCrypto(h.tickerTypeCode);
-            const totalInvested = h.investmentCost * h.quantity;
+            const totalInvested = h.totalInvestmentCost;
             const marketValue = h.marketPrice * h.quantity; 
             const unrealizedPnL = marketValue - totalInvested;
             return (
@@ -634,14 +634,14 @@ export default function HoldingsPage() {
                   </div>
 
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
-                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Total Invested</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Total Invested</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.totalInvestmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Value</span><span className="font-black text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Unrealized P&L</span>
-                    <span className={`font-black text-[15px] flex flex-wrap items-center gap-1.5 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity))}`}>
-                      {formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity), checkIsCrypto(detailHolding.tickerTypeCode), true)}
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"}`}>
-                        {formatPercent(detailHolding.investmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.investmentCost * detailHolding.quantity)) / (detailHolding.investmentCost * detailHolding.quantity) : 0)}
+                    <span className={`font-black text-[15px] flex flex-wrap items-center gap-1.5 ${getPnLColor((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.totalInvestmentCost))}`}>
+                      {formatMoney((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.totalInvestmentCost), checkIsCrypto(detailHolding.tickerTypeCode), true)}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.totalInvestmentCost)) >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"}`}>
+                        {formatPercent(detailHolding.totalInvestmentCost > 0 ? ((detailHolding.marketPrice * detailHolding.quantity) - (detailHolding.totalInvestmentCost)) / (detailHolding.totalInvestmentCost) : 0)}
                       </span>
                     </span>
                   </div>

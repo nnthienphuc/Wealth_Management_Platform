@@ -11,6 +11,7 @@
         decimal InvestmentCost,
         decimal MarketPrice,
         decimal Quantity,
+        decimal TotalInvestmentCost,
         decimal? TargetBuy,
         decimal? TargetSell,
         DateTime CreatedAt,
