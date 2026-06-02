@@ -185,6 +185,8 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                         IsDeleted = false
                     };
 
+                    _uow.Repository<Holdings>().Create(newHolding);
+
                     existingAccount.InvestedBalance += (decimal)netAmount;
                     existingAccount.CurrentBalance -= (decimal)netAmount;
                     existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
