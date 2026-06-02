@@ -13,7 +13,7 @@ const formatPrice = (price, currency) => {
   if (currency?.toUpperCase() === "USD") {
     return "$" + new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(num);
   }
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(num) + " ₫";
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(num) + " ₫";
 };
 
 const getEnglishTypeCode = (name) => {
