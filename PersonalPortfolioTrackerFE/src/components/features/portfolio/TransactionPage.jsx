@@ -8,14 +8,13 @@ import {
   Clock, History, Receipt, ShieldCheck
 } from "lucide-react";
 
-// === FORMATTERS & HELPERS ===
 const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
   if (value == null || isNaN(value)) return "0";
   const num = Number(value);
   if (isCrypto) {
     return "$" + new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(num);
   }
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: isVndDisplay ? 0 : 2 }).format(num) + " ₫";
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: isVndDisplay ? 0 : 2 }).format(num) + " ₫";
 };
 
 const formatQuantity = (value, isCrypto = false) => {

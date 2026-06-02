@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { 
   LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign, 
   Pencil, Trash2, X, Loader2, ArchiveRestore, Trash, Search,
-  ChevronDown, PiggyBank, Wallet, Landmark, CreditCard
+  ChevronDown, PiggyBank, Wallet, Landmark, CreditCard, Info
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,7 +24,7 @@ const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
   if (isCrypto) {
     return "$" + new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 8 }).format(num);
   }
-  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: isVndDisplay ? 0 : 2 }).format(num) + " ₫";
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: isVndDisplay ? 0 : 2 }).format(num) + " ₫";
 };
 
 const formatVndTotal = (value) => {
@@ -431,7 +431,7 @@ export default function HoldingsPage() {
           {!isTrashView && (
             <label className="flex items-center gap-2 text-[12px] font-medium text-gray-600 cursor-pointer ml-1">
               <input type="checkbox" checked={isOwned} onChange={handleOwnedToggle} className="w-4 h-4 rounded text-pink-500 focus:ring-pink-400 border-gray-300"/>
-              Hiện mã đang sở hữu
+              The ticket holders currently own
             </label>
           )}
 
@@ -473,7 +473,20 @@ export default function HoldingsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-y-2.5 gap-x-3 text-sm mt-1 border-b border-gray-50 pb-3">
                   <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Quantity</span><span className="font-bold text-gray-800 text-[12px]">{formatQuantity(h.quantity, isCrypto)}</span></div>
-                  <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Avg. Price</span><span className="font-bold text-gray-800 text-[12px]">{formatMoney(h.investmentCost, isCrypto, true)}</span></div>
+                  
+                  <div>
+                    <span className="text-gray-400 flex items-center gap-1 text-[9px] uppercase font-bold mb-0.5">
+                      Avg. Price
+                      <div className="relative group/info cursor-help">
+                        <Info size={10} className="text-gray-400 hover:text-pink-500 transition-colors" />
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden w-48 group-hover/info:block bg-gray-800 text-white text-[10px] normal-case tracking-normal rounded-lg p-2 z-50 text-center shadow-xl">
+                          Average price is rounded. Minor discrepancies may occur: Avg. Price * Quantity ≠ Total Invested.
+                        </div>
+                      </div>
+                    </span>
+                    <span className="font-bold text-gray-800 text-[12px]">{formatMoney(h.investmentCost, isCrypto, true)}</span>
+                  </div>
+
                   <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Total Invested</span><span className="font-bold text-gray-800 text-[12px]">{formatMoney(totalInvested, isCrypto, true)}</span></div>
                   <div><span className="text-gray-400 block text-[9px] uppercase font-bold mb-0.5">Unrealized P&L</span><span className={`font-bold text-[12px] ${getPnLColor(unrealizedPnL)}`}>{formatMoney(unrealizedPnL, isCrypto, true)}</span></div>
                 </div>
@@ -579,7 +592,7 @@ export default function HoldingsPage() {
           </div>
         )}
 
-        {/* MODAL 2: VIEW DETAILS (CÓ TÍNH TARGET %, GIỮ NGUYÊN CSS) */}
+        {/* MODAL 2: VIEW DETAILS */}
         {detailHolding && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity" onClick={() => setDetailHolding(null)}>
             <div className="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[92vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -604,10 +617,22 @@ export default function HoldingsPage() {
                   </div>
                 </div>
                 
-                {/* LƯU Ý GIAO DIỆN VIEW DETAIL (KHÔNG SỬA GÌ NGOÀI MÀU TARGET SELL) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-y-5 gap-x-4 text-sm mt-2">
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Quantity</span><span className="font-bold text-gray-900 text-[15px]">{formatQuantity(detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode))}</span></div>
-                  <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Avg. Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
+                  
+                  <div>
+                    <span className="text-gray-400 flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold mb-1">
+                      Avg. Price
+                      <div className="relative group/info cursor-help">
+                        <Info size={12} className="text-gray-400 hover:text-pink-500 transition-colors" />
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 hidden w-48 group-hover/info:block bg-gray-800 text-white text-[10px] normal-case tracking-normal rounded-lg p-2 z-50 text-center shadow-xl font-medium">
+                          Average price is rounded. Minor discrepancies may occur: Avg. Price * Quantity ≠ Total Invested.
+                        </div>
+                      </div>
+                    </span>
+                    <span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span>
+                  </div>
+
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Market Price</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.marketPrice, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   <div><span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Total Invested</span><span className="font-bold text-gray-900 text-[15px]">{formatMoney(detailHolding.investmentCost * detailHolding.quantity, checkIsCrypto(detailHolding.tickerTypeCode), true)}</span></div>
                   
@@ -621,7 +646,6 @@ export default function HoldingsPage() {
                     </span>
                   </div>
                   
-                  {/* LOGIC MỚI: TÍNH % TARGET BUY */}
                   <div>
                     <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Buy</span>
                     {detailHolding.targetBuy ? (
@@ -634,7 +658,6 @@ export default function HoldingsPage() {
                     ) : <span className="font-bold text-gray-500 text-[15px]">-</span>}
                   </div>
 
-                  {/* LOGIC MỚI: TÍNH % TARGET SELL (SỬ DỤNG MÀU CAM KHI < GIÁ VỐN ĐỂ TRÁNH NHẦM VỚI LỖ) */}
                   <div>
                     <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">Target Sell</span>
                     {detailHolding.targetSell ? (
