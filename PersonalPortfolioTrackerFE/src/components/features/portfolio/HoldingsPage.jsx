@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { NumericFormat } from 'react-number-format';
 
 const USD_TO_VND = 27000;
 
@@ -553,9 +554,39 @@ export default function HoldingsPage() {
                     )}
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Buy</label><input type="number" step="any" min="0" name="targetBuy" value={formData.targetBuy} onChange={handleChange} placeholder="(Optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-blue-600" /></div>
-                      <div><label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Sell</label><input type="number" step="any" min="0" name="targetSell" value={formData.targetSell} onChange={handleChange} placeholder="(Optional)" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-orange-600" /></div>
-                    </div>
+  <div>
+    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Buy</label>
+    <NumericFormat
+      thousandSeparator=","
+      decimalScale={8}
+      allowNegative={false}
+      name="targetBuy"
+      value={formData.targetBuy}
+      placeholder="(Optional)"
+      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-blue-600 transition-all"
+      onValueChange={(values) => {
+        const { value } = values;
+        setFormData(prev => ({ ...prev, targetBuy: value }));
+      }}
+    />
+  </div>
+  <div>
+    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Target Sell</label>
+    <NumericFormat
+      thousandSeparator=","
+      decimalScale={8}
+      allowNegative={false}
+      name="targetSell"
+      value={formData.targetSell}
+      placeholder="(Optional)"
+      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-orange-600 transition-all"
+      onValueChange={(values) => {
+        const { value } = values;
+        setFormData(prev => ({ ...prev, targetSell: value }));
+      }}
+    />
+  </div>
+</div>
                   </div>
                   <div className="md:col-span-7 flex flex-col min-h-0 bg-gray-50 rounded-2xl border border-gray-200 p-1">
                     <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl shrink-0"><label className="block text-sm font-bold text-gray-800">Trading Notes (Markdown)</label><div className="flex gap-2 bg-gray-100 p-1 rounded-lg"><button type="button" onClick={() => setNoteMode("edit")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'edit' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>Edit</button><button type="button" onClick={() => setNoteMode("preview")} className={`text-[11px] px-3 py-1.5 rounded-md font-bold transition-all ${noteMode === 'preview' ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>Preview</button></div></div>

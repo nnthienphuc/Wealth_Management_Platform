@@ -7,6 +7,7 @@ import {
   CreditCard, Pencil, Trash2, X, Loader2, 
   ArchiveRestore, Trash, Eye, Search 
 } from "lucide-react";
+import { NumericFormat } from 'react-number-format';
 
 const USD_TO_VND = 27000;
 
@@ -166,7 +167,6 @@ export default function AccountsPage() {
     setIsSaving(true);
     setFormError("");
     
-    // Gửi payload bỏ investedBalance
     const payload = {
       name: formData.name.trim(),
       type: formData.type,
@@ -447,10 +447,21 @@ export default function AccountsPage() {
 
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Current Balance *</label>
-                    <input 
-                      type="number" step="any"
-                      name="currentBalance" value={formData.currentBalance} onChange={handleChange}
-                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${fieldErrors.currentBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'}`}
+                    <NumericFormat
+                      thousandSeparator=","  
+                      decimalScale={2}       
+                      allowNegative={false}  
+                      value={formData.currentBalance}
+                      name="currentBalance"
+                      placeholder="0"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 transition-all"
+                      onValueChange={(values) => {
+                        const { value } = values; 
+                        setFormData(prev => ({
+                          ...prev,
+                          currentBalance: value
+                        }));
+                      }}
                     />
                   </div>
                 </div>

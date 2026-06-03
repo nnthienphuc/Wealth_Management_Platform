@@ -5,6 +5,7 @@ import {
   LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign, 
   ChevronDown, Loader2, Pencil, Trash2, X, Search 
 } from "lucide-react";
+import { NumericFormat } from 'react-number-format';
 
 // === FORMATTERS ===
 const formatPrice = (price, currency) => {
@@ -491,18 +492,23 @@ export default function TickerPage() {
                   </div>
 
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Market Price <span className="text-gray-400 font-normal">(Optional)</span></label>
-                    <input 
-                      type="number" 
-                      step="any" 
-                      min="0" 
-                      name="marketPrice" 
-                      value={formData.marketPrice} 
-                      onChange={handleChange} 
-                      placeholder="0.00" 
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 text-sm font-semibold transition-all" 
-                    />
-                  </div>
+  <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+    Market Price <span className="text-gray-400 font-normal">(Optional)</span>
+  </label>
+  <NumericFormat
+    thousandSeparator=","
+    decimalScale={8}
+    allowNegative={false}
+    name="marketPrice"
+    value={formData.marketPrice}
+    placeholder="0.00"
+    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 text-sm font-semibold transition-all"
+    onValueChange={(values) => {
+      const { value } = values;
+      setFormData(prev => ({ ...prev, marketPrice: value }));
+    }}
+  />
+</div>
 
                   <div className="col-span-2">
                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Company / Token Name *</label>

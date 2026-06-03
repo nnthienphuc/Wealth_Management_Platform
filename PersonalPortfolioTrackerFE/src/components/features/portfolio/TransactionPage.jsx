@@ -7,6 +7,7 @@ import {
   LineChart, Bitcoin, PieChart, ScrollText, CircleDollarSign,
   Clock, History, Receipt, ShieldCheck
 } from "lucide-react";
+import { NumericFormat } from 'react-number-format';
 
 const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
   if (value == null || isNaN(value)) return "0";
@@ -625,8 +626,38 @@ export default function TransactionPage() {
                         
                         {(formData.transactionType === "BUY" || formData.transactionType === "SELL") && (
                           <>
-                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Price *</label><input type="number" step="any" min="0" name="price" value={formData.price} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
-                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            <div>
+          <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Price *</label>
+          <NumericFormat
+            thousandSeparator=","
+            decimalScale={8}
+            allowNegative={false}
+            name="price"
+            value={formData.price}
+            required
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+            onValueChange={(values) => {
+              const { value } = values;
+              setFormData(prev => ({ ...prev, price: value }));
+            }}
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity *</label>
+          <NumericFormat
+            thousandSeparator=","
+            decimalScale={8}
+            allowNegative={false}
+            name="quantity"
+            value={formData.quantity}
+            required
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+            onValueChange={(values) => {
+              const { value } = values;
+              setFormData(prev => ({ ...prev, quantity: value }));
+            }}
+          />
+        </div>
                             <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Fee Rate (%)</label><input type="number" step="any" min="0" name="feeRate" value={formData.feeRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
                             {formData.transactionType === "SELL" && (
                               <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
@@ -636,13 +667,43 @@ export default function TransactionPage() {
 
                         {formData.transactionType === "DIVIDEND_CASH" && (
                           <>
-                            <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Gross Amount *</label><input type="number" step="any" min="0" name="grossAmount" value={formData.grossAmount} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                            <div>
+          <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Gross Amount *</label>
+          <NumericFormat
+            thousandSeparator=","
+            decimalScale={8}
+            allowNegative={false}
+            name="grossAmount"
+            value={formData.grossAmount}
+            required
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+            onValueChange={(values) => {
+              const { value } = values;
+              setFormData(prev => ({ ...prev, grossAmount: value }));
+            }}
+          />
+        </div>
                             <div><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">PIT Rate (%)</label><input type="number" step="any" min="0" name="pitRate" value={formData.pitRate} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
                           </>
                         )}
 
                         {formData.transactionType === "DIVIDEND_TICKER" && (
-                          <div className="col-span-2"><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity Added *</label><input type="number" step="any" min="0" name="quantity" value={formData.quantity} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm" /></div>
+                          <div className="col-span-2">
+        <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">Quantity Added *</label>
+        <NumericFormat
+          thousandSeparator=","
+          decimalScale={8}
+          allowNegative={false}
+          name="quantity"
+          value={formData.quantity}
+          required
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+          onValueChange={(values) => {
+            const { value } = values;
+            setFormData(prev => ({ ...prev, quantity: value }));
+          }}
+        />
+      </div>
                         )}
                       </div>
                     )}
