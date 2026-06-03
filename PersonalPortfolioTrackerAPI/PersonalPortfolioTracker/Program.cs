@@ -14,6 +14,7 @@ using PersonalPortfolioTracker.Services.HoldingService;
 using PersonalPortfolioTracker.Services.TickerService;
 using PersonalPortfolioTracker.Services.TickerTypeService;
 using PersonalPortfolioTracker.Services.TransactionService;
+using PersonalPortfolioTracker.Services.UploadImageService;
 using PersonalPortfolioTrackerAPI.Middlewares;
 using System.Text;
 
@@ -114,6 +115,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IHoldingService, HoldingService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IUploadImageService, UploadImageService>();
 // Add cac builder.Services.AddScoped o day
 
 // Controllers
