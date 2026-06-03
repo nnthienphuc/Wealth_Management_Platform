@@ -31,6 +31,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { NumericFormat } from "react-number-format";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 const USD_TO_VND = 27000;
 
@@ -152,12 +154,14 @@ const markdownComponents = {
       : props.src;
 
     return (
-      <img
-        {...props}
-        src={imageSrc}
-        className="max-w-full h-auto rounded-xl my-4 border border-gray-200 shadow-sm mx-auto block"
-        alt="markdown-img"
-      />
+      <Zoom>
+        <img
+          {...props}
+          src={imageSrc}
+          className="max-w-full h-auto rounded-xl my-4 border border-gray-200 shadow-sm mx-auto block"
+          alt="markdown-img"
+        />
+      </Zoom>
     );
   },
   code: ({ inline, children, ...props }) =>
@@ -307,10 +311,10 @@ export default function HoldingsPage() {
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     // Đẩy file vào hàm xử lý chung mà bạn đã viết
     processImageUpload(file);
-    
+
     // Reset lại value của input để user có thể chọn lại chính ảnh đó lần 2 nếu muốn
     e.target.value = null;
   };
