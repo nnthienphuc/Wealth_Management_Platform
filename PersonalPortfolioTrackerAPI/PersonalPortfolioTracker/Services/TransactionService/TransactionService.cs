@@ -198,7 +198,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             }
             else if (dto.TransactionType.ToUpperInvariant() == TransactionTypes.SELL)
             {
-                if (existingHolding == null || existingHolding.Quantity == 0)
+                if (existingHolding == null || existingHolding.Quantity <= 0)
                     throw new InvalidOperationException("You do not own this ticker to sell.");
 
                 if (dto.Quantity > existingHolding.Quantity)
@@ -283,8 +283,8 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             }
             else if (dto.TransactionType.ToUpperInvariant() == TransactionTypes.DIVIDEND_TICKER)
             {
-                if (existingHolding == null)
-                    throw new InvalidOperationException("You do not own this ticker to receive dividends.");
+                if (existingHolding == null || existingHolding.Quantity <= 0)
+                    throw new InvalidOperationException("You do not own this ticker to receive ticker dividends.");
 
                 await _uow.BeginTransactionAsync();
 
@@ -325,6 +325,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             }
             else if (dto.TransactionType.ToUpperInvariant() == TransactionTypes.DIVIDEND_CASH)
             {
+                if (existingHolding == null || existingHolding.Quantity <= 0)
+                    throw new InvalidOperationException("You do not own this ticker to receive cash dividends.");
+
                 await _uow.BeginTransactionAsync();
 
                 var PIT = dto.GrossAmount * dto.PITRate / 100;
