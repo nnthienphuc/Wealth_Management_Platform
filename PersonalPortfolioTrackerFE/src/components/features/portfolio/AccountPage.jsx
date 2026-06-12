@@ -38,7 +38,7 @@ export default function AccountsPage() {
   const [totalRecords, setTotalRecords] = useState(0); 
   const [keyword, setKeyword] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(12);
+  const [pageSize] = useState(15);
 
   const [loading, setLoading] = useState(false);
   const [isTrashView, setIsTrashView] = useState(false);
