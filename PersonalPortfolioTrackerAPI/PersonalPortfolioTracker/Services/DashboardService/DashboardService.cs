@@ -51,11 +51,12 @@ namespace PersonalPortfolioTracker.Services.DashboardService
 
             var realizedPnLs = await _uow.Repository<Transactions>()
                 .FindByCondition(tt => tt.Account.InvestorId == _investorID && (tt.TransactionType == TransactionTypes.SELL || tt.TransactionType == TransactionTypes.DIVIDEND_CASH))
-                .GroupBy(tt => tt.TransactionType)
+                .GroupBy(tt => new { tt.TransactionType ,tt.Account.Currency})
                 .Select(group => new{
-                    group.Key,
+                    group.Key.TransactionType,
                     NetAmount = group.Sum(tt => tt.NetAmount),
                     RealizedPnL = group.Sum(tt => tt.RealizedPnL),
+                    group.Key.Currency
                 })
                 .ToListAsync();
 
@@ -88,7 +89,11 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             decimal totalInvested = holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.TotalInvestmentCost * USD_TO_VND : h.TotalInvestmentCost);
             decimal unrealizedPnLRate = totalInvested == 0 ? 0 : (unrealizedPnL / totalInvested) * 100;
 
-            decimal totalRealizedPnL = realizedPnLs.Sum(r => r.Key == TransactionTypes.SELL ? (r.RealizedPnL ?? 0) : (r.NetAmount ?? 0));
+            //decimal totalRealizedPnL = realizedPnLs.Sum(tt => tt.Currency.ToUpperInvariant() == CurrencyConstants.USD ? (tt.TransactionType == TransactionTypes.SELL ? (decimal)tt.RealizedPnL * USD_TO_VND : (decimal)tt.NetAmount * USD_TO_VND) : (tt.TransactionType == TransactionTypes.SELL ? (decimal)tt.RealizedPnL : (decimal)(decimal)tt.NetAmount));
+
+            decimal totalRealizedPnL = realizedPnLs.Sum(tt =>
+                (tt.TransactionType == TransactionTypes.SELL ? (tt.RealizedPnL ?? 0) : (tt.NetAmount ?? 0)) * (tt.Currency?.ToUpperInvariant() == CurrencyConstants.USD ? USD_TO_VND : 1)
+            );
 
             decimal totalPortfolio = accounts.Sum(a => a.Currency.ToUpperInvariant() == CurrencyConstants.USD ? a.CurrentBalance * USD_TO_VND : a.CurrentBalance)
                                    + holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.TotalMarketValue * USD_TO_VND : h.TotalMarketValue);

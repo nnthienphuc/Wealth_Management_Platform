@@ -22,10 +22,11 @@ order by(UnrealizedPnLRate) desc
 
 
 /* 3. Realized P&L: */
-Select TransactionType, sum(NetAmount) as NetAmount, SUM([RealizedPnL]) as RealizedPnL
+Select TransactionType, Currency, sum(NetAmount) as NetAmount, SUM([RealizedPnL]) as RealizedPnL
 from Transactions
-where TransactionType = 'Sell' or TransactionType = 'DIVIDEND_CASH'
-group by (TransactionType)
+join Accounts on Accounts.ID = Transactions.AccountID
+where (TransactionType = 'Sell' or TransactionType = 'DIVIDEND_CASH') AND Accounts.InvestorID = '5D09266D-57EF-4807-97B8-53204A01D103'
+group by Transactions.TransactionType, Accounts.Currency
 
 /* 4. Recent BUY/SELL Transactions: */
 SELECT TOP (8)
