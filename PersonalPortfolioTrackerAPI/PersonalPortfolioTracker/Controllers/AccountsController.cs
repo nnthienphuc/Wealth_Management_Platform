@@ -14,6 +14,12 @@ namespace PersonalPortfolioTracker.Controllers
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
+        [HttpGet("total-balance")]
+        public async Task<IActionResult> GetTotalBalance()
+        {
+            return Ok(await _service.GetTotalBalance());
+        }
+
         [HttpGet]
         public async Task<IActionResult> FindByConditionAsync([FromQuery] string? accountName,
             [FromQuery] bool isDeleted = false,

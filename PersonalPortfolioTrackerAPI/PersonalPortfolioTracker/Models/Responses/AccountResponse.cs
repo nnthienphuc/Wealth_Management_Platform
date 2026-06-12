@@ -16,4 +16,6 @@
     );
 
     public record AccountTypeResponse(Guid AccountID, string AccountType, string AccountName);
+
+    public record TotalBalanceResponse(string Currency, decimal Total);
 }

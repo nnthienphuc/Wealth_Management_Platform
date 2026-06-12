@@ -18,6 +18,18 @@ namespace PersonalPortfolioTracker.Services.AccountService
             _investorID = CurrentUserHelper.GetInvestorId(httpContextAccessor.HttpContext.User);
         }
 
+        public async Task<IEnumerable<TotalBalanceResponse>> GetTotalBalance()
+        {
+            var query = await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID)
+                .GroupBy(tt => tt.Currency)
+                .Select(group => new TotalBalanceResponse(
+                    group.Key,
+                    group.Sum(tt => tt.TotalBalance)
+                )).ToListAsync();
+
+            return query;
+        }
+
         public async Task<PagedResponse<AccountResponse>> FindByConditionAsync(string? accountName, 
             bool isDeleted = false, 
             int pageNumber = 1, 

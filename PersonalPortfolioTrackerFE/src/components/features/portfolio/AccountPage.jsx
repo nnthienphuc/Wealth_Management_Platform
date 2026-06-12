@@ -38,10 +38,14 @@ export default function AccountsPage() {
   const [totalRecords, setTotalRecords] = useState(0); 
   const [keyword, setKeyword] = useState("");
   const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize] = useState(15);
+  const [pageSize] = useState(9);
 
   const [loading, setLoading] = useState(false);
   const [isTrashView, setIsTrashView] = useState(false);
+
+  // States lưu tổng tiền thực tế từ DB
+  const [totalVnd, setTotalVnd] = useState(0);
+  const [totalUsd, setTotalUsd] = useState(0);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
@@ -51,7 +55,6 @@ export default function AccountsPage() {
 
   const [detailAccount, setDetailAccount] = useState(null);
 
-  // Đã gỡ investedBalance
   const [formData, setFormData] = useState({
     name: "",
     type: "BANK",
@@ -78,7 +81,9 @@ export default function AccountsPage() {
     if (!isSilent) setLoading(true);
     try {
       const trimmed = keyword.trim();
-      const res = await axiosInstance.get("/Accounts", {
+
+      // GỌI ĐỒNG THỜI 2 API BẰNG PROMISE.ALL
+      const accountsPromise = axiosInstance.get("/Accounts", {
         params: {
           accountName: trimmed || undefined,
           isDeleted: isTrashView, 
@@ -86,14 +91,40 @@ export default function AccountsPage() {
           pageSize
         }
       });
-      const data = res.data?.result || res.data;
+
+      // Chỉ gọi lấy tổng tiền nếu không phải đang ở Trash View
+      const balancePromise = !isTrashView 
+        ? axiosInstance.get("/Accounts/total-balance") 
+        : Promise.resolve({ data: [] });
+
+      const [resAccounts, resBalance] = await Promise.all([accountsPromise, balancePromise]);
+
+      // 1. Xử lý danh sách Accounts
+      const data = resAccounts.data?.result || resAccounts.data;
       if (data && data.items) {
         setAccounts(data.items);
-        setTotalRecords(data.totalRecords); // CẬP NHẬT TỔNG SỐ
+        setTotalRecords(data.totalRecords);
       } else {
         setAccounts([]);
-        setTotalRecords(0); // RESET TỔNG SỐ
+        setTotalRecords(0);
       }
+
+      // 2. Xử lý số dư Tổng (API backend mới)
+      if (!isTrashView) {
+        const balances = resBalance.data?.result || resBalance.data || [];
+        let vnd = 0;
+        let usd = 0;
+        balances.forEach(b => {
+          if (b.currency?.toUpperCase() === "VND") vnd = b.total;
+          if (b.currency?.toUpperCase() === "USD") usd = b.total;
+        });
+        setTotalVnd(vnd);
+        setTotalUsd(usd);
+      } else {
+        setTotalVnd(0);
+        setTotalUsd(0);
+      }
+
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load accounts.");
     } finally {
@@ -115,8 +146,7 @@ export default function AccountsPage() {
     return () => clearTimeout(delay);
   }, [keyword]);
 
-  const totalVnd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "VND" ? sum + acc.totalBalance : sum, 0);
-  const totalUsd = isTrashView ? 0 : accounts.reduce((sum, acc) => acc.currency === "USD" ? sum + acc.totalBalance : sum, 0);
+  // Tính Grand Total bằng cách quy đổi USD sang VND
   const grandTotalVnd = totalVnd + (totalUsd * USD_TO_VND);
 
   const openFormModal = (account = null) => {
@@ -217,11 +247,11 @@ export default function AccountsPage() {
   };
 
   return (
-    <div className="p-8 md:p-12 min-h-screen bg-gray-50 flex justify-center">
+    <div className="p-6 md:p-8 lg:p-10 min-h-screen bg-gray-50 flex justify-center">
       <div className="w-full max-w-6xl">
         
         {/* HEADER */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-5">
           <div>
             <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
               {isTrashView ? "Recycle Bin (Accounts)" : "Account Management"}
@@ -262,7 +292,6 @@ export default function AccountsPage() {
               />
             </div>
 
-            {/* TOTAL RECORDS BÊN CẠNH THANH SEARCH */}
             {!isTrashView && !loading && (
               <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1">
                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{totalRecords} items</span>
@@ -296,7 +325,7 @@ export default function AccountsPage() {
         </div>
 
         {/* CARDS GRID */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 transition-opacity duration-300 ${loading ? "opacity-40 pointer-events-none" : "opacity-100"}`}>
           {!loading && accounts.length === 0 && (
             <p className="text-gray-500 text-sm col-span-full text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200">
               {isTrashView ? "Recycle bin is empty." : "No accounts found. Create one now!"}
@@ -305,58 +334,79 @@ export default function AccountsPage() {
 
           {accounts.map((acc) => {
             const visual = getIconByType(acc.type);
-            const createdText = formatDate(acc.createdAt);
             const balanceText = acc.currency === "USD" ? formatUsd(acc.totalBalance) : formatVnd(acc.totalBalance);
+            const isInvestment = ["SECURITIES", "CRYPTO"].includes(acc.type?.toUpperCase());
 
             return (
               <div
                 key={acc.id}
-                className={`bg-white rounded-[1.25rem] p-5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] hover:-translate-y-1 hover:shadow-[0_12px_25px_rgba(15,23,42,0.08)] transition-all border border-transparent hover:border-pink-50 flex items-center justify-between group cursor-pointer ${isTrashView ? "opacity-75 hover:opacity-100 grayscale-[20%]" : ""}`}
+                className={`bg-white rounded-2xl p-4 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all border border-transparent hover:border-pink-50 flex flex-col group cursor-pointer h-full ${isTrashView ? "opacity-75 hover:opacity-100 grayscale-[20%]" : ""}`}
                 onClick={() => setDetailAccount(acc)}
               >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${visual.bg} ${visual.text}`}>
-                    {visual.icon}
-                  </div>
-                  
-                  <div className="overflow-hidden">
-                    <div className="text-sm font-bold text-gray-900 truncate flex items-center gap-2">
-                      {acc.name}
-                      {isTrashView && (
-                        <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[9px] rounded-full uppercase tracking-widest font-bold">Deleted</span>
-                      )}
+                <div className="flex items-start justify-between mb-3 shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${visual.bg} ${visual.text}`}>
+                      {React.cloneElement(visual.icon, { size: 16 })}
                     </div>
-                    <div className="text-[15px] font-extrabold text-gray-900 mt-1 truncate">
-                      {balanceText}
-                    </div>
-                    {createdText && (
-                      <div className="text-[10px] text-gray-400 mt-1">
-                        Created: {createdText}
+                    <div className="truncate">
+                      <div className="text-[13px] font-bold text-gray-900 truncate flex items-center gap-1.5">
+                        {acc.name}
                       </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">{acc.type}</span>
+                        {isTrashView && (
+                          <span className="px-1 py-[1px] bg-red-100 text-red-600 text-[8px] rounded-sm uppercase tracking-widest font-bold">Deleted</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="flex gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); setDetailAccount(acc); }} title="View Details" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-emerald-500 transition-colors">
+                      <Eye size={12} />
+                    </button>
+                    
+                    {isTrashView ? (
+                      <button onClick={(e) => handleRestore(acc, e)} title="Restore" className="w-7 h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all">
+                        <ArchiveRestore size={12} strokeWidth={2.5} />
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); openFormModal(acc); }} title="Edit" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
+                          <Pencil size={12} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(acc, e); }} title="Delete" className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                          <Trash2 size={12} />
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
 
-                {/* ACTIONS */}
-                <div className="flex gap-2 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); setDetailAccount(acc); }} title="View Details" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-emerald-500 transition-colors">
-                    <Eye size={14} />
-                  </button>
+                {/* KHỐI XÁM - NỚI CHIỀU CAO LÊN 104PX VÀ THÊM SHRINK-0 ĐỂ KHÔNG BỊ ẨN TEXT */}
+                <div className="bg-gray-50/50 rounded-xl p-3 mb-2.5 border border-gray-100 h-[104px] flex flex-col justify-center shrink-0">
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5 shrink-0">{isInvestment ? "Total Balance" : "Balance"}</div>
+                  <div className="text-[17px] font-black text-gray-900 truncate shrink-0">{balanceText}</div>
                   
-                  {isTrashView ? (
-                    <button onClick={(e) => handleRestore(acc, e)} title="Restore" className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 transition-all">
-                      <ArchiveRestore size={14} strokeWidth={2.5} />
-                    </button>
-                  ) : (
-                    <>
-                      <button onClick={(e) => { e.stopPropagation(); openFormModal(acc); }} title="Edit" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(acc, e); }} title="Delete" className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors">
-                        <Trash2 size={14} />
-                      </button>
-                    </>
+                  {isInvestment && (
+                    <div className="grid grid-cols-2 gap-2 mt-1.5 pt-1.5 border-t border-gray-200/60 shrink-0">
+                      <div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Invested</div>
+                        <div className="text-[11px] font-bold text-gray-800 truncate">{acc.currency === "USD" ? formatUsd(acc.investedBalance) : formatVnd(acc.investedBalance)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[8px] font-bold text-gray-400 uppercase mb-0.5">Available Cash</div>
+                        <div className="text-[11px] font-bold text-gray-800 truncate">{acc.currency === "USD" ? formatUsd(acc.currentBalance) : formatVnd(acc.currentBalance)}</div>
+                      </div>
+                    </div>
                   )}
+                </div>
+
+                {/* THÔNG TIN PHỤ */}
+                <div className="flex justify-between items-center text-[9px] text-gray-400 font-medium px-1 mt-auto shrink-0">
+                  <div>{acc.brokerAccountNo && acc.brokerAccountNo !== "N/A" ? `Account No: ${acc.brokerAccountNo}` : "No Broker ID"}</div>
+                  <div>Updated: {formatDate(acc.updatedAt)}</div>
                 </div>
               </div>
             );
@@ -454,7 +504,9 @@ export default function AccountsPage() {
                       value={formData.currentBalance}
                       name="currentBalance"
                       placeholder="0"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none bg-gray-50 transition-all"
+                      className={`w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 bg-gray-50 transition-all ${
+                        fieldErrors.currentBalance ? 'border-red-400 focus:ring-red-200' : 'border-gray-200 focus:border-pink-400 focus:ring-pink-100'
+                      }`}
                       onValueChange={(values) => {
                         const { value } = values; 
                         setFormData(prev => ({
@@ -493,76 +545,83 @@ export default function AccountsPage() {
         {/* ========================================================
             MODAL 2: XEM CHI TIẾT TÀI KHOẢN (MODAL TRUNG TÂM LỚN)
         ======================================================== */}
-        {detailAccount && (
-          <div 
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity"
-            onClick={() => setDetailAccount(null)} // Click outside to close
-          >
+        {detailAccount && (() => {
+          const isInvestment = ["SECURITIES", "CRYPTO"].includes(detailAccount.type?.toUpperCase());
+          
+          return (
             <div 
-              className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200 overflow-hidden"
-              onClick={(e) => e.stopPropagation()} 
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity"
+              onClick={() => setDetailAccount(null)}
             >
-              
-              <button 
-                onClick={() => setDetailAccount(null)} 
-                className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-1.5 transition-all"
+              <div 
+                className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative animate-in fade-in zoom-in duration-200 overflow-hidden"
+                onClick={(e) => e.stopPropagation()} 
               >
-                <X size={20} />
-              </button>
+                <button 
+                  onClick={() => setDetailAccount(null)} 
+                  className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-1.5 transition-all"
+                >
+                  <X size={20} />
+                </button>
 
-              <div className="flex flex-col items-center mb-8 mt-2">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${getIconByType(detailAccount.type).bg} ${getIconByType(detailAccount.type).text}`}>
-                  {getIconByType(detailAccount.type).icon}
+                <div className="flex flex-col items-center mb-8 mt-2">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm ${getIconByType(detailAccount.type).bg} ${getIconByType(detailAccount.type).text}`}>
+                    {getIconByType(detailAccount.type).icon}
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900 text-center">{detailAccount.name}</h2>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-500 text-[11px] rounded-full uppercase tracking-widest font-bold mt-3">
+                    {detailAccount.type}
+                  </span>
                 </div>
-                <h2 className="text-2xl font-black text-gray-900 text-center">{detailAccount.name}</h2>
-                <span className="px-3 py-1 bg-gray-100 text-gray-500 text-[11px] rounded-full uppercase tracking-widest font-bold mt-3">
-                  {detailAccount.type}
-                </span>
-              </div>
 
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-6 border border-gray-200 mb-8 text-center shadow-sm">
-                <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">Total Balance</div>
-                <div className="text-3xl font-black text-gray-900">
-                  {detailAccount.currency === "USD" ? formatUsd(detailAccount.totalBalance) : formatVnd(detailAccount.totalBalance)}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl p-6 border border-gray-200 mb-8 text-center shadow-sm">
+                  <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-2">{isInvestment ? "Total Balance" : "Balance"}</div>
+                  <div className="text-3xl font-black text-gray-900">
+                    {detailAccount.currency === "USD" ? formatUsd(detailAccount.totalBalance) : formatVnd(detailAccount.totalBalance)}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-5 text-sm mb-8 px-2">
-                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                  <span className="text-gray-500 font-medium">Invested Balance</span>
-                  <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.investedBalance) : formatVnd(detailAccount.investedBalance)}</span>
-                </div>
-                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                  <span className="text-gray-500 font-medium">Current Balance</span>
-                  <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.currentBalance) : formatVnd(detailAccount.currentBalance)}</span>
-                </div>
-                {detailAccount.brokerAccountNo && detailAccount.brokerAccountNo !== "N/A" && (
+                <div className="space-y-4 text-sm mb-6 px-2">
+                  {isInvestment && (
+                    <>
+                      <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <span className="text-gray-500 font-medium">Invested Balance</span>
+                        <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.investedBalance) : formatVnd(detailAccount.investedBalance)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <span className="text-gray-500 font-medium">Available Cash</span>
+                        <span className="font-bold text-gray-900">{detailAccount.currency === "USD" ? formatUsd(detailAccount.currentBalance) : formatVnd(detailAccount.currentBalance)}</span>
+                      </div>
+                    </>
+                  )}
+                  {detailAccount.brokerAccountNo && detailAccount.brokerAccountNo !== "N/A" && (
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <span className="text-gray-500 font-medium">Broker Account</span>
+                      <span className="font-bold text-gray-900">{detailAccount.brokerAccountNo}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                    <span className="text-gray-500 font-medium">Broker Account</span>
-                    <span className="font-bold text-gray-900">{detailAccount.brokerAccountNo}</span>
+                    <span className="text-gray-500 font-medium">Created On</span>
+                    <span className="font-bold text-gray-900">{formatDate(detailAccount.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-medium">Last Updated</span>
+                    <span className="font-bold text-gray-900">{formatDate(detailAccount.updatedAt)}</span>
+                  </div>
+                </div>
+
+                {detailAccount.note && detailAccount.note !== "N/A" && (
+                  <div className="px-2 mt-2">
+                    <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Notes</div>
+                    <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-yellow-800 text-sm italic leading-relaxed">
+                      "{detailAccount.note}"
+                    </div>
                   </div>
                 )}
-                <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-                  <span className="text-gray-500 font-medium">Created On</span>
-                  <span className="font-bold text-gray-900">{formatDate(detailAccount.createdAt)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 font-medium">Last Updated</span>
-                  <span className="font-bold text-gray-900">{formatDate(detailAccount.updatedAt)}</span>
-                </div>
               </div>
-
-              {detailAccount.note && detailAccount.note !== "N/A" && (
-                <div className="px-2 mt-2">
-                  <div className="text-xs text-gray-400 uppercase tracking-wider font-bold mb-2">Notes</div>
-                  <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100 text-yellow-800 text-sm italic leading-relaxed">
-                    "{detailAccount.note}"
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       </div>
     </div>
