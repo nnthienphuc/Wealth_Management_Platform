@@ -12,6 +12,7 @@ services:
       SMTP_USERNAME: ${SMTP_USERNAME}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       ConnectionStrings__DefaultConnection: ${DB_CONNECTION}
+      TZ: Asia/Ho_Chi_Minh
     volumes:
       - ./PersonalPortfolioTrackerAPI/PersonalPortfolioTracker/Storage:/app/Storage
   frontend:
@@ -21,5 +22,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5176:80"
+    environment:
+      TZ: Asia/Ho_Chi_Minh
     depends_on:
       - api
