@@ -55,7 +55,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 .Select(group => new{
                     group.Key,
                     NetAmount = group.Sum(tt => tt.NetAmount),
-                    RealizedPnL = group.Sum(tt => tt.RealizedPnL)
+                    RealizedPnL = group.Sum(tt => tt.RealizedPnL),
                 })
                 .ToListAsync();
 
@@ -67,6 +67,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
                 .Select(tt => new
                 {
                     tt.Ticker.Symbol,
+                    tt.Account.Name,
                     tt.TransactionType,
                     tt.Quantity,
                     tt.Price,
@@ -172,7 +173,7 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             List<DashboardRecentBuyAndSellTransactions> topRecentTransactions = [];
 
             foreach (var trans in recentTransactions)
-                topRecentTransactions.Add(new DashboardRecentBuyAndSellTransactions(trans.Symbol, trans.TransactionType, trans.Quantity ?? 0, trans.Price ?? 0, trans.NetAmount ?? 0, trans.Currency, trans.TradeDate));
+                topRecentTransactions.Add(new DashboardRecentBuyAndSellTransactions(trans.Symbol, trans.Name, trans.TransactionType, trans.Quantity ?? 0, trans.Price ?? 0, trans.NetAmount ?? 0, trans.Currency, trans.TradeDate));
 
             #endregion
 

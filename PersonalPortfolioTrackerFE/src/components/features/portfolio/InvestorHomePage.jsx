@@ -53,7 +53,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [hideAmounts, setHideAmounts] = useState(false);
+  const [hideAmounts, setHideAmounts] = useState(true);
 
   const moneyMask = "********";
   const vnd = (num) => (hideAmounts ? moneyMask : formatVnd(num));
@@ -113,10 +113,53 @@ export default function Dashboard() {
   };
 
   const commonPieOptions = useMemo(() => ({
-    responsive: true, maintainAspectRatio: false, animation: false,
+    responsive: true, 
+    maintainAspectRatio: false, 
+    animation: false,
     plugins: {
       legend: { display: false },
       tooltip: {
+        enabled: false, // Tắt tooltip mặc định bị giới hạn bởi Canvas
+        external: (context) => {
+          const { chart, tooltip } = context;
+          let tooltipEl = document.getElementById('custom-chartjs-tooltip');
+
+          // Tạo thẻ div tooltip nếu chưa có
+          if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.id = 'custom-chartjs-tooltip';
+            tooltipEl.style.background = 'rgba(31, 41, 55, 0.9)'; // Màu nền xám đen
+            tooltipEl.style.borderRadius = '8px';
+            tooltipEl.style.color = 'white';
+            tooltipEl.style.pointerEvents = 'none';
+            tooltipEl.style.position = 'absolute';
+            tooltipEl.style.transform = 'translate(-50%, -100%)'; // Đẩy lên trên con trỏ chuột
+            tooltipEl.style.transition = 'all .1s ease';
+            tooltipEl.style.zIndex = '99999'; // Đảm bảo nổi lên trên tất cả mọi thứ
+            document.body.appendChild(tooltipEl);
+          }
+
+          // Ẩn tooltip nếu không hover vào chart
+          if (tooltip.opacity === 0) {
+            tooltipEl.style.opacity = 0;
+            return;
+          }
+
+          // Render nội dung Tooltip (Bao gồm ô vuông màu và text)
+          if (tooltip.body) {
+            const text = tooltip.body[0].lines[0];
+            const colors = tooltip.labelColors[0];
+            const colorSquare = `<span style="display:inline-block; width:10px; height:10px; margin-right:6px; background-color:${colors.backgroundColor}; border-radius:2px; flex-shrink:0;"></span>`;
+            
+            tooltipEl.innerHTML = `<div style="padding: 6px 10px; font-size: 11px; font-weight: 500; font-family: inherit; white-space: nowrap; display: flex; align-items: center;">${colorSquare}<span>${text}</span></div>`;
+          }
+
+          // Cập nhật vị trí trôi nổi dựa trên vị trí chuột trên trang web
+          const position = chart.canvas.getBoundingClientRect();
+          tooltipEl.style.opacity = 1;
+          tooltipEl.style.left = position.left + window.scrollX + tooltip.caretX + 'px';
+          tooltipEl.style.top = position.top + window.scrollY + tooltip.caretY - 8 + 'px';
+        },
         callbacks: {
           label: (ctx) => {
             const raw = Number(ctx.raw || 0);
@@ -194,14 +237,16 @@ export default function Dashboard() {
   };
 
   const AllocationBlock = ({ title, items, total, chartData }) => (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50 flex flex-col h-full">
-      <h3 className="text-sm font-semibold text-gray-500 text-center mb-4">{title}</h3>
+    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-pink-50 flex flex-col h-full relative">
+      <h3 className="text-sm font-semibold text-gray-500 text-center mb-3 shrink-0">{title}</h3>
       {items.length === 0 ? <div className="text-sm text-gray-400 text-center">No data.</div> : (
-        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-stretch flex-1">
-          <div className="w-52 h-52 shrink-0">
+        <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-stretch flex-1">
+          
+          <div className="w-48 h-48 shrink-0 flex items-center justify-center relative">
             <Pie data={chartData} options={commonPieOptions} />
           </div>
-          <div className={`flex-1 min-w-[220px] bg-white rounded-xl border border-gray-100 p-2 ${isExporting ? "overflow-visible h-auto" : "max-h-[220px] overflow-y-auto custom-scrollbar pr-1"}`}>
+          
+          <div className={`flex-1 min-w-[220px] bg-white rounded-xl border border-gray-100 p-2 ${isExporting ? "overflow-visible h-auto" : "max-h-[200px] overflow-y-auto custom-scrollbar pr-1"}`}>
             {items.map((x, idx) => (
               <div key={idx} className={`grid grid-cols-[12px_1fr_auto] gap-3 items-center p-2 text-xs ${idx !== items.length - 1 ? 'border-b border-gray-50' : ''}`}>
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: x.color }} />
@@ -219,23 +264,19 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-8 flex justify-center">
-      <div className="w-full max-w-6xl space-y-6">
+    <div className="py-6 px-6 md:px-10 lg:px-12 flex justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-6xl space-y-5">
         
         {/* HEADER */}
-        <div ref={headerRef} className="flex justify-between items-center mb-2">
+        <div ref={headerRef} className="flex justify-between items-center mb-1">
           <h1 className="text-2xl font-extrabold text-gray-800">Dashboard</h1>
           <div className={`flex items-center gap-3 ${isExporting ? 'invisible' : 'visible'}`}>
             <button onClick={() => setHideAmounts(!hideAmounts)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-pink-500 transition-colors">
               {hideAmounts ? <FaEyeSlash /> : <FaEye />}
             </button>
-            {/* <button onClick={handleExportPdf} disabled={isExporting} className="px-5 py-2.5 rounded-full bg-gradient-to-r from-gray-700 to-gray-900 text-white text-sm font-bold shadow-lg hover:-translate-y-0.5 transition-transform disabled:opacity-70">
-              Export PDF
-            </button> */}
           </div>
         </div>
 
-        {/* 4 CARDS (Từ DashboardZone1) */}
         <div ref={topCardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             { title: "Portfolio Value", badge: "Total", value: zone1?.portfolioValue || 0 },
@@ -243,7 +284,7 @@ export default function Dashboard() {
             { title: "Unrealized P&L", badge: "Open", value: zone1?.unrealizedPnL || 0, pnlRate: zone1?.unrealizedPnLRate || 0 },
             { title: "Realized P&L", badge: "Closed", value: zone1?.realizedPnL || 0 }
           ].map((c, i) => (
-            <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50">
+            <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-pink-50">
               <div className="text-sm font-semibold text-gray-500 mb-2 flex items-center gap-2">
                 {c.title}
                 <span className="px-2 py-0.5 rounded-full bg-pink-50 text-pink-500 text-[10px] uppercase font-bold">{c.badge}</span>
@@ -260,23 +301,20 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* ALLOCATION PIE CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div ref={allocAccountRef} className="h-full"><AllocationBlock title="Allocation by Account" items={accountList} total={accountTotal} chartData={accountChartData} /></div>
           <div ref={allocTickerRef} className="h-full"><AllocationBlock title="Allocation by Ticker" items={tickerList} total={tickerTotal} chartData={tickerChartData} /></div>
         </div>
 
-        {/* TOP PERFORMERS & TRANSACTIONS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           
           {/* TOP PERFORMERS */}
-          <div ref={topPerformersRef} className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50 flex flex-col">
+          <div ref={topPerformersRef} className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-pink-50 flex flex-col">
             <h3 className="text-sm font-semibold text-gray-500 mb-4 shrink-0">Top Performers</h3>
             {!topPerformers || topPerformers.length === 0 ? (
               <div className="text-sm text-gray-400 flex-1">No holdings yet.</div> 
             ) : (
-              // XÓA SCROLLBAR KHI EXPORT BẰNG OVERFLOW-VISIBLE
-              <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[340px]"}`}>
+              <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[320px]"}`}>
                 <table className="w-full text-sm text-left relative">
                   <thead className="text-xs text-gray-500 font-semibold sticky top-0 bg-white z-10">
                     <tr>
@@ -307,7 +345,7 @@ export default function Dashboard() {
           </div>
 
           {/* RECENT TRANSACTIONS */}
-          <div ref={recentTxRef} className="bg-white rounded-2xl p-5 shadow-sm border border-pink-50 flex flex-col">
+          <div ref={recentTxRef} className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-pink-50 flex flex-col">
              <div className="shrink-0 mb-4">
                <h3 className="text-sm font-semibold text-gray-500 mb-1">8 Recent BUY/SELL Transactions</h3>
                <p className="text-xs text-gray-400">Latest trading activity</p>
@@ -316,7 +354,7 @@ export default function Dashboard() {
              {!recentTransactions || recentTransactions.length === 0 ? (
                <div className="text-sm text-gray-400 flex-1">No transactions yet.</div> 
              ) : (
-               <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[340px]"}`}>
+               <div className={`custom-scrollbar pr-2 flex-1 ${isExporting ? "overflow-visible h-auto" : "overflow-y-auto max-h-[320px]"}`}>
                  <table className="w-full text-sm">
                    <tbody className="divide-y divide-gray-50">
                      {recentTransactions.map((t, i) => {
@@ -327,7 +365,7 @@ export default function Dashboard() {
                        return (
                          <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                            <td className="py-2.5">
-                             <div className="font-medium"><span className={t.transactionType === 'SELL' ? 'text-rose-600 font-bold' : 'text-blue-600 font-bold'}>{t.transactionType}</span> — {t.symbol}</div>
+                             <div className="font-medium"><span className={t.transactionType === 'SELL' ? 'text-rose-600 font-bold' : 'text-blue-600 font-bold'}>{t.transactionType}</span> - {t.accountName} : {t.symbol}</div>
                              <div className="text-xs text-gray-400 mt-0.5">{formatTradingDate(t.tradeDate)}</div>
                            </td>
                            <td className="py-2.5 text-right">
