@@ -89,10 +89,8 @@ namespace PersonalPortfolioTracker.Services.DashboardService
             decimal totalInvested = holdings.Sum(h => h.Currency.ToUpperInvariant() == CurrencyConstants.USD ? h.TotalInvestmentCost * USD_TO_VND : h.TotalInvestmentCost);
             decimal unrealizedPnLRate = totalInvested == 0 ? 0 : (unrealizedPnL / totalInvested) * 100;
 
-            //decimal totalRealizedPnL = realizedPnLs.Sum(tt => tt.Currency.ToUpperInvariant() == CurrencyConstants.USD ? (tt.TransactionType == TransactionTypes.SELL ? (decimal)tt.RealizedPnL * USD_TO_VND : (decimal)tt.NetAmount * USD_TO_VND) : (tt.TransactionType == TransactionTypes.SELL ? (decimal)tt.RealizedPnL : (decimal)(decimal)tt.NetAmount));
-
-            decimal totalRealizedPnL = realizedPnLs.Sum(tt =>
-                (tt.TransactionType == TransactionTypes.SELL ? (tt.RealizedPnL ?? 0) : (tt.NetAmount ?? 0)) * (tt.Currency?.ToUpperInvariant() == CurrencyConstants.USD ? USD_TO_VND : 1)
+            decimal totalRealizedPnL = realizedPnLs.Sum(tt => (tt.TransactionType == TransactionTypes.SELL ? (tt.RealizedPnL ?? 0) : (tt.NetAmount ?? 0)) 
+                * (tt.Currency?.ToUpperInvariant() == CurrencyConstants.USD ? USD_TO_VND : 1)
             );
 
             decimal totalPortfolio = accounts.Sum(a => a.Currency.ToUpperInvariant() == CurrencyConstants.USD ? a.CurrentBalance * USD_TO_VND : a.CurrentBalance)

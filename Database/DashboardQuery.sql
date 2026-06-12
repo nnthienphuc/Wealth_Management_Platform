@@ -17,7 +17,7 @@
   from Holdings as h
   join Tickers as t on h.TickerID = t.ID
   join Accounts as a on h.AccountID = a.ID
-  where a.InvestorID = '5D09266D-57EF-4807-97B8-53204A01D103' and h.Quantity > 0 and h.IsDeleted = 0
+  where a.InvestorID = '5D09266D-57EF-4807-97B8-53204A01D103' and h.Quantity > 0 and h.InvestmentCost > 0 and h.IsDeleted = 0
 order by(UnrealizedPnLRate) desc
 
 
