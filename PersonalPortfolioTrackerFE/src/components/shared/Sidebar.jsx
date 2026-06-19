@@ -234,7 +234,8 @@ export default function Sidebar() {
           v2.0 • Personal Portfolio
         </div>
         <div style={{ fontSize: 10, color: "#475569", textAlign: "center", marginBottom: 16 }}>
-          © 2026 Nguyễn Ngọc Thiên Phúc
+          © 2026 Nguyễn Ngọc Thiên Phúc.<br></br>
+          This is a personal portfolio tracker. Market data is delayed and for informational purposes only
         </div>
 
         <div
