@@ -111,6 +111,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITickerTypeService, TickerTypeService>();
 builder.Services.AddScoped<ITickerService, TickerService>();
+builder.Services.AddHostedService<TickerPriceUpdateWorker>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IHoldingService, HoldingService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
