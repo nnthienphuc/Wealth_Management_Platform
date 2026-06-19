@@ -230,12 +230,17 @@ export default function Sidebar() {
 
       {/* BOTTOM: version + copyright + logout */}
       <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 11, color: "#64748b", textAlign: "center", marginBottom: 2 }}>
-          v2.0 • Personal Portfolio
-        </div>
-        <div style={{ fontSize: 10, color: "#475569", textAlign: "center", marginBottom: 16 }}>
-          © 2026 Nguyễn Ngọc Thiên Phúc.<br></br>
-          This is a personal portfolio tracker. Market data is delayed and for informational purposes only
+        <div style={{ 
+          fontSize: 10, 
+          color: "#94a3b8", // Làm sáng màu chữ lên một chút để dễ đọc hơn trên nền tối
+          textAlign: "center", 
+          marginBottom: 16,
+          lineHeight: 1.6, // Thêm khoảng thở giữa các dòng
+          padding: "0 10px" // Tránh chữ dính sát vào mép
+        }}>
+          <span style={{ fontWeight: 700, color: "#cbd5e1" }}>v2.0 • Personal Portfolio</span><br/>
+          © 2026 Nguyễn Ngọc Thiên Phúc.<br/>
+          <span style={{ fontSize: 9, opacity: 0.8 }}>Data is delayed. For informational purposes only.</span>
         </div>
 
         <div
