@@ -101,7 +101,7 @@ public class TickerPriceUpdateWorker : BackgroundService
         {
             var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
 
-            _logger.LogInformation($"BINANCE API] Calling URL: { binanceUrl}");
+            _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
 
             try
             {
