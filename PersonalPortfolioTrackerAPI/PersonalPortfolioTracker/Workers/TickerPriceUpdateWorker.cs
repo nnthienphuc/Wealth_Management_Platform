@@ -2,6 +2,7 @@
 using PersonalPortfolioTracker.Common.Enum;
 using PersonalPortfolioTracker.Data.Entities;
 using PersonalPortfolioTracker.Data.Repositories;
+using System;
 using System.Text.Json.Serialization;
 
 public class TickerPriceUpdateWorker : BackgroundService
@@ -99,6 +100,8 @@ public class TickerPriceUpdateWorker : BackgroundService
         if (cryptos.Any())
         {
             var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
+
+            _logger.LogInformation($"BINANCE API] Calling URL: { binanceUrl}");
 
             try
             {
