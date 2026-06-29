@@ -48,14 +48,24 @@ builder.Services.AddDbContext<PortfolioTrackerContext>(options =>
         options.EnableSensitiveDataLogging();
 });
 
+// Ẩn để test chạy web trên điện thoại, test oke thì bật lại và set hard url lại
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowFrontend", policy =>
+//        policy
+//            .WithOrigins("http://localhost:5176")
+//            .AllowAnyHeader()
+//            .AllowAnyMethod()
+//            .AllowCredentials());
+//});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
         policy
-            .WithOrigins("http://localhost:5176")
+            .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
+            .AllowAnyMethod());
 });
 
 // JWT Authentication
