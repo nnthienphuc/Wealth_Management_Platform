@@ -552,7 +552,7 @@ export default function TransactionPage() {
               setFilterType(e.target.value);
               setPageNumber(1);
             }}
-            className="w-full xl:w-auto px-4 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[13px] font-semibold shadow-sm focus:border-pink-500 transition-colors cursor-pointer"
+            className="w-full xl:w-auto px-4 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[16px] md:text-[13px] font-semibold shadow-sm focus:border-pink-500 transition-colors cursor-pointer"
           >
             <option value="ALL_TYPE">All Types</option>
             <option value="BUY">BUY</option>
@@ -569,7 +569,7 @@ export default function TransactionPage() {
             <input
               type="text"
               placeholder="Search ticker..."
-              className="w-full pl-8 pr-3 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[13px] shadow-sm focus:border-pink-500 transition-colors"
+              className="w-full pl-8 pr-3 py-2 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[16px] md:text-[13px] shadow-sm focus:border-pink-500 transition-colors"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
@@ -584,7 +584,7 @@ export default function TransactionPage() {
                 setFromDate(e.target.value);
                 setPageNumber(1);
               }}
-              className="outline-none text-[12px] text-gray-600 bg-transparent w-[105px] cursor-pointer"
+              className="outline-none text-[16px] md:text-[12px] text-gray-600 bg-transparent w-[115px] md:w-[105px] cursor-pointer"
               title="From Date"
             />
             <span className="text-gray-300 mx-1">-</span>
@@ -596,7 +596,7 @@ export default function TransactionPage() {
                 setToDate(e.target.value);
                 setPageNumber(1);
               }}
-              className="outline-none text-[12px] text-gray-600 bg-transparent w-[105px] cursor-pointer"
+              className="outline-none text-[16px] md:text-[12px] text-gray-600 bg-transparent w-[115px] md:w-[105px] cursor-pointer"
               title="To Date"
             />
             {(fromDate || toDate) && (
@@ -1093,7 +1093,7 @@ export default function TransactionPage() {
                           onChange={handleChange}
                           required
                           disabled={!!editingTransaction}
-                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400"}`}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-[16px] md:text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400"}`}
                         >
                           <option value="">-- Select --</option>
                           {accounts.map((acc) => (
@@ -1145,7 +1145,7 @@ export default function TransactionPage() {
                           onChange={handleChange}
                           required
                           disabled={!!editingTransaction}
-                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400"}`}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-[16px] md:text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400"}`}
                         >
                           <option value="BUY">BUY</option>
                           <option value="SELL">SELL</option>
@@ -1167,7 +1167,7 @@ export default function TransactionPage() {
                           onChange={handleChange}
                           required
                           disabled={!!editingTransaction}
-                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400 cursor-pointer"}`}
+                          className={`w-full px-4 py-2.5 rounded-xl border outline-none text-[16px] md:text-sm font-medium ${editingTransaction ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed" : "bg-gray-50 border-gray-200 focus:border-pink-400 cursor-pointer"}`}
                         />
                       </div>
                     </div>
@@ -1189,7 +1189,7 @@ export default function TransactionPage() {
                                 name="price"
                                 value={formData.price}
                                 required
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm transition-all"
                                 onValueChange={(values) => {
                                   const { value } = values;
                                   setFormData((prev) => ({
@@ -1210,7 +1210,7 @@ export default function TransactionPage() {
                                 name="quantity"
                                 value={formData.quantity}
                                 required
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm transition-all"
                                 onValueChange={(values) => {
                                   const { value } = values;
                                   setFormData((prev) => ({
@@ -1231,7 +1231,7 @@ export default function TransactionPage() {
                                 name="feeRate"
                                 value={formData.feeRate}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm"
                               />
                             </div>
                             {formData.transactionType === "SELL" && (
@@ -1246,7 +1246,7 @@ export default function TransactionPage() {
                                   name="pitRate"
                                   value={formData.pitRate}
                                   onChange={handleChange}
-                                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm"
+                                  className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm"
                                 />
                               </div>
                             )}
@@ -1266,7 +1266,7 @@ export default function TransactionPage() {
                                 name="grossAmount"
                                 value={formData.grossAmount}
                                 required
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm transition-all"
                                 onValueChange={(values) => {
                                   const { value } = values;
                                   setFormData((prev) => ({
@@ -1287,7 +1287,7 @@ export default function TransactionPage() {
                                 name="pitRate"
                                 value={formData.pitRate}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm"
                               />
                             </div>
                           </>
@@ -1305,7 +1305,7 @@ export default function TransactionPage() {
                               name="quantity"
                               value={formData.quantity}
                               required
-                              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-sm transition-all"
+                              className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm transition-all"
                               onValueChange={(values) => {
                                 const { value } = values;
                                 setFormData((prev) => ({
@@ -1330,7 +1330,7 @@ export default function TransactionPage() {
                         onChange={handleChange}
                         rows="2"
                         placeholder="Optional details..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm resize-none"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-[16px] md:text-sm resize-none"
                       />
                     </div>
 
@@ -1542,7 +1542,7 @@ export default function TransactionPage() {
               </h2>
               <div className="flex gap-2 mb-4">
                 <select
-                  className="w-1/3 px-3 py-2 rounded-xl border border-gray-200 outline-none text-sm font-bold bg-gray-50"
+                  className="w-1/3 px-3 py-2 rounded-xl border border-gray-200 outline-none text-[16px] md:text-sm font-bold bg-gray-50"
                   value={tickerSearchType}
                   onChange={(e) => setTickerSearchType(e.target.value)}
                 >
@@ -1560,7 +1560,7 @@ export default function TransactionPage() {
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm font-medium bg-gray-50"
+                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-[16px] md:text-sm font-medium bg-gray-50"
                     value={tickerSearchKeyword}
                     onChange={(e) => setTickerSearchKeyword(e.target.value)}
                     autoFocus

@@ -750,7 +750,7 @@ export default function HoldingsPage() {
             <input
               type="text"
               placeholder="Search Symbol..."
-              className="w-full pl-9 pr-5 py-2.5 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[13px] shadow-sm focus:border-pink-500"
+              className="w-full pl-9 pr-5 py-2.5 rounded-full border border-pink-200 outline-none bg-white text-gray-800 text-[16px] md:text-[13px] shadow-sm focus:border-pink-500"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
             />
@@ -1109,7 +1109,7 @@ export default function HoldingsPage() {
                           name="targetBuy"
                           value={formData.targetBuy}
                           placeholder="(Optional)"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-blue-600 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-blue-600 transition-all"
                           onValueChange={(values) => {
                             const { value } = values;
                             setFormData((prev) => ({
@@ -1130,7 +1130,7 @@ export default function HoldingsPage() {
                           name="targetSell"
                           value={formData.targetSell}
                           placeholder="(Optional)"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-sm font-semibold text-orange-600 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-orange-600 transition-all"
                           onValueChange={(values) => {
                             const { value } = values;
                             setFormData((prev) => ({
@@ -1197,7 +1197,7 @@ export default function HoldingsPage() {
                           name="note"
                           value={formData.note}
                           onChange={handleChange}
-                          className="flex-1 w-full outline-none resize-none font-mono text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar"
+                          className="flex-1 w-full outline-none resize-none font-mono text-[16px] md:text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar"
                           placeholder="## Plan... (You can Ctrl+V to paste images here)"
                         />
                       ) : (
@@ -1254,7 +1254,7 @@ export default function HoldingsPage() {
               </h2>
               <div className="flex gap-3 mb-6">
                 <select
-                  className="w-1/3 px-3 py-2.5 rounded-xl border border-gray-200 outline-none text-sm font-bold bg-gray-50"
+                  className="w-1/3 px-3 py-2.5 rounded-xl border border-gray-200 outline-none text-base md:text-sm font-bold bg-gray-50"
                   value={tickerSearchType}
                   onChange={(e) => setTickerSearchType(e.target.value)}
                 >
@@ -1272,7 +1272,7 @@ export default function HoldingsPage() {
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium bg-gray-50"
+                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-[16px] md:text-sm font-medium bg-gray-50"
                     value={tickerSearchKeyword}
                     onChange={(e) => setTickerSearchKeyword(e.target.value)}
                     autoFocus
