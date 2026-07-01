@@ -94,6 +94,13 @@ export default function TickerPage() {
     currency: "VND",
   });
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTickers();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchTickers]);
+
   // Click Outside cho Dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -401,12 +408,12 @@ export default function TickerPage() {
               </div>
             )}
 
-            <button
+            {/* <button
               onClick={() => openFormModal()}
               className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
             >
               + ADD TICKER
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -472,7 +479,7 @@ export default function TickerPage() {
                     </span>
                   </div>
 
-                  <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  {/* <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -490,7 +497,7 @@ export default function TickerPage() {
                     >
                       <Trash2 size={12} />
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             );

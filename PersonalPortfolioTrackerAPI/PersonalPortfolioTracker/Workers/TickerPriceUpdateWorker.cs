@@ -78,9 +78,6 @@ public class TickerPriceUpdateWorker : BackgroundService
 
                             ticker.MarketPrice = latestPrice;
                             ticker.UpdatedAt = DateTime.Now;
-
-                            uow.Repository<Tickers>().Update(ticker);
-                            _logger.LogInformation($"[OK] Updated: {ticker.Symbol} -> {latestPrice}");
                         }
                     }
                 }
@@ -118,9 +115,6 @@ public class TickerPriceUpdateWorker : BackgroundService
                         {
                             ticker.MarketPrice = quote.Price;
                             ticker.UpdatedAt = DateTime.Now;
-
-                            uow.Repository<Tickers>().Update(ticker);
-                            _logger.LogInformation($"[BINANCE] Updated Crypto: {ticker.Symbol} -> ${quote.Price}");
                         }
                     }
                 }
