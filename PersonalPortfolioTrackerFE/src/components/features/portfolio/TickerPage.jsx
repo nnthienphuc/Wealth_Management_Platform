@@ -94,12 +94,12 @@ export default function TickerPage() {
     currency: "VND",
   });
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTickers();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [fetchTickers]);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetchTickers();
+  //   }, 30000);
+  //   return () => clearInterval(interval);
+  // }, [fetchTickers]);
 
   // Click Outside cho Dropdown
   useEffect(() => {
