@@ -94,12 +94,15 @@ export default function TickerPage() {
     currency: "VND",
   });
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     fetchTickers();
-  //   }, 30000);
-  //   return () => clearInterval(interval);
-  // }, [fetchTickers]);
+useEffect(() => {
+  const interval = setInterval(() => {
+    // Chỉ fetch nếu modal đang đóng
+    if (!isFormModalOpen) {
+      fetchTickers();
+    }
+  }, 30000);
+  return () => clearInterval(interval);
+}, [isFormModalOpen, fetchTickers]);
 
   // Click Outside cho Dropdown
   useEffect(() => {
