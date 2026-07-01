@@ -94,15 +94,15 @@ export default function TickerPage() {
     currency: "VND",
   });
 
-useEffect(() => {
-  const interval = setInterval(() => {
-    // Chỉ fetch nếu modal đang đóng
-    if (!isFormModalOpen) {
-      fetchTickers();
-    }
-  }, 30000);
-  return () => clearInterval(interval);
-}, [isFormModalOpen, fetchTickers]);
+// useEffect(() => {
+//   const interval = setInterval(() => {
+//     // Chỉ fetch nếu modal đang đóng
+//     if (!isFormModalOpen) {
+//       fetchTickers();
+//     }
+//   }, 30000);
+//   return () => clearInterval(interval);
+// }, [isFormModalOpen, fetchTickers]);
 
   // Click Outside cho Dropdown
   useEffect(() => {
@@ -321,7 +321,7 @@ useEffect(() => {
               )}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Browse supported assets and real-time market prices
+              Browse supported assets and real-time market prices. Delay 1min.
             </p>
           </div>
 
