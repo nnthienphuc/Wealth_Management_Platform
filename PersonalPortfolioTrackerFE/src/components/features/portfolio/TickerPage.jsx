@@ -321,7 +321,7 @@ export default function TickerPage() {
               )}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Browse supported assets and real-time market prices. Delay 1min.
+              View supported assets and near real-time market prices (1-minute delay).
             </p>
           </div>
 
