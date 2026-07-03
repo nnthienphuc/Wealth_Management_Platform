@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss()
   ],
   server: {
-    port: 5176,
+    port: 5177,
     open: true,
     proxy: {
       "/media": {
