@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 // Đọc biến môi trường
 builder.Configuration
     .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: false)
+    .AddJsonFile("appsettings.json", optional: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
@@ -40,6 +40,12 @@ var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? builder.Co
 
 // Kết nối DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or null! Please check appsettings or Render Environment Variables.");
+}
+
 builder.Services.AddDbContext<PortfolioTrackerContext>(options =>
 {
     options.UseSqlServer(connectionString);
@@ -143,7 +149,7 @@ app.UseSwaggerUI(c =>
 });
 
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 var storageSetting = builder.Configuration["Storage:RootPath"] ?? "Storage";
 string storageRoot;

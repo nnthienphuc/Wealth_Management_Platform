@@ -53,7 +53,8 @@ namespace PersonalPortfolioTracker.Services.UploadImageService
                 await file.CopyToAsync(stream);
             }
 
-            return $"/TickerNotes/{fileName}";
+            var backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:5034";
+            return $"{backendUrl}/TickerNotes/{fileName}";
         }
     }
 }
