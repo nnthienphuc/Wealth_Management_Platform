@@ -144,14 +144,26 @@ app.UseSwaggerUI(c =>
 
 
 //app.UseHttpsRedirection();
+
 var storageSetting = builder.Configuration["Storage:RootPath"] ?? "Storage";
-var storageRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, storageSetting));
+string storageRoot;
+
+// Kiểm tra nếu đang chạy trên Render (Linux Cloud) thì lưu vào phân vùng /tmp hợp lệ
+if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+{
+    storageRoot = Path.Combine("/tmp", storageSetting);
+}
+else
+{
+    storageRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, storageSetting));
+}
 
 Directory.CreateDirectory(storageRoot);
+Directory.CreateDirectory(Path.Combine(storageRoot, "TickerNotes"));
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Storage", "TickerNotes")),
+    FileProvider = new PhysicalFileProvider(Path.Combine(storageRoot, "TickerNotes")),
     RequestPath = "/TickerNotes"
 });
 

@@ -28,12 +28,21 @@ namespace PersonalPortfolioTracker.Services.UploadImageService
                 throw new InvalidOperationException("Invalid file type. Only JPG, PNG, GIF, WEBP are allowed.");
 
             string randomId = Guid.NewGuid().ToString("N");
-
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-
             string fileName = $"{randomId}_{timestamp}{ext}";
 
-            var storagePath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "TickerNotes");
+            string storagePath;
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+            if (environment == "Production")
+            {
+                storagePath = Path.Combine("/tmp", "Storage", "TickerNotes");
+            }
+            else
+            {
+                storagePath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "TickerNotes");
+            }
+
             if (!Directory.Exists(storagePath))
                 Directory.CreateDirectory(storagePath);
 
