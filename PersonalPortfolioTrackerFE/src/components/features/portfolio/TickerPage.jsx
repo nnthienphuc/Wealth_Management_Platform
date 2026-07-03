@@ -407,15 +407,15 @@ export default function TickerPage() {
               />
             </div>
 
-            {/* THÊM TOTAL RECORDS VÀO ĐÂY NHƯ Ý SẾP */}
-            {!loading && (
-              <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1">
-                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                  {totalRecords} items
-                </span>
-              </div>
-            )}
-
+            <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1 min-w-[90px]">
+  <span 
+    className={`text-[11px] font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${
+      loading ? "opacity-40" : "opacity-100"
+    }`}
+  >
+    {totalRecords} items
+  </span>
+</div>
             {/* <button
               onClick={() => openFormModal()}
               className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
