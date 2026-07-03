@@ -94,20 +94,57 @@ export default function TickerPage() {
     currency: "VND",
   });
 
-// const fetchTickersRef = useRef(fetchTickers);
+  // Fetch Tickers
+  const fetchTickers = useCallback(
+    async (isBackground = false) => {
+      if (!selectedType) return;
 
-// useEffect(() => {
-//   fetchTickersRef.current = fetchTickers;
-// }, [fetchTickers]);
+      // Chỉ bật loading nếu KHÔNG PHẢI là chạy ngầm
+      if (!isBackground) {
+        setLoading(true);
+        setError("");
+      }
 
-// useEffect(() => {
-//   const interval = setInterval(() => {
-//     if (!isFormModalOpen) {
-//       fetchTickersRef.current(); 
-//     }
-//   }, 30000);
-//   return () => clearInterval(interval);
-// }, [isFormModalOpen]);
+      try {
+        const trimmed = keyword.trim();
+        const res = await axiosInstance.get("/Tickers", {
+          params: {
+            tickerTypeId: selectedType,
+            symbol: trimmed || undefined,
+            pageNumber,
+            pageSize,
+          },
+        });
+
+        const data = res.data?.result || res.data;
+        if (data && data.items) {
+          setTickers(data.items);
+          setTotalPages(Math.ceil(data.totalRecords / pageSize));
+          setTotalRecords(data.totalRecords);
+        } else {
+          setTickers([]);
+          setTotalPages(1);
+          setTotalRecords(0);
+        }
+      } catch (err) {
+        if (!isBackground)
+          setError("Cannot load market assets from the server.");
+      } finally {
+        if (!isBackground) setLoading(false);
+      }
+    },
+    [selectedType, keyword, pageNumber, pageSize],
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isFormModalOpen) {
+        fetchTickers(true);
+      }
+    }, 60000); // 60000ms = 1min
+
+    return () => clearInterval(interval);
+  }, [fetchTickers, isFormModalOpen]);
 
   // Click Outside cho Dropdown
   useEffect(() => {
@@ -144,40 +181,6 @@ export default function TickerPage() {
     };
     fetchTypes();
   }, []);
-
-  // Fetch Tickers
-  const fetchTickers = useCallback(async () => {
-    if (!selectedType) return;
-
-    setLoading(true);
-    setError("");
-    try {
-      const trimmed = keyword.trim();
-      const res = await axiosInstance.get("/Tickers", {
-        params: {
-          tickerTypeId: selectedType,
-          symbol: trimmed || undefined,
-          pageNumber,
-          pageSize,
-        },
-      });
-
-      const data = res.data?.result || res.data;
-      if (data && data.items) {
-        setTickers(data.items);
-        setTotalPages(Math.ceil(data.totalRecords / pageSize));
-        setTotalRecords(data.totalRecords); // CẬP NHẬT TOTAL RECORDS
-      } else {
-        setTickers([]);
-        setTotalPages(1);
-        setTotalRecords(0); // RESET TOTAL RECORDS
-      }
-    } catch (err) {
-      setError("Cannot load market assets from the server.");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedType, keyword, pageNumber, pageSize]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -326,7 +329,8 @@ export default function TickerPage() {
               )}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              View supported assets and near real-time market prices (1-minute delay).
+              View supported assets and near real-time market prices (1-minute
+              delay).
             </p>
           </div>
 
@@ -408,14 +412,14 @@ export default function TickerPage() {
             </div>
 
             <div className="hidden md:flex items-center px-4 h-10 border-l border-gray-200 ml-1 min-w-[90px]">
-  <span 
-    className={`text-[11px] font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${
-      loading ? "opacity-40" : "opacity-100"
-    }`}
-  >
-    {totalRecords} items
-  </span>
-</div>
+              <span
+                className={`text-[11px] font-bold text-gray-400 uppercase tracking-widest transition-opacity duration-200 ${
+                  loading ? "opacity-40" : "opacity-100"
+                }`}
+              >
+                {totalRecords} items
+              </span>
+            </div>
             {/* <button
               onClick={() => openFormModal()}
               className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
