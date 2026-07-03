@@ -12,7 +12,21 @@ export default defineConfig({
     port: 5176,
     open: true,
     proxy: {
-      "/media": "http://localhost:5034",
+      "/media": {
+        target: "http://localhost:5034",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/api/v2": {
+        target: "http://localhost:5034",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/TickerNotes": {
+        target: "http://localhost:5034",
+        changeOrigin: true,
+        secure: false,
+      }
     },
   },
   resolve: {
