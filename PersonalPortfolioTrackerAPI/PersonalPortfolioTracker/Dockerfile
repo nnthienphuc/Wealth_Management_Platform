@@ -18,8 +18,6 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-COPY --from=build /app/appsettings.json .
-
 EXPOSE 5034
 ENV ASPNETCORE_URLS=http://+:5034
 ENV ASPNETCORE_ENVIRONMENT=Production
