@@ -26,7 +26,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 
 // Đọc biến môi trường
 builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
+    .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
