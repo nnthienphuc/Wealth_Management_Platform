@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
@@ -154,10 +155,11 @@ app.UseHttpsRedirection();
 var storageSetting = builder.Configuration["Storage:RootPath"] ?? "Storage";
 string storageRoot;
 
-// Kiểm tra nếu đang chạy trên Render (Linux Cloud) thì lưu vào phân vùng /tmp hợp lệ
-if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+bool isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+if (isRunningInDocker)
 {
-    storageRoot = Path.Combine("/tmp", storageSetting);
+    storageRoot = Path.Combine("/app", storageSetting);
 }
 else
 {
@@ -165,11 +167,12 @@ else
 }
 
 Directory.CreateDirectory(storageRoot);
-Directory.CreateDirectory(Path.Combine(storageRoot, "TickerNotes"));
+var tickerNotesPath = Path.Combine(storageRoot, "TickerNotes");
+Directory.CreateDirectory(tickerNotesPath);
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(storageRoot, "TickerNotes")),
+    FileProvider = new PhysicalFileProvider(tickerNotesPath),
     RequestPath = "/TickerNotes"
 });
 

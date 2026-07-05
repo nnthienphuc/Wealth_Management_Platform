@@ -1,6 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using PersonalPortfolioTracker.Common.Helper;
+using System;
+using System.IO;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace PersonalPortfolioTracker.Services.UploadImageService
 {
@@ -8,13 +14,16 @@ namespace PersonalPortfolioTracker.Services.UploadImageService
     {
         private readonly Guid _investorID;
         private readonly HttpContext _httpContext;
-        public UploadImageService(IHttpContextAccessor httpContextAccessor)
+        private readonly IConfiguration _configuration;
+
+        public UploadImageService(IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
         {
             if (httpContextAccessor.HttpContext == null)
                 throw new ArgumentNullException(nameof(httpContextAccessor));
 
             _httpContext = httpContextAccessor.HttpContext;
             _investorID = CurrentUserHelper.GetInvestorId(_httpContext.User);
+            _configuration = configuration;
         }
 
         public async Task<string> UploadTickerNoteImageAsync(IFormFile file)
@@ -31,29 +40,71 @@ namespace PersonalPortfolioTracker.Services.UploadImageService
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
             string fileName = $"{randomId}_{timestamp}{ext}";
 
-            string storagePath;
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
+            // ==================== LUỒNG PRODUCTION (AZURE CLOUD) ====================
             if (environment == "Production")
             {
-                storagePath = Path.Combine("/tmp", "Storage", "TickerNotes");
+                // Đọc Connection String từ biến môi trường AzureStorage__ConnectionString trên Render
+                var connectionString = _configuration["AzureStorage:ConnectionString"];
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new InvalidOperationException("Azure Storage ConnectionString is missing on Render settings.");
+                }
+
+                string containerName = "tickernotes";
+
+                var blobServiceClient = new BlobServiceClient(connectionString);
+                var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+                // Tự động tạo container nếu chưa có và mở quyền đọc Public cho ảnh hiển thị trên Web
+                await containerClient.CreateIfNotExistsAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
+
+                var blobClient = containerClient.GetBlobClient(fileName);
+
+                // Upload thẳng luồng dữ liệu lên Azure Blob
+                using (var stream = file.OpenReadStream())
+                {
+                    await blobClient.UploadAsync(stream, true);
+                }
+
+                // Trả về URL tuyệt đối (ví dụ: https://portfoliotrackerstorage.blob.core.windows.net/tickernotes/...)
+                return blobClient.Uri.ToString();
             }
+
+            // ==================== LUỒNG DEVELOPMENT (LOCAL HOST - ĐỒNG BỘ CHUẨN) ====================
             else
             {
-                storagePath = Path.Combine(Directory.GetCurrentDirectory(), "Storage", "TickerNotes");
+                // Đọc config Storage:RootPath giống hệt Program.cs, nếu không có thì mặc định là "Storage"
+                var storageSetting = _configuration["Storage:RootPath"] ?? "Storage";
+                string storageRoot;
+
+                // Check xem có đang nằm trong Docker container hay không
+                bool isRunningInDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+                if (isRunningInDocker)
+                {
+                    storageRoot = Path.Combine("/app", storageSetting);
+                }
+                else
+                {
+                    storageRoot = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), storageSetting));
+                }
+
+                string storagePath = Path.Combine(storageRoot, "TickerNotes");
+
+                if (!Directory.Exists(storagePath))
+                    Directory.CreateDirectory(storagePath);
+
+                var filePath = Path.Combine(storagePath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                return $"/TickerNotes/{fileName}";
             }
-
-            if (!Directory.Exists(storagePath))
-                Directory.CreateDirectory(storagePath);
-
-            var filePath = Path.Combine(storagePath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return $"/TickerNotes/{fileName}";
         }
     }
 }
