@@ -92,7 +92,7 @@ public class TickerPriceUpdateWorker : BackgroundService
         if (cryptos.Any())
         {
 
-           var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
+            var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
 
             _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
 
@@ -121,6 +121,7 @@ public class TickerPriceUpdateWorker : BackgroundService
             }
         }
     }
+}
 
 public class VpsStockData
 {
