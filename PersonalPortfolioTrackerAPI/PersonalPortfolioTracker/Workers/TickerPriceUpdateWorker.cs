@@ -101,11 +101,9 @@ public class TickerPriceUpdateWorker : BackgroundService
         var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
         if (!cryptos.Any()) return;
 
-        // MEXC API không chặn IP Cloud.
-        // Format: https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT
         foreach (var ticker in cryptos)
         {
-            string symbol = ticker.Symbol.ToUpper().Replace("/", "").Replace("-", "");
+            string symbol = ticker.Symbol.ToUpper();
             var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}";
 
             try
@@ -122,7 +120,7 @@ public class TickerPriceUpdateWorker : BackgroundService
             {
                 _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {url}\n{e.Message}");
             }
-            await Task.Delay(300); // Tránh bị giới hạn request
+            await Task.Delay(120);
         }
     }
 }
