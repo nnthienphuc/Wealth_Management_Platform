@@ -119,7 +119,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-Console.WriteLine(">>>> Using ConnectionString: " + connectionString);
+//Console.WriteLine(">>>> Using ConnectionString: " + connectionString);
 
 // Services & DI
 builder.Services.AddHttpContextAccessor(); // để inject được IHttpContextAccessor
