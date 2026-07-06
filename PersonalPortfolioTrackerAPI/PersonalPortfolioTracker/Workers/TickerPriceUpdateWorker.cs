@@ -117,7 +117,7 @@ public class TickerPriceUpdateWorker : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogWarning($"[FAIL] Bybit API error for {symbol}: {e.Message}");
+                _logger.LogWarning($"[FAIL] Bybit API error for {symbol}: {bybitUrl}");
             }
         }
     }
