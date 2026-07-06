@@ -83,34 +83,64 @@ public class TickerPriceUpdateWorker : BackgroundService
         catch (Exception e) { _logger.LogWarning($"[FAIL] VPS API error: {e.Message}"); }
     }
 
+    //private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
+    //{
+    //    var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
+    //    if (!cryptos.Any()) return;
+
+    //    var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
+    //    _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
+
+    //    try
+    //    {
+    //        var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
+    //        if (binanceQuotes != null && binanceQuotes.Any())
+    //        {
+    //            foreach (var ticker in cryptos)
+    //            {
+    //                string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
+    //                var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
+    //                if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
+    //                {
+    //                    ticker.MarketPrice = price;
+    //                    ticker.UpdatedAt = DateTime.Now;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    catch (Exception e)
+    //    {
+    //        _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
+    //    }
+    //}
+
     private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
     {
         var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
         if (!cryptos.Any()) return;
 
-        var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
-        _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
-
-        try
+        // MEXC API không chặn IP Cloud.
+        // Format: https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT
+        foreach (var ticker in cryptos)
         {
-            var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
-            if (binanceQuotes != null && binanceQuotes.Any())
+            string symbol = ticker.Symbol.ToUpper().Replace("/", "").Replace("-", "");
+            var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}USDT";
+
+            try
             {
-                foreach (var ticker in cryptos)
+                var response = await _httpClient.GetFromJsonAsync<MexcQuote>(url);
+                if (response != null && decimal.TryParse(response.Price, out decimal price) && price > 0)
                 {
-                    string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
-                    var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
-                    if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
-                    {
-                        ticker.MarketPrice = price;
-                        ticker.UpdatedAt = DateTime.Now;
-                    }
+                    ticker.MarketPrice = price;
+                    ticker.UpdatedAt = DateTime.Now;
+                    _logger.LogInformation($"[MEXC] Updated {ticker.Symbol} to {price}");
                 }
             }
-        }
-        catch (Exception e)
-        {
-            _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
+            catch (Exception e)
+            {
+                _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {e.Message}");
+            }
+            await Task.Delay(300); // Tránh bị giới hạn request
         }
     }
 }
@@ -129,4 +159,10 @@ public class BinanceQuote
     public string Symbol { get; set; }
     [JsonPropertyName("price")]
     public string Price { get; set; }
+}
+
+public class MexcQuote
+{
+    [JsonPropertyName("symbol")] public string Symbol { get; set; }
+    [JsonPropertyName("price")] public string Price { get; set; }
 }
