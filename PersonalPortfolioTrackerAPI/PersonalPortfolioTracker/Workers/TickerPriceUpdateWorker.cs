@@ -85,40 +85,32 @@ public class TickerPriceUpdateWorker : BackgroundService
 
     private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
     {
-        var cryptos = activeTickers
-        .Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO)
-        .ToList();
+        var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
+        if (!cryptos.Any()) return;
 
-        if (cryptos.Any())
+        var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
+        _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
+
+        try
         {
-
-            var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
-
-            _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
-
-            try
+            var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
+            if (binanceQuotes != null && binanceQuotes.Any())
             {
-                var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
-
-                if (binanceQuotes != null && binanceQuotes.Any())
+                foreach (var ticker in cryptos)
                 {
-                    foreach (var ticker in cryptos)
+                    string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
+                    var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
+                    if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
                     {
-                        string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
-
-                        var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
-                        if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
-                        {
-                            ticker.MarketPrice = price;
-                            ticker.UpdatedAt = DateTime.Now;
-                        }
+                        ticker.MarketPrice = price;
+                        ticker.UpdatedAt = DateTime.Now;
                     }
                 }
             }
-            catch (Exception e)
-            {
-                _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
-            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
         }
     }
 }
@@ -127,7 +119,6 @@ public class VpsStockData
 {
     [JsonPropertyName("sym")]
     public string Symbol { get; set; }
-
     [JsonPropertyName("lastPrice")]
     public decimal LastPrice { get; set; }
 }
@@ -136,28 +127,6 @@ public class BinanceQuote
 {
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; }
-
     [JsonPropertyName("price")]
     public string Price { get; set; }
-}
-
-public class BybitResponse
-{
-    [JsonPropertyName("result")]
-    public BybitResult Result { get; set; }
-}
-
-public class BybitResult
-{
-    [JsonPropertyName("list")]
-    public List<BybitTicker> List { get; set; }
-}
-
-public class BybitTicker
-{
-    [JsonPropertyName("symbol")]
-    public string Symbol { get; set; }
-
-    [JsonPropertyName("lastPrice")]
-    public string LastPrice { get; set; }
 }
