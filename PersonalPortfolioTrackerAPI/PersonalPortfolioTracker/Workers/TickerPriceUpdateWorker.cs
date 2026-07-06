@@ -124,7 +124,7 @@ public class TickerPriceUpdateWorker : BackgroundService
         foreach (var ticker in cryptos)
         {
             string symbol = ticker.Symbol.ToUpper().Replace("/", "").Replace("-", "");
-            var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}USDT";
+            var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}";
 
             try
             {
@@ -138,7 +138,7 @@ public class TickerPriceUpdateWorker : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {e.Message}");
+                _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {url}\n{e.Message}");
             }
             await Task.Delay(300); // Tránh bị giới hạn request
         }
