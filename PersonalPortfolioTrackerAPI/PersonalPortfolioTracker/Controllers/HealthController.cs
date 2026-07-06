@@ -8,6 +8,7 @@ namespace PersonalPortfolioTracker.Controllers
     public class HealthController : BaseController
     {
         [HttpGet]
+        [HttpHead]
         public IActionResult Get()
         {
             return Ok(new { status = "alive", time = DateTime.UtcNow });
