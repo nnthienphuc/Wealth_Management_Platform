@@ -843,7 +843,7 @@ export default function TransactionPage() {
             >
               <button
                 onClick={() => setDetailTransaction(null)}
-                className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all z-10"
+                className="absolute top-6 right-6 z-20 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-200 rounded-full p-2 transition-all"
               >
                 <X size={20} />
               </button>
