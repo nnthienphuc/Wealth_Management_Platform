@@ -34,7 +34,7 @@ public class TickerPriceUpdateWorker : BackgroundService
                 _logger.LogError(ex, "Error updating stock prices from VPS.");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(4), stoppingToken);
         }
     }
 
@@ -88,26 +88,31 @@ public class TickerPriceUpdateWorker : BackgroundService
         var cryptos = activeTickers.Where(t => t.TickerType?.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
         if (!cryptos.Any()) return;
 
-        var coinIds = string.Join(",", cryptos.Select(t => t.Symbol.ToLower()));
-        var geckoUrl = $"https://api.coingecko.com/api/v3/simple/price?ids={coinIds}&vs_currencies=usd";
-
-        try
+        foreach (var ticker in cryptos)
         {
-            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, Dictionary<string, decimal>>>(geckoUrl);
-            if (response != null)
+            string symbol = ticker.Symbol.ToUpper().Replace("/", "").Replace("-", "") + "USDT";
+            var bybitUrl = $"https://api.bybit.com/v5/market/tickers?category=spot&symbol={symbol}";
+
+            try
             {
-                foreach (var ticker in cryptos)
+                var response = await _httpClient.GetFromJsonAsync<BybitResponse>(bybitUrl);
+
+                if (response?.Result?.List != null && response.Result.List.Any())
                 {
-                    string coinId = ticker.Symbol.ToLower();
-                    if (response.TryGetValue(coinId, out var priceData) && priceData.TryGetValue("usd", out decimal price))
+                    var quote = response.Result.List.FirstOrDefault();
+                    if (quote != null && decimal.TryParse(quote.LastPrice, out decimal price) && price > 0)
                     {
                         ticker.MarketPrice = price;
                         ticker.UpdatedAt = DateTime.Now;
                     }
                 }
+                await Task.Delay(200);
+            }
+            catch (Exception e)
+            {
+                _logger.LogWarning($"[FAIL] Bybit API error for {symbol}: {e.Message}");
             }
         }
-        catch (Exception e) { _logger.LogWarning($"[FAIL] CoinGecko API error: {e.Message}"); }
     }
 
     //private async Task UpdatePricesAsync()
@@ -249,4 +254,25 @@ public class BinanceQuote
 
     [JsonPropertyName("price")]
     public string Price { get; set; }
+}
+
+public class BybitResponse
+{
+    [JsonPropertyName("result")]
+    public BybitResult Result { get; set; }
+}
+
+public class BybitResult
+{
+    [JsonPropertyName("list")]
+    public List<BybitTicker> List { get; set; }
+}
+
+public class BybitTicker
+{
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; }
+
+    [JsonPropertyName("lastPrice")]
+    public string LastPrice { get; set; }
 }
