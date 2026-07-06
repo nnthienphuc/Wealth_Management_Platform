@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PersonalPortfolioTracker.Common.Enum;
+using PersonalPortfolioTracker.Common.Helper;
 using PersonalPortfolioTracker.Data.Entities;
 using PersonalPortfolioTracker.Data.Repositories;
 using System;
@@ -58,7 +59,7 @@ public class TickerPriceUpdateWorker : BackgroundService
                 foreach (var ticker in stocks)
                 {
                     var quote = quotes.FirstOrDefault(q => q.Symbol.Equals(ticker.Symbol, StringComparison.OrdinalIgnoreCase));
-                    if (quote?.LastPrice > 0) { ticker.MarketPrice = quote.LastPrice * 1000; ticker.UpdatedAt = DateTime.Now; }
+                    if (quote?.LastPrice > 0) { ticker.MarketPrice = quote.LastPrice * 1000; ticker.UpdatedAt = VietnamTime.Now(); }
                 }
             }
         }
@@ -112,7 +113,7 @@ public class TickerPriceUpdateWorker : BackgroundService
                 if (response != null && decimal.TryParse(response.Price, out decimal price) && price > 0)
                 {
                     ticker.MarketPrice = price;
-                    ticker.UpdatedAt = DateTime.Now;
+                    ticker.UpdatedAt = VietnamTime.Now();
                     _logger.LogInformation($"[MEXC] Updated {ticker.Symbol} to {price}");
                 }
             }
