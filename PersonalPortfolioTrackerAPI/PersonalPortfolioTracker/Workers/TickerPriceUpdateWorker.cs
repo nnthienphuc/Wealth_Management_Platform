@@ -15,9 +15,15 @@ public class TickerPriceUpdateWorker : BackgroundService
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _httpClient = new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-        _httpClient.Timeout = TimeSpan.FromSeconds(120);
+
+        var handler = new SocketsHttpHandler();
+        _httpClient = new HttpClient(handler);
+
+        _httpClient.DefaultRequestHeaders.Clear(); 
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+        //_httpClient.Timeout = TimeSpan.FromSeconds(120);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
