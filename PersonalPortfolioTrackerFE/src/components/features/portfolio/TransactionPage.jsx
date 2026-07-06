@@ -651,7 +651,7 @@ export default function TransactionPage() {
                     e.stopPropagation();
                     openFormModal(t);
                   }}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-500 border border-gray-200"
+                  className="absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded-full bg-gray-50 hover:bg-blue-50 text-gray-500 hover:text-blue-500 border border-gray-200"
                 >
                   <Pencil size={12} />
                 </button>
