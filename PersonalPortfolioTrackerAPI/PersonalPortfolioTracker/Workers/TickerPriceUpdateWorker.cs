@@ -108,12 +108,12 @@ public class TickerPriceUpdateWorker : BackgroundService
                 {
                     foreach (var ticker in cryptos)
                     {
-                        string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "");
+                        string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
 
                         var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
-                        if (quote != null && quote.Price > 0)
+                        if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
                         {
-                            ticker.MarketPrice = quote.Price;
+                            ticker.MarketPrice = price;
                             ticker.UpdatedAt = DateTime.Now;
                         }
                     }
@@ -145,6 +145,5 @@ public class BinanceQuote
     public string Symbol { get; set; }
 
     [JsonPropertyName("price")]
-    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-    public decimal Price { get; set; }
+    public string Price { get; set; }
 }
