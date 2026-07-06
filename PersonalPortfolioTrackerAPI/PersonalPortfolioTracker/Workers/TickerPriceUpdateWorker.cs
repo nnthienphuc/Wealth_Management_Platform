@@ -15,25 +15,16 @@ public class TickerPriceUpdateWorker : BackgroundService
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _httpClient = new HttpClient();
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Ticker Price Update Worker is starting.");
-
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                await UpdatePricesAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating stock prices from VPS.");
-            }
-
+            try { await UpdatePricesAsync(); }
+            catch (Exception ex) { _logger.LogError(ex, "Worker loop error"); }
             await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
         }
     }
@@ -42,15 +33,10 @@ public class TickerPriceUpdateWorker : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-
-        var activeTickers = uow.Repository<Tickers>()
-            .FindByCondition(t => t.IsDeleted == false, true)
-            .Include(t => t.TickerType)
-            .ToList();
-
-        if (!activeTickers.Any()) return;
+        var activeTickers = uow.Repository<Tickers>().FindByCondition(t => t.IsDeleted == false, true).Include(t => t.TickerType).ToList();
 
         await UpdateStocksAsync(activeTickers);
+
         await UpdateCryptosAsync(activeTickers);
 
         await uow.SaveAsync();
@@ -58,29 +44,25 @@ public class TickerPriceUpdateWorker : BackgroundService
 
     private async Task UpdateStocksAsync(List<Tickers> activeTickers)
     {
-        var vnStocks = activeTickers.Where(t => t.TickerType?.Code.ToUpper() == TickerTypeConstants.STOCK).ToList();
-        if (!vnStocks.Any()) return;
+        var stocks = activeTickers.Where(t => t.TickerType?.Code.ToUpper() == TickerTypeConstants.STOCK).ToList();
+        if (!stocks.Any()) return;
 
-        var symbols = string.Join(",", vnStocks.Select(t => t.Symbol));
-        var url = $"https://bgapidatafeed.vps.com.vn/getliststockdata/{symbols}";
-
+        var symbols = string.Join(",", stocks.Select(t => t.Symbol));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         try
         {
-            var quotes = await _httpClient.GetFromJsonAsync<List<VpsStockData>>(url);
+            var url = $"https://bgapidatafeed.vps.com.vn/getliststockdata/{symbols}";
+            var quotes = await _httpClient.GetFromJsonAsync<List<VpsStockData>>(url, cts.Token);
             if (quotes != null)
             {
-                foreach (var ticker in vnStocks)
+                foreach (var ticker in stocks)
                 {
-                    var quote = quotes.FirstOrDefault(q => q.Symbol.ToUpper() == ticker.Symbol.ToUpperInvariant());
-                    if (quote != null && quote.LastPrice > 0)
-                    {
-                        ticker.MarketPrice = quote.LastPrice * 1000;
-                        ticker.UpdatedAt = DateTime.Now;
-                    }
+                    var quote = quotes.FirstOrDefault(q => q.Symbol.Equals(ticker.Symbol, StringComparison.OrdinalIgnoreCase));
+                    if (quote?.LastPrice > 0) { ticker.MarketPrice = quote.LastPrice * 1000; ticker.UpdatedAt = DateTime.Now; }
                 }
             }
         }
-        catch (Exception e) { _logger.LogWarning($"[FAIL] VPS API error: {e.Message}"); }
+        catch (Exception e) { _logger.LogWarning($"[SKIP] VPS API: {e.Message}"); }
     }
 
     //private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
