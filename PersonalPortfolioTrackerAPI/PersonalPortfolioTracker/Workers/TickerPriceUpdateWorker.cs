@@ -34,7 +34,7 @@ public class TickerPriceUpdateWorker : BackgroundService
                 _logger.LogError(ex, "Error updating stock prices from VPS.");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
+            await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
         }
     }
 
