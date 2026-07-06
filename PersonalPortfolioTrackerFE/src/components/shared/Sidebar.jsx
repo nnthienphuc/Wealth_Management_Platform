@@ -55,7 +55,7 @@ export default function Sidebar() {
     {
       section: "Overview",
       items: [
-        { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={18} /> },
+        { label: "Dashboard", path: "/investor", icon: <LayoutDashboard size={18} /> },
       ],
     },
     {
