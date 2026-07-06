@@ -97,7 +97,7 @@ public class TickerPriceUpdateWorker : BackgroundService
 
         foreach (var ticker in cryptos)
         {
-            string symbol = ticker.Symbol.ToUpper().Replace("/", "").Replace("-", "") + "USDT";
+            string symbol = ticker.Symbol.ToUpper();
             var bybitUrl = $"https://api.bybit.com/v5/market/tickers?category=spot&symbol={symbol}";
 
             try
