@@ -96,22 +96,53 @@ public class TickerPriceUpdateWorker : BackgroundService
 
         if (cryptos.Any())
         {
-            var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
 
-            _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
+            // Binance chay tot o local nhung Render no khong goi duoc API nay nen gio doi qua API khac.
+            //var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
+
+            //_logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
+
+            //try
+            //{
+            //    var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
+
+            //    if (binanceQuotes != null && binanceQuotes.Any())
+            //    {
+            //        foreach (var ticker in cryptos)
+            //        {
+            //            string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
+
+            //            var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
+            //            if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
+            //            {
+            //                ticker.MarketPrice = price;
+            //                ticker.UpdatedAt = DateTime.Now;
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception e)
+            //{
+            //    _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
+            //}
+
+
+            var coinIds = string.Join(",", cryptos.Select(t => t.Symbol.ToLower()));
+            var geckoUrl = $"https://api.coingecko.com/api/v3/simple/price?ids={coinIds}&vs_currencies=usd";
+
+            _logger.LogInformation($"[COINGECKO API] Calling URL: {geckoUrl}");
 
             try
             {
-                var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
+                // CoinGecko trả về dạng: { "bitcoin": {"usd": 63000}, "ethereum": {"usd": 3500} }
+                var response = await _httpClient.GetFromJsonAsync<Dictionary<string, Dictionary<string, decimal>>>(geckoUrl);
 
-                if (binanceQuotes != null && binanceQuotes.Any())
+                if (response != null)
                 {
                     foreach (var ticker in cryptos)
                     {
-                        string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
-
-                        var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
-                        if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
+                        string coinId = ticker.Symbol.ToLower();
+                        if (response.TryGetValue(coinId, out var priceData) && priceData.TryGetValue("usd", out decimal price))
                         {
                             ticker.MarketPrice = price;
                             ticker.UpdatedAt = DateTime.Now;
@@ -121,9 +152,9 @@ public class TickerPriceUpdateWorker : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
+                _logger.LogWarning($"[FAIL] CoinGecko API error: {e.Message}");
             }
-        }
+    }
         #endregion
 
         await uow.SaveAsync();
