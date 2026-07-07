@@ -1,36 +1,38 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, 
-  Wallet,          
-  Briefcase,       
-  LineChart,       
-  ArrowRightLeft,  
-  LockKeyhole,     
-  LogOut, 
+  LayoutDashboard,
+  Wallet,
+  Briefcase,
+  LineChart,
+  ArrowRightLeft,
+  LockKeyhole,
+  LogOut,
   UserRound,
-  Menu, // Icon mở menu
-  X     // Icon đóng menu
+  Menu,
+  X,
+  Info,
 } from "lucide-react";
 
 export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false); // Quản lý trạng thái đóng/mở trên mobile
+  const [isOpen, setIsOpen] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
   const fullName = localStorage.getItem("fullName") || "Nhà đầu tư";
 
   // ---- PALETTE PINK UI 2025 ----
-  const darkBg = "#0f172a"; 
-  const sectionBg = "rgba(168, 85, 247, 0.15)"; 
+  const darkBg = "#0f172a";
+  const sectionBg = "rgba(168, 85, 247, 0.15)";
   const sectionBorder = "rgba(168, 85, 247, 0.4)";
-  const sectionText = "#f9a8d4"; 
-  const activeGradient = "linear-gradient(135deg, #f9a8d4 0%, #fb7185 40%, #ff8fa3 100%)";
+  const sectionText = "#f9a8d4";
+  const activeGradient =
+    "linear-gradient(135deg, #f9a8d4 0%, #fb7185 40%, #ff8fa3 100%)";
   const hoverBg = "rgba(248, 250, 252, 0.06)";
   const logoutBg = "#fb7185";
-  
-  const activeText = "#ffffff"; 
-  const inactiveText = "#94a3b8"; 
+
+  const activeText = "#ffffff";
+  const inactiveText = "#94a3b8";
 
   const handleLogout = () => {
     localStorage.clear();
@@ -55,27 +57,57 @@ export default function Sidebar() {
     {
       section: "Overview",
       items: [
-        { label: "Dashboard", path: "/investor", icon: <LayoutDashboard size={18} /> },
+        {
+          label: "Dashboard",
+          path: "/investor",
+          icon: <LayoutDashboard size={18} />,
+        },
       ],
     },
     {
       section: "Portfolio",
       items: [
-        { label: "Accounts", path: "/investor/accounts", icon: <Wallet size={18} /> },
-        { label: "My Holdings", path: "/investor/holdings", icon: <Briefcase size={18} /> },
-        { label: "Market Tickers", path: "/investor/tickers", icon: <LineChart size={18} /> },
+        {
+          label: "Accounts",
+          path: "/investor/accounts",
+          icon: <Wallet size={18} />,
+        },
+        {
+          label: "My Holdings",
+          path: "/investor/holdings",
+          icon: <Briefcase size={18} />,
+        },
+        {
+          label: "Market Tickers",
+          path: "/investor/tickers",
+          icon: <LineChart size={18} />,
+        },
       ],
     },
     {
       section: "Activity",
       items: [
-        { label: "Transactions", path: "/investor/transactions", icon: <ArrowRightLeft size={18} /> },
+        {
+          label: "Transactions",
+          path: "/investor/transactions",
+          icon: <ArrowRightLeft size={18} />,
+        },
       ],
     },
     {
-      section: "Settings", 
+      section: "Settings",
       items: [
-        { label: "Change Password", path: "/investor/change-password", icon: <LockKeyhole size={18} /> },
+        {
+          label: "Change Password",
+          path: "/investor/change-password",
+          icon: <LockKeyhole size={18} />,
+        },
+      ],
+    },
+    {
+      section: "About",
+      items: [
+        { label: "App Info", path: "/landing", icon: <Info size={18} /> },
       ],
     },
   ];
@@ -118,7 +150,7 @@ export default function Sidebar() {
         <div>
           {/* Nút tắt X nằm trong Sidebar (Chỉ hiện trên Mobile) */}
           <div className="flex md:hidden justify-end mb-4">
-            <button 
+            <button
               onClick={() => setIsOpen(false)}
               className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
             >
@@ -129,7 +161,8 @@ export default function Sidebar() {
           {/* === TỐI ƯU USER CARD THEO CHUẨN GLASSMORPHISM === */}
           <div
             style={{
-              background: "linear-gradient(135deg, #f9a8d4 0%, #fb7185 50%, #ff8fa3 100%)",
+              background:
+                "linear-gradient(135deg, #f9a8d4 0%, #fb7185 50%, #ff8fa3 100%)",
               borderRadius: 20,
               padding: "16px",
               marginBottom: 24,
@@ -150,7 +183,7 @@ export default function Sidebar() {
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#ffffff",
-                flexShrink: 0
+                flexShrink: 0,
               }}
             >
               <UserRound size={22} strokeWidth={2.5} />
@@ -160,7 +193,7 @@ export default function Sidebar() {
               <div
                 style={{
                   fontSize: 12,
-                  color: "rgba(255, 255, 255, 0.9)", 
+                  color: "rgba(255, 255, 255, 0.9)",
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -168,14 +201,16 @@ export default function Sidebar() {
                   fontWeight: 500,
                 }}
               >
-                <span role="img" aria-label="wave">👋</span>
+                <span role="img" aria-label="wave">
+                  👋
+                </span>
                 <span>Welcome,</span>
               </div>
               <div
                 style={{
-                  fontWeight: 800, 
-                  fontSize: 16, 
-                  color: "#ffffff", 
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: "#ffffff",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -193,8 +228,8 @@ export default function Sidebar() {
                   justifyContent: "center",
                   padding: "4px 10px",
                   borderRadius: 9999,
-                  backgroundColor: "rgba(255, 255, 255, 0.25)", 
-                  color: "#ffffff", 
+                  backgroundColor: "rgba(255, 255, 255, 0.25)",
+                  color: "#ffffff",
                   fontSize: 10,
                   fontWeight: 800,
                   letterSpacing: 1,
@@ -212,9 +247,10 @@ export default function Sidebar() {
                 <div style={sectionStyle}>{section.section}</div>
 
                 {section.items.map((item) => {
-                  const isActive = item.path === "/investor"
-                    ? pathname === "/investor" || pathname === "/investor/"
-                    : pathname.startsWith(item.path);
+                  const isActive =
+                    item.path === "/investor"
+                      ? pathname === "/investor" || pathname === "/investor/"
+                      : pathname.startsWith(item.path);
 
                   return (
                     <div
@@ -235,15 +271,21 @@ export default function Sidebar() {
                         fontSize: 14,
                         background: isActive ? activeGradient : "transparent",
                         color: isActive ? activeText : inactiveText,
-                        boxShadow: isActive ? "0 8px 15px rgba(251, 113, 133, 0.4)" : "none",
-                        textShadow: isActive ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
+                        boxShadow: isActive
+                          ? "0 8px 15px rgba(251, 113, 133, 0.4)"
+                          : "none",
+                        textShadow: isActive
+                          ? "0 1px 2px rgba(0,0,0,0.1)"
+                          : "none",
                         transition: "all 0.2s ease",
                       }}
                       onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = hoverBg;
+                        if (!isActive)
+                          e.currentTarget.style.backgroundColor = hoverBg;
                       }}
                       onMouseLeave={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+                        if (!isActive)
+                          e.currentTarget.style.backgroundColor = "transparent";
                       }}
                     >
                       <span style={{ display: "flex", alignItems: "center" }}>
@@ -260,17 +302,25 @@ export default function Sidebar() {
 
         {/* BOTTOM: version + copyright + logout */}
         <div style={{ marginTop: 24 }}>
-          <div style={{ 
-            fontSize: 10, 
-            color: "#94a3b8", 
-            textAlign: "center", 
-            marginBottom: 16,
-            lineHeight: 1.6, 
-            padding: "0 10px" 
-          }}>
-            <span style={{ fontWeight: 700, color: "#cbd5e1" }}>v2.0 • Personal Portfolio</span><br/>
-            © 2026 Nguyễn Ngọc Thiên Phúc.<br/>
-            <span style={{ fontSize: 9, opacity: 0.8 }}>Data is delayed. For informational purposes only.</span>
+          <div
+            style={{
+              fontSize: 10,
+              color: "#94a3b8",
+              textAlign: "center",
+              marginBottom: 16,
+              lineHeight: 1.6,
+              padding: "0 10px",
+            }}
+          >
+            <span style={{ fontWeight: 700, color: "#cbd5e1" }}>
+              v2.0 • Personal Portfolio
+            </span>
+            <br />
+            © 2026 Nguyễn Ngọc Thiên Phúc.
+            <br />
+            <span style={{ fontSize: 9, opacity: 0.8 }}>
+              Data is delayed. For informational purposes only.
+            </span>
           </div>
 
           <div
@@ -292,11 +342,13 @@ export default function Sidebar() {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 14px 30px rgba(251, 113, 133, 0.6)";
+              e.currentTarget.style.boxShadow =
+                "0 14px 30px rgba(251, 113, 133, 0.6)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 10px 24px rgba(251, 113, 133, 0.4)";
+              e.currentTarget.style.boxShadow =
+                "0 10px 24px rgba(251, 113, 133, 0.4)";
             }}
           >
             <LogOut size={18} strokeWidth={2.5} />

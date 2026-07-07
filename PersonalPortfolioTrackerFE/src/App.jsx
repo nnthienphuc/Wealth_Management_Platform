@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./components/features/auth/ForgotPasswordPage";
 import ChangePasswordPage from "./components/features/auth/ChangePasswordPage";
 import ActivateAccountPage from "./components/features/auth/ActivateAccountPage";
 import ConfirmResetPasswordPage from "./components/features/auth/ConfirmResetPasswordPage";
+import LandingPage from "./components/features/landing/LandingPage";
 
 // --- Portfolio Features ---
 import InvestorHomePage from "./components/features/portfolio/InvestorHomePage";
@@ -27,14 +28,58 @@ function App() {
     <>
       <Routes>
         {/* Auth routes */}
-        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-        <Route path="/activate" element={<PublicRoute><ActivateAccountPage /></PublicRoute>} />
-        <Route path="/confirm-reset-password" element={<PublicRoute><ConfirmResetPasswordPage /></PublicRoute>} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/activate"
+          element={
+            <PublicRoute>
+              <ActivateAccountPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/confirm-reset-password"
+          element={
+            <PublicRoute>
+              <ConfirmResetPasswordPage />
+            </PublicRoute>
+          }
+        />
 
         {/* Protected investor routes */}
-        <Route path="/investor" element={<PrivateRoute><InvestorLayout /></PrivateRoute>}>
+        <Route
+          path="/investor"
+          element={
+            <PrivateRoute>
+              <InvestorLayout />
+            </PrivateRoute>
+          }
+        >
           <Route index element={<InvestorHomePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route path="tickers" element={<TickerPage />} />

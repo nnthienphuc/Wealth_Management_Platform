@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* Fix lỗi màu nền input khi trình duyệt tự động điền (autofill) */
 input:-webkit-autofill,
