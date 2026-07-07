@@ -83,4 +83,4 @@ The platform is fully optimized for mobile devices, giving you total control of 
 </table>
 
 ---
-> ⚠️ **Disclaimer:** Market data is delayed (approx. 4 mins) and for informational purposes only. / *Dữ liệu thị trường có độ trễ khoảng 4 phút và chỉ mang tính chất tham khảo.*
+> ⚠️ **Disclaimer:** Market data is delayed (approx. 2 mins) and for informational purposes only. / *Dữ liệu thị trường có độ trễ khoảng 2 phút và chỉ mang tính chất tham khảo.*
