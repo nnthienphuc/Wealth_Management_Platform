@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import axiosInstance from "../../../utils/axiosInstance";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const location = useLocation();
@@ -16,20 +17,29 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("activated") === "true") {
-      toast.success("Your account has been activated. Please sign in.", { toastId: "act-success" });
+      toast.success("Your account has been activated. Please sign in.", {
+        toastId: "act-success",
+      });
     } else if (params.get("activated") === "false") {
-      toast.error("Activation token is invalid or this account is already active.", { toastId: "act-err" });
+      toast.error(
+        "Activation token is invalid or this account is already active.",
+        { toastId: "act-err" },
+      );
     }
 
     if (params.get("reset") === "success") {
-      toast.success("Password has been reset. Please sign in.", { toastId: "reset-success" });
+      toast.success("Password has been reset. Please sign in.", {
+        toastId: "reset-success",
+      });
     } else if (params.get("reset") === "failed") {
-      toast.error("Password reset token is invalid or has expired.", { toastId: "reset-err" });
+      toast.error("Password reset token is invalid or has expired.", {
+        toastId: "reset-err",
+      });
     }
-    
+
     // Mẹo nhỏ Tech Lead: Xóa param trên URL sau khi đã hiện toast để lúc sếp F5 nó không hiện lại
     if (params.has("activated") || params.has("reset")) {
-      window.history.replaceState(null, '', location.pathname);
+      window.history.replaceState(null, "", location.pathname);
     }
   }, [location.search, location.pathname]);
 
@@ -65,12 +75,12 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
       if (fullName) localStorage.setItem("fullName", fullName);
       if (email) localStorage.setItem("email", email);
-      
+
       // Không cần toast lúc login thành công, vào thẳng Dashboard luôn cho mượt
       navigate("/investor");
     } catch (err) {
       toast.error(err.response?.data?.message || "Sign-in failed.", {
-        toastId: "login-error"
+        toastId: "login-error",
       });
     } finally {
       setLoading(false);
@@ -99,6 +109,17 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-pink-50 p-4">
+      <Link
+        to="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-slate-500 font-medium hover:text-pink-600 transition-colors group"
+      >
+        <ArrowLeft
+          size={18}
+          className="group-hover:-translate-x-1 transition-transform"
+        />
+        <span>Explore App</span>
+      </Link>
+
       <div className="max-w-md w-full bg-white rounded-[2rem] shadow-2xl p-8 transform transition-all">
         <h2 className="text-2xl font-bold text-center text-pink-600 mb-6 tracking-wide">
           Sign in
@@ -115,7 +136,11 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
             />
-            {fieldErrors.email && <p className="text-red-500 text-xs font-medium mt-1 ml-2">{fieldErrors.email}</p>}
+            {fieldErrors.email && (
+              <p className="text-red-500 text-xs font-medium mt-1 ml-2">
+                {fieldErrors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -128,7 +153,11 @@ export default function LoginPage() {
               value={formData.password}
               onChange={handleChange}
             />
-            {fieldErrors.password && <p className="text-red-500 text-xs font-medium mt-1 ml-2">{fieldErrors.password}</p>}
+            {fieldErrors.password && (
+              <p className="text-red-500 text-xs font-medium mt-1 ml-2">
+                {fieldErrors.password}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-between items-center px-1">
@@ -141,7 +170,10 @@ export default function LoginPage() {
               />
               Remember me
             </label>
-            <Link to="/forgot-password" className="text-sm text-pink-500 font-medium hover:text-pink-600 transition-colors">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-pink-500 font-medium hover:text-pink-600 transition-colors"
+            >
               Forgot password?
             </Link>
           </div>
@@ -160,11 +192,22 @@ export default function LoginPage() {
         </div>
 
         <div className="flex justify-center mb-6">
-          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} theme="outline" shape="pill" />
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            shape="pill"
+          />
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-4">
-          Don't have an account? <Link to="/register" className="text-pink-500 font-bold hover:text-pink-600 transition-colors">Sign up</Link>
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-pink-500 font-bold hover:text-pink-600 transition-colors"
+          >
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
