@@ -6,20 +6,27 @@ import {
   Globe, 
   Smartphone,
   CheckCircle2,
-  ShieldCheck // Icon mới cho tính năng Bảo mật
+  ShieldCheck
 } from "lucide-react";
 
+// Desktop Images
 import DashboardImg from "../../../assets/landing/Dashboard.png";
 import HoldingImg from "../../../assets/landing/Holding.png";
 import AccountImg from "../../../assets/landing/Account.png";
 import MarketImg from "../../../assets/landing/Market.png";
 import TransactionImg from "../../../assets/landing/Transaction.png";
 
+import DashboardMobileImg from "../../../assets/landing/DashboardMobile.png";
+import HoldingMobileImg from "../../../assets/landing/HoldingMobile.png";
+import AccountMobileImg from "../../../assets/landing/AccountMobile.png"; 
+import MarketMobileImg from "../../../assets/landing/MarketMobile.png";
+import TransactionMobileImg from "../../../assets/landing/TransactionMobile.png";
+
 export default function LandingPage() {
   const isLoggedIn = !!localStorage.getItem("token");
 
   return (
-    <div className="bg-[#0f172a] text-slate-300 min-h-screen font-sans selection:bg-pink-500/30">
+    <div className="bg-[#0f172a] text-slate-300 min-h-screen font-sans selection:bg-pink-500/30 overflow-hidden">
       {/* NAVBAR */}
       <nav className="p-6 flex justify-between items-center border-b border-white/5 sticky top-0 bg-[#0f172a]/80 backdrop-blur-xl z-50">
         <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400 italic tracking-tighter">
@@ -40,7 +47,7 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO SECTION */}
-      <header className="relative pt-24 pb-16 px-6 text-center overflow-hidden">
+      <header className="relative pt-24 pb-16 px-6 text-center">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/20 rounded-full blur-[120px] pointer-events-none"></div>
         
         <h2 className="relative text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
@@ -123,7 +130,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Feature 6 (New) */}
+            {/* Feature 6 */}
             <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
               <ShieldCheck className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
               <h4 className="text-lg font-bold text-white mb-2">Secure & Private</h4>
@@ -206,51 +213,52 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* PRODUCT TOUR */}
+        {/* DESKTOP PRODUCT TOUR */}
         <section>
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-black text-white mb-3">🖼️ Product Tour <span className="text-pink-500">/</span> <span className="text-slate-400 font-medium">Giao diện hệ thống</span></h3>
+            <h3 className="text-3xl font-black text-white mb-3">💻 Desktop Experience</h3>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800">
-              <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
-                <span>Account Management</span>
-                <span className="text-xs text-slate-400 font-normal">Quản lý Tài khoản</span>
+            {[
+              { img: AccountImg, en: 'Account Management', vi: 'Quản lý Tài khoản' },
+              { img: HoldingImg, en: 'Portfolio Holdings', vi: 'Danh mục đầu tư' },
+              { img: MarketImg, en: 'Market Tickers', vi: 'Thị trường' },
+              { img: TransactionImg, en: 'Transaction History', vi: 'Nhật ký Giao dịch' }
+            ].map((item, idx) => (
+              <div key={idx} className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800">
+                <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
+                  <span>{item.en}</span>
+                  <span className="text-xs text-slate-400 font-normal">{item.vi}</span>
+                </div>
+                <img src={item.img} alt={item.en} className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
               </div>
-              <img src={AccountImg} alt="Accounts" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            
-            <div className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800">
-              <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
-                <span>Portfolio Holdings</span>
-                <span className="text-xs text-slate-400 font-normal">Danh mục đầu tư</span>
-              </div>
-              <img src={HoldingImg} alt="Holdings" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
-            </div>
+            ))}
+          </div>
+        </section>
 
-            <div className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800">
-              <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
-                <span>Market Tickers</span>
-                <span className="text-xs text-slate-400 font-normal">Thị trường</span>
+        {/* MOBILE PRODUCT TOUR */}
+        <section>
+          <div className="text-center mb-12 mt-20">
+            <h3 className="text-3xl font-black text-white mb-3">📱 Mobile Experience</h3>
+            <p className="text-slate-500">Fully optimized for on-the-go portfolio tracking.</p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
+            {[DashboardMobileImg, AccountMobileImg, HoldingMobileImg, MarketMobileImg, TransactionMobileImg].map((img, idx) => (
+              <div key={idx} className="relative group">
+                <div className="w-[160px] md:w-[220px] h-[350px] md:h-[450px] rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 overflow-y-auto overflow-x-hidden shadow-2xl group-hover:-translate-y-3 transition-transform duration-500 custom-scrollbar">
+                  <img src={img} alt="Mobile UI" className="w-full h-auto object-top" />
+                </div>
               </div>
-              <img src={MarketImg} alt="Market" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
-            </div>
-
-            <div className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800">
-              <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
-                <span>Transaction History</span>
-                <span className="text-xs text-slate-400 font-normal">Nhật ký Giao dịch</span>
-              </div>
-              <img src={TransactionImg} alt="Transactions" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
-            </div>
+            ))}
           </div>
         </section>
 
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/5 bg-slate-900/50 py-8">
+      <footer className="border-t border-white/5 bg-slate-900/50 py-8 mt-20">
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400 text-sm mb-2">© 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.</p>
           <p className="text-slate-600 text-xs italic">

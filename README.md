@@ -50,7 +50,7 @@ If you already hold assets, follow these 3 strict steps to set up your cost basi
 
 ---
 
-## 🖼️ Product Tour
+## 🖼️ Product Tour (Desktop)
 
 | Account Management | Portfolio Holdings |
 | :--- | :--- |
@@ -59,6 +59,28 @@ If you already hold assets, follow these 3 strict steps to set up your cost basi
 | Market Tickers | Transaction History |
 | :--- | :--- |
 | ![Market](./PersonalPortfolioTrackerFE/src/assets/landing/Market.png) | ![Transaction](./PersonalPortfolioTrackerFE/src/assets/landing/Transaction.png) |
+
+
+## 📱 Mobile Experience
+
+The platform is fully optimized for mobile devices, giving you total control of your portfolio anytime, anywhere.
+
+<table>
+  <tr>
+    <th align="center">Dashboard</th>
+    <th align="center">Accounts</th>
+    <th align="center">Holdings</th>
+    <th align="center">Market</th>
+    <th align="center">Transactions</th>
+  </tr>
+  <tr valign="top">
+    <td align="center"><img src="./PersonalPortfolioTrackerFE/src/assets/landing/DashboardMobile.png" width="100%"></td>
+    <td align="center"><img src="./PersonalPortfolioTrackerFE/src/assets/landing/AccountMobile.png" width="100%"></td>
+    <td align="center"><img src="./PersonalPortfolioTrackerFE/src/assets/landing/HoldingMobile.png" width="100%"></td>
+    <td align="center"><img src="./PersonalPortfolioTrackerFE/src/assets/landing/MarketMobile.png" width="100%"></td>
+    <td align="center"><img src="./PersonalPortfolioTrackerFE/src/assets/landing/TransactionMobile.png" width="100%"></td>
+  </tr>
+</table>
 
 ---
 > ⚠️ **Disclaimer:** Market data is delayed (approx. 4 mins) and for informational purposes only. / *Dữ liệu thị trường có độ trễ khoảng 4 phút và chỉ mang tính chất tham khảo.*
