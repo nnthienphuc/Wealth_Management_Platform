@@ -16,6 +16,7 @@ import AccountImg from "../../../assets/landing/Account.png";
 import MarketImg from "../../../assets/landing/Market.png";
 import TransactionImg from "../../../assets/landing/Transaction.png";
 
+// Mobile Images
 import DashboardMobileImg from "../../../assets/landing/DashboardMobile.png";
 import HoldingMobileImg from "../../../assets/landing/HoldingMobile.png";
 import AccountMobileImg from "../../../assets/landing/AccountMobile.png"; 
@@ -24,6 +25,17 @@ import TransactionMobileImg from "../../../assets/landing/TransactionMobile.png"
 
 export default function LandingPage() {
   const isLoggedIn = !!localStorage.getItem("token");
+
+  // Component giúp Safari không bị "nghẽn" khi cuộn trang
+  const OptimizedImage = ({ src, alt, className }) => (
+    <img 
+      src={src} 
+      alt={alt} 
+      loading="lazy" 
+      decoding="async"
+      className={className} 
+    />
+  );
 
   return (
     <div className="bg-[#0f172a] text-slate-300 min-h-screen font-sans selection:bg-pink-500/30 overflow-hidden">
@@ -61,7 +73,14 @@ export default function LandingPage() {
         </p>
 
         <div className="relative max-w-5xl mx-auto mt-12 rounded-2xl border border-slate-700/50 bg-slate-800/50 p-2 shadow-2xl backdrop-blur-sm">
-          <img src={DashboardImg} alt="Dashboard Preview" loading="lazy" className="rounded-xl w-full border border-slate-700/50" />
+          {/* ẢNH HERO: KHÔNG dùng lazy load, BẮT BUỘC ưu tiên load cao nhất */}
+          <img 
+            src={DashboardImg} 
+            alt="Dashboard Preview" 
+            fetchpriority="high"
+            decoding="async"
+            className="rounded-xl w-full border border-slate-700/50 bg-slate-900" 
+          />
         </div>
       </header>
 
@@ -231,7 +250,12 @@ export default function LandingPage() {
                   <span>{item.en}</span>
                   <span className="text-xs text-slate-400 font-normal">{item.vi}</span>
                 </div>
-                <img src={item.img} alt={item.en} loading="lazy" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
+                {/* ĐÃ DÙNG OPTIMIZED IMAGE Ở ĐÂY */}
+                <OptimizedImage 
+                  src={item.img} 
+                  alt={item.en} 
+                  className="w-full mt-8 group-hover:scale-105 transition-transform duration-700 bg-slate-900" 
+                />
               </div>
             ))}
           </div>
@@ -248,7 +272,12 @@ export default function LandingPage() {
             {[DashboardMobileImg, AccountMobileImg, HoldingMobileImg, MarketMobileImg, TransactionMobileImg].map((img, idx) => (
               <div key={idx} className="relative group">
                 <div className="w-[160px] md:w-[220px] h-[350px] md:h-[450px] rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 overflow-y-auto overflow-x-hidden shadow-2xl group-hover:-translate-y-3 transition-transform duration-500 custom-scrollbar">
-                  <img src={img} alt="Mobile UI" loading="lazy" className="w-full h-auto object-top" />
+                  {/* ĐÃ DÙNG OPTIMIZED IMAGE Ở ĐÂY */}
+                  <OptimizedImage 
+                    src={img} 
+                    alt="Mobile UI" 
+                    className="w-full h-auto object-top bg-slate-900" 
+                  />
                 </div>
               </div>
             ))}
@@ -262,9 +291,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400 text-sm mb-2">© 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.</p>
           <p className="text-slate-600 text-xs italic">
-            ⚠️ Disclaimer: Market data is delayed (approx. 4 mins) and for informational purposes only.
+            ⚠️ Disclaimer: Market data is delayed (approx. 2 mins) and for informational purposes only.
             <br />
-            Dữ liệu thị trường có độ trễ khoảng 4 phút và chỉ mang tính chất tham khảo.
+            Dữ liệu thị trường có độ trễ khoảng 2 phút và chỉ mang tính chất tham khảo.
           </p>
         </div>
       </footer>
