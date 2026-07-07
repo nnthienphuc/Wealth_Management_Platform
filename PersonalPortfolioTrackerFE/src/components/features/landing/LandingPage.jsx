@@ -61,7 +61,7 @@ export default function LandingPage() {
         </p>
 
         <div className="relative max-w-5xl mx-auto mt-12 rounded-2xl border border-slate-700/50 bg-slate-800/50 p-2 shadow-2xl backdrop-blur-sm">
-          <img src={DashboardImg} alt="Dashboard Preview" className="rounded-xl w-full border border-slate-700/50" />
+          <img src={DashboardImg} alt="Dashboard Preview" loading="lazy" className="rounded-xl w-full border border-slate-700/50" />
         </div>
       </header>
 
@@ -231,7 +231,7 @@ export default function LandingPage() {
                   <span>{item.en}</span>
                   <span className="text-xs text-slate-400 font-normal">{item.vi}</span>
                 </div>
-                <img src={item.img} alt={item.en} className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
+                <img src={item.img} alt={item.en} loading="lazy" className="w-full mt-8 group-hover:scale-105 transition-transform duration-700" />
               </div>
             ))}
           </div>
@@ -248,7 +248,7 @@ export default function LandingPage() {
             {[DashboardMobileImg, AccountMobileImg, HoldingMobileImg, MarketMobileImg, TransactionMobileImg].map((img, idx) => (
               <div key={idx} className="relative group">
                 <div className="w-[160px] md:w-[220px] h-[350px] md:h-[450px] rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 overflow-y-auto overflow-x-hidden shadow-2xl group-hover:-translate-y-3 transition-transform duration-500 custom-scrollbar">
-                  <img src={img} alt="Mobile UI" className="w-full h-auto object-top" />
+                  <img src={img} alt="Mobile UI" loading="lazy" className="w-full h-auto object-top" />
                 </div>
               </div>
             ))}
