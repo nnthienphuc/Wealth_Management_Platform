@@ -41,7 +41,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             if (isEmailExists)
                 throw new InvalidOperationException("Email is being used by another user.");
 
-            if(request.Password.CompareTo(request.PasswordConfirmation) != 0)
+            if (request.Password.CompareTo(request.PasswordConfirmation) != 0)
                 throw new InvalidOperationException("Passwords are not match.");
 
             var newInvestor = new Investors
