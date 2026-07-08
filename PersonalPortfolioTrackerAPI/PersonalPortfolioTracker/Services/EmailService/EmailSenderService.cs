@@ -30,7 +30,11 @@ namespace PersonalPortfolioTracker.Services.EmailService
             email.Body = new TextPart("html") { Text = body };
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(smtpServer, smtpPort, MailKit.Security.SecureSocketOptions.StartTls); // eSTARTTLS
+            var secureOption = smtpPort == 587
+    ? MailKit.Security.SecureSocketOptions.StartTls
+    : MailKit.Security.SecureSocketOptions.Auto;
+
+            await smtp.ConnectAsync(smtpServer, smtpPort, secureOption);
             await smtp.AuthenticateAsync(smtpUser, smtpPass);
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
