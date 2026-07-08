@@ -20,14 +20,14 @@ namespace PersonalPortfolioTracker.Services.EmailService
             try
             {
                 var smtpServer = _config["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
-                var smtpPort = int.Parse(_config["EmailSettings:SmtpPort"] ?? "587");
+                var smtpPort = int.Parse(_config["EmailSettings:SmtpPort"] ?? "465");
 
                 var smtpUser = _config["EmailSettings:SmtpUsername"];
                 var smtpPass = _config["EmailSettings:SmtpPassword"];
 
                 if (string.IsNullOrWhiteSpace(smtpUser) || smtpUser.Contains("${"))
                 {
-                    _logger.LogError("[EMAIL CRITICAL] SMTP Credentials are missing or mapping failed. Please check Render Environment Variables!");
+                    _logger.LogError("[EMAIL CRITICAL] SMTP Credentials are missing or mapping failed.");
                     return;
                 }
 
@@ -41,11 +41,15 @@ namespace PersonalPortfolioTracker.Services.EmailService
                 email.Body = new TextPart("html") { Text = body };
 
                 using var smtp = new SmtpClient();
-
                 smtp.Timeout = 15000;
 
-                _logger.LogInformation($"[EMAIL] 1. Connecting to {smtpServer}:{smtpPort}...");
-                await smtp.ConnectAsync(smtpServer, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+                var secureOption = smtpPort == 465
+                    ? MailKit.Security.SecureSocketOptions.SslOnConnect
+                    : MailKit.Security.SecureSocketOptions.StartTls;
+
+                _logger.LogInformation($"[EMAIL] 1. Connecting to {smtpServer}:{smtpPort} via {secureOption}...");
+
+                await smtp.ConnectAsync(smtpServer, smtpPort, secureOption);
 
                 _logger.LogInformation($"[EMAIL] 2. Authenticating user: {smtpUser}...");
                 await smtp.AuthenticateAsync(smtpUser, smtpPass);
