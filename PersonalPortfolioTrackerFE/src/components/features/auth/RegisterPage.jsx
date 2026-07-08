@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../../utils/axiosInstance";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
+import { ArrowLeft } from "lucide-react";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -75,6 +76,17 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-pink-50 p-4">
+      <Link
+              to="/"
+              className="absolute top-6 left-6 flex items-center gap-2 text-slate-500 font-medium hover:text-pink-600 transition-colors group"
+            >
+              <ArrowLeft
+                size={18}
+                className="group-hover:-translate-x-1 transition-transform"
+              />
+              <span>Explore App</span>
+            </Link>
+
       <div className="max-w-md w-full bg-white rounded-[2rem] shadow-2xl p-8 transform transition-all">
         <h2 className="text-2xl font-bold text-center text-pink-600 mb-6 tracking-wide">Sign up</h2>
         
