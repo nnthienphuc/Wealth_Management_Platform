@@ -49,7 +49,7 @@ public class TickerPriceUpdateWorker : BackgroundService
         if (!stocks.Any()) return;
 
         var symbols = string.Join(",", stocks.Select(t => t.Symbol));
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         try
         {
             var url = $"https://bgapidatafeed.vps.com.vn/getliststockdata/{symbols}";
