@@ -65,10 +65,14 @@ namespace PersonalPortfolioTracker.Services.AuthService
             var token = GenerateActivationToken(newInvestor.ID);
             var activationLink = BuildFrontendUrl("/activate", token);
 
-            await _emailService.SendEmailAsync(
-                newInvestor.Email,
-                "Activate your account",
-                $"Click this link to activate your account: <a href='{activationLink}'>Activate your account</a>");
+            var emailBody = CreateEmailTemplate(
+    "Welcome to Portfolio Tracker!",
+    $"Hi {newInvestor.FullName}, please click below to activate your account:",
+    "Activate My Account",
+    activationLink
+);
+
+            await _emailService.SendEmailAsync(newInvestor.Email, "Activate your account", emailBody);
 
             return true;
         }
@@ -232,17 +236,28 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var token = GenerateActivationToken(existingInvestor.ID);
                 var activationLink = BuildFrontendUrl("/activate", token);
 
-                await _emailService.SendEmailAsync(normalizedEmail, "Activate your account",
-                    $"Click this link to activate your account: <a href='{activationLink}'>Activate your account</a>");
+                var emailBody = CreateEmailTemplate(
+        "Activate your account",
+        $"Hi {existingInvestor.FullName}, welcome! Click the button below to finish your registration.",
+        "Activate Account",
+        activationLink
+    );
+
+                await _emailService.SendEmailAsync(existingInvestor.Email, "Activate your account", emailBody);
 
                 throw new ForbiddenException("Your account is not activated. Please check your email.");
             }
 
             var resetToken = GenerateResetPasswordToken(existingInvestor.ID);
             var resetLink = BuildFrontendUrl("/confirm-reset-password", resetToken);
+            var resetBody = CreateEmailTemplate(
+    "Reset Your Password",
+    $"Hi {existingInvestor.FullName}! We received a request to reset your password. Click the button below to proceed.",
+    "Reset Password",
+    resetLink
+);
 
-            await _emailService.SendEmailAsync(existingInvestor.Email, "Reset your password",
-                $"Click this link to reset your password: <a href='{resetLink}'>Reset your password</a>");
+            await _emailService.SendEmailAsync(existingInvestor.Email, "Reset your password", resetBody);
 
             return true;
         }
@@ -409,6 +424,24 @@ namespace PersonalPortfolioTracker.Services.AuthService
                           ?? throw new Exception("FrontendBaseUrl/ApiBaseUrl is missing.");
 
             return $"{baseUrl.TrimEnd('/')}{path}?token={WebUtility.UrlEncode(token)}";
+        }
+
+        private string CreateEmailTemplate(string title, string content, string buttonText, string link)
+        {
+            return $@"
+    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 16px; background-color: #ffffff;'>
+<div style='display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;'>
+    Please verify your email address to continue using Portfolio Tracker.
+</div>
+        <h2 style='color: #db2777; margin-top: 0;'>{title}</h2>
+        <p style='color: #374151; font-size: 16px;'>{content}</p>
+        <div style='text-align: center; margin: 30px 0;'>
+            <a href='{link}' style='display: inline-block; padding: 14px 28px; background-color: #db2777; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>{buttonText}</a>
+        </div>
+        <p style='color: #6b7280; font-size: 14px;'>Nếu nút không hoạt động, hãy copy link này dán vào trình duyệt:<br/>
+        <a href='{link}' style='color: #db2777; word-break: break-all;'>{link}</a></p>
+        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Portfolio Tracker Team</p>
+    </div>";
         }
     }
 }
