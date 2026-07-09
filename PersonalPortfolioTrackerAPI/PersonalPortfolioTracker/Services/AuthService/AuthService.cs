@@ -157,8 +157,12 @@ namespace PersonalPortfolioTracker.Services.AuthService
 
             var investor = await _uow.Repository<Investors>().FindByCondition(i => i.Email == email, true).IgnoreQueryFilters().FirstOrDefaultAsync();
 
+            bool isNewUser = false;
+
             if (investor == null)
             {
+                isNewUser = true;
+
                 investor = new Investors
                 {
                     Email = email,
@@ -186,6 +190,15 @@ namespace PersonalPortfolioTracker.Services.AuthService
             investor.LastLoginAt = VietnamTime.Now();
 
             await _uow.SaveAsync();
+
+            if (isNewUser)
+            {
+                var homeUrl = _config["Urls:FrontendBaseUrl"] ?? "https://app.nnthienphuc.me";
+                var welcomeBody = CreateWelcomeEmailTemplate(investor.FullName, homeUrl);
+
+                // Fire and forget (Hoặc await nếu bạn muốn đảm bảo gửi xong)
+                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Portfolio Tracker", welcomeBody);
+            }
 
             return new LoginResponse
             (
@@ -340,7 +353,17 @@ namespace PersonalPortfolioTracker.Services.AuthService
             investor.IsActivated = true;
             investor.UpdatedAt = VietnamTime.Now();
 
-            return await _uow.SaveAsync() > 0;
+            var success = await _uow.SaveAsync() > 0;
+
+            if (success)
+            {
+                var homeUrl = _config["Urls:FrontendBaseUrl"] ?? "https://app.nnthienphuc.me";
+                var welcomeBody = CreateWelcomeEmailTemplate(investor.FullName, homeUrl);
+
+                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Portfolio Tracker", welcomeBody);
+            }
+
+            return success;
         }
 
         private string GenerateResetPasswordToken(Guid investorId)
@@ -441,6 +464,28 @@ namespace PersonalPortfolioTracker.Services.AuthService
         <p style='color: #6b7280; font-size: 14px;'>Nếu nút không hoạt động, hãy copy link này dán vào trình duyệt:<br/>
         <a href='{link}' style='color: #db2777; word-break: break-all;'>{link}</a></p>
         <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Portfolio Tracker Team</p>
+    </div>";
+        }
+
+        private string CreateWelcomeEmailTemplate(string fullName, string appUrl)
+        {
+            return $@"
+    <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 16px; background-color: #ffffff;'>
+        <div style='display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;'>
+            Welcome aboard! Your registration is complete. Start tracking your investments today.
+        </div>
+        <h2 style='color: #10b981; margin-top: 0;'>Registration Successful! 🎉</h2>
+        <p style='color: #374151; font-size: 16px;'>Hi <b>{fullName}</b>,</p>
+        <p style='color: #374151; font-size: 16px;'>Congratulations! Your account has been successfully created and activated. You are now ready to take full control of your wealth management journey.</p>
+        
+        <div style='background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+            <p style='margin: 0; color: #4b5563; font-size: 14px;'><b>💡 Quick Tip:</b> Start by creating your first 'Account' (e.g., Cash or Bank) and add your existing assets to see your dashboard come to life!</p>
+        </div>
+
+        <div style='text-align: center; margin: 30px 0;'>
+            <a href='{appUrl}' style='display: inline-block; padding: 14px 28px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>Go to Dashboard</a>
+        </div>
+        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Portfolio Tracker Team<br/>Ho Chi Minh City, Vietnam</p>
     </div>";
         }
     }
