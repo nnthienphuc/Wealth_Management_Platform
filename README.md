@@ -46,7 +46,7 @@ If you already hold assets, follow these 3 strict steps to set up your cost basi
 1. **Input Capital:** Input your current invested capital into the relevant account.
 2. **Record a BUY:** Create a "BUY" transaction with your actual quantity and original cost price.
 3. **Zero Fee:** Set the **FEE Rate to 0%** to preserve your initial cost basis without triggering additional deductions.
-*(1. Nhập vốn vào Account. 2. Tạo giao dịch Mua với giá vốn thực tế. 3. Đặt Phí 0% để giữ nguyên giá vốn ban đầu.)*
+*<br>1. Nhập vốn vào Account.<br>2. Tạo giao dịch Mua với giá vốn thực tế.<br>3. Đặt Phí 0% để giữ nguyên giá vốn ban đầu.*
 
 ---
 
