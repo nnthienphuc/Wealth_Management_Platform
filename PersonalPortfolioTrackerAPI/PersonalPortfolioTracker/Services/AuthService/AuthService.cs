@@ -463,7 +463,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
         </div>
         <p style='color: #6b7280; font-size: 14px;'>Nếu nút không hoạt động, hãy copy link này dán vào trình duyệt:<br/>
         <a href='{link}' style='color: #db2777; word-break: break-all;'>{link}</a></p>
-        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Portfolio Tracker Team</p>
+        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Wealth Management Platform Team</p>
     </div>";
         }
 
@@ -485,7 +485,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
         <div style='text-align: center; margin: 30px 0;'>
             <a href='{appUrl}' style='display: inline-block; padding: 14px 28px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>Go to Dashboard</a>
         </div>
-        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Portfolio Tracker Team<br/>Ho Chi Minh City, Vietnam</p>
+        <p style='color: #9ca3af; font-size: 12px; margin-top: 40px;'>Wealth Management Platform Team<br/>Ho Chi Minh City, Vietnam</p>
     </div>";
         }
     }

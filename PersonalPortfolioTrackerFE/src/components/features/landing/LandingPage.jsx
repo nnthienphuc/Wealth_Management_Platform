@@ -42,7 +42,7 @@ export default function LandingPage() {
       {/* NAVBAR */}
       <nav className="p-6 flex justify-between items-center border-b border-white/5 sticky top-0 bg-[#0f172a]/80 backdrop-blur-xl z-50">
         <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400 italic tracking-tighter">
-          PORTFOLIO TRACKER V2
+          Wealth Management Platform
         </h1>
         {isLoggedIn ? (
           <a href="/investor" className="px-6 py-2 rounded-full font-bold text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)]">
