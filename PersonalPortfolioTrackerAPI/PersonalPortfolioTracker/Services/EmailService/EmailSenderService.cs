@@ -21,7 +21,7 @@ namespace PersonalPortfolioTracker.Services.EmailService
             var smtpUser = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? _config["EmailSettings:SmtpUsername"];
             var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _config["EmailSettings:SmtpPassword"];
             var senderEmail = _config["EmailSettings:SenderEmail"] ?? smtpUser;
-            var senderName = _config["EmailSettings:SenderName"] ?? "Personal Portfolio Tracker Admin";
+            var senderName = _config["EmailSettings:SenderName"] ?? "Wealth Management Platform Admin";
 
             var email = new MimeMessage();
             email.From.Add(new MailboxAddress(senderName, senderEmail));
