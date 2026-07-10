@@ -1,4 +1,4 @@
-# Portfolio Tracker V2
+# Wealth Management Platform
 
 🚀 **Live Demo:** [app.nnthienphuc.me](https://app.nnthienphuc.me/)
 
