@@ -111,8 +111,14 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var token = GenerateActivationToken(existingInvestor.ID);
                 var activationLink = BuildFrontendUrl("/activate", token); ;
 
-                await _emailService.SendEmailAsync(normalizedEmail, "Activate your account",
-                    $"Click this link to activate your account: <a href='{activationLink}'>Activate your account</a>");
+                var emailBody = CreateEmailTemplate(
+        "Welcome to Wealth Management Platform!",
+        $"Hi {existingInvestor.FullName}, please click below to activate your account:",
+        "Activate My Account",
+        activationLink
+    );
+
+                await _emailService.SendEmailAsync(existingInvestor.Email, "Activate your account", emailBody);
 
                 throw new ForbiddenException("Your account is not activated. Please check your email.");
             }
