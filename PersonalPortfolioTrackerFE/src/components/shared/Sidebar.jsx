@@ -313,7 +313,7 @@ export default function Sidebar() {
             }}
           >
             <span style={{ fontWeight: 700, color: "#cbd5e1" }}>
-              v2.0 • Personal Portfolio
+              Wealth Management Platform
             </span>
             <br />
             © 2026 Nguyễn Ngọc Thiên Phúc.
