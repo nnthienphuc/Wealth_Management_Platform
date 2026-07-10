@@ -66,7 +66,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             var activationLink = BuildFrontendUrl("/activate", token);
 
             var emailBody = CreateEmailTemplate(
-    "Welcome to Portfolio Tracker!",
+    "Welcome to Wealth Management Platform!",
     $"Hi {newInvestor.FullName}, please click below to activate your account:",
     "Activate My Account",
     activationLink
@@ -197,7 +197,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var welcomeBody = CreateWelcomeEmailTemplate(investor.FullName, homeUrl);
 
                 // Fire and forget (Hoặc await nếu bạn muốn đảm bảo gửi xong)
-                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Portfolio Tracker", welcomeBody);
+                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Wealth Management Platform", welcomeBody);
             }
 
             return new LoginResponse
@@ -360,7 +360,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 var homeUrl = _config["Urls:FrontendBaseUrl"] ?? "https://app.nnthienphuc.me";
                 var welcomeBody = CreateWelcomeEmailTemplate(investor.FullName, homeUrl);
 
-                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Portfolio Tracker", welcomeBody);
+                _ = _emailService.SendEmailAsync(investor.Email, "Registration Successful - Welcome to Wealth Management Platform", welcomeBody);
             }
 
             return success;
@@ -454,7 +454,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
             return $@"
     <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 16px; background-color: #ffffff;'>
 <div style='display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0px; max-width:0px; opacity:0; overflow:hidden;'>
-    Please verify your email address to continue using Portfolio Tracker.
+    Please verify your email address to continue using Wealth Management Platform.
 </div>
         <h2 style='color: #db2777; margin-top: 0;'>{title}</h2>
         <p style='color: #374151; font-size: 16px;'>{content}</p>
