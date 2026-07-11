@@ -676,7 +676,7 @@ export default function AccountsPage() {
                     <NumericFormat
                       thousandSeparator=","
                       decimalScale={2}
-                      allowNegative={false}
+                      allowNegative={formData.type === "CREDIT"}
                       value={formData.currentBalance}
                       name="currentBalance"
                       placeholder="0"
