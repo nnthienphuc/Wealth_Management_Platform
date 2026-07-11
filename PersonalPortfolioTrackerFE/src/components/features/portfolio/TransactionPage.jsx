@@ -1416,7 +1416,11 @@ export default function TransactionPage() {
                           </span>{" "}
                           <span className="font-bold text-gray-900">
                             {formatMoney(
-                              formData.grossAmount,
+                              // Tự động tính Price * Quantity nếu là BUY/SELL
+                              ["BUY", "SELL"].includes(formData.transactionType)
+                                ? Number(formData.price || 0) *
+                                    Number(formData.quantity || 0)
+                                : formData.grossAmount,
                               isGlobalCryptoAccount,
                               true,
                             )}
