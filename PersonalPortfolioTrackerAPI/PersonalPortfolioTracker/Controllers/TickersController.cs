@@ -44,20 +44,20 @@ namespace PersonalPortfolioTracker.Controllers
             return Ok(new { message = "Added new Ticker successfully." });
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] TickerUpdate dto)
-        {
-            await _service.UpdateAsync(id, dto);
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] TickerUpdate dto)
+        //{
+        //    await _service.UpdateAsync(id, dto);
 
-            return Ok(new { message = "Updated Ticker successfully." });
-        }
+        //    return Ok(new { message = "Updated Ticker successfully." });
+        //}
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAsync(Guid id)
-        {
-            await _service.DeleteAsync(id);
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> DeleteAsync(Guid id)
+        //{
+        //    await _service.DeleteAsync(id);
 
-            return Ok(new { message = "Soft deleted Ticker successfully." });
-        }
+        //    return Ok(new { message = "Soft deleted Ticker successfully." });
+        //}
     }
 }
