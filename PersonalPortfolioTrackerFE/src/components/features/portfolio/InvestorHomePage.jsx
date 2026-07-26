@@ -65,7 +65,31 @@ const checkIsCrypto = (typeCode) => {
   );
 };
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const copyComputedStyles = (sourceElement, targetElement) => {
+  if (!sourceElement || !targetElement) return;
+
+  const computedStyle = window.getComputedStyle(sourceElement);
+
+  for (const property of Array.from(computedStyle)) {
+    targetElement.style.setProperty(
+      property,
+      computedStyle.getPropertyValue(property),
+      computedStyle.getPropertyPriority(property),
+    );
+  }
+
+  const sourceChildren = sourceElement.children;
+  const targetChildren = targetElement.children;
+
+  const childCount = Math.min(sourceChildren.length, targetChildren.length);
+
+  for (let index = 0; index < childCount; index++) {
+    copyComputedStyles(sourceChildren[index], targetChildren[index]);
+  }
+};
+
+const waitForNextFrame = () =>
+  new Promise((resolve) => requestAnimationFrame(resolve));
 
 /* ================= Component ================= */
 export default function Dashboard() {
@@ -278,25 +302,30 @@ export default function Dashboard() {
 
   const { zone1, topPerformers, recentTransactions } = data;
 
-  // HÀM EXPORT PDF ĐÃ ĐƯỢC FIX LỖI TRIỆT ĐỂ
   const handleExportPdf = async () => {
     try {
       toast.info("Exporting PDF...");
       setIsExporting(true);
 
-      // Chờ giao diện render lại (Mở rộng toàn bộ scrollbar thành overflow-visible)
-      await sleep(500);
+      // Đợi React cập nhật giao diện export
+      await waitForNextFrame();
+      await waitForNextFrame();
 
       try {
-        if (document?.fonts?.ready) await document.fonts.ready;
-      } catch (fontErr) {
-        console.warn("Skipped fonts check", fontErr);
+        if (document.fonts?.ready) {
+          await document.fonts.ready;
+        }
+      } catch (fontError) {
+        console.warn("Skipped fonts check", fontError);
       }
 
       const pdf = new jsPDF("p", "mm", "a4");
-      const marginX = 8,
-        marginY = 8;
+
+      const marginX = 8;
+      const marginY = 8;
+
       const pageHeight = pdf.internal.pageSize.getHeight();
+
       let currentY = marginY;
 
       const blocks = [
@@ -306,41 +335,84 @@ export default function Dashboard() {
         allocTickerRef.current,
         topPerformersRef.current,
         recentTxRef.current,
-      ].filter(Boolean); // Đảm bảo ref không bị null
+      ].filter(Boolean);
 
-      for (let el of blocks) {
-        if (el.offsetWidth === 0 || el.offsetHeight === 0) continue;
+      for (let index = 0; index < blocks.length; index++) {
+        const element = blocks[index];
 
-        const canvas = await html2canvas(el, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          logging: false, // Tắt log html2canvas để tránh nặng trình duyệt
-        });
-
-        const imgWidth = pdf.internal.pageSize.getWidth() - marginX * 2;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (currentY + imgHeight > pageHeight - marginY) {
-          pdf.addPage();
-          currentY = marginY;
+        if (element.offsetWidth === 0 || element.offsetHeight === 0) {
+          continue;
         }
 
-        pdf.addImage(
-          canvas.toDataURL("image/png"),
-          "PNG",
-          marginX,
-          currentY,
-          imgWidth,
-          imgHeight,
-        );
-        currentY += imgHeight + 4;
+        const exportId = `pdf-export-block-${Date.now()}-${index}`;
+
+        element.setAttribute("data-pdf-export-id", exportId);
+
+        try {
+          const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            logging: false,
+            removeContainer: true,
+
+            onclone: (clonedDocument) => {
+              const clonedElement = clonedDocument.querySelector(
+                `[data-pdf-export-id="${exportId}"]`,
+              );
+
+              if (!clonedElement) return;
+
+              copyComputedStyles(element, clonedElement);
+
+              clonedElement.style.setProperty(
+                "overflow",
+                "visible",
+                "important",
+              );
+
+              clonedElement.style.setProperty(
+                "max-height",
+                "none",
+                "important",
+              );
+
+              clonedElement.style.setProperty("height", "auto", "important");
+            },
+          });
+
+          const imgWidth = pdf.internal.pageSize.getWidth() - marginX * 2;
+
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          if (currentY + imgHeight > pageHeight - marginY) {
+            pdf.addPage();
+            currentY = marginY;
+          }
+
+          pdf.addImage(
+            canvas.toDataURL("image/png"),
+            "PNG",
+            marginX,
+            currentY,
+            imgWidth,
+            imgHeight,
+          );
+
+          currentY += imgHeight + 4;
+        } finally {
+          element.removeAttribute("data-pdf-export-id");
+        }
       }
+
       pdf.save(`Dashboard_${new Date().toISOString().slice(0, 10)}.pdf`);
+
       toast.success("Export PDF success!");
-    } catch (err) {
-      console.error("PDF Export failed:", err);
-      toast.error("Export PDF failed: " + (err.message || "Unknown error"));
+    } catch (error) {
+      console.error("PDF Export failed:", error);
+
+      toast.error(`Export PDF failed: ${error.message || "Unknown error"}`);
     } finally {
       setIsExporting(false);
     }
