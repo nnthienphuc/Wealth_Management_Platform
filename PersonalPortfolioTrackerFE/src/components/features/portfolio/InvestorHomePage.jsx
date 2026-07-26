@@ -549,7 +549,7 @@ export default function Dashboard() {
               isExporting ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           >
-            <button
+            {/* <button
               type="button"
               onClick={handleExportPdf}
               disabled={isExporting}
@@ -565,7 +565,7 @@ export default function Dashboard() {
               <span className="hidden sm:inline text-xs font-bold">
                 {isExporting ? "Exporting..." : "Export PDF"}
               </span>
-            </button>
+            </button> */}
 
             <button
               type="button"
