@@ -163,21 +163,23 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 if (existingHolding != null)
                 {
-                    //var preQuantity = existingTicker.Quantity;
-                    //var preInvestmentCost = existingTicker.InvestmentCost;
-                    //var preTotalInvestmentCost = existingTicker.TotalInvestmentCost;
+                    var oldTotalInvestmentCost =
+    existingHolding.TotalInvestmentCost;
 
-                    var oldTotalInvestmentCost = existingHolding.TotalInvestmentCost;
+                    var newQuantity =
+                        existingHolding.Quantity + dto.Quantity.Value;
 
-                    var newQuantity = existingHolding.Quantity + (decimal)dto.Quantity;
-                    var newTotalInvestmentCost = oldTotalInvestmentCost + netAmount;
+                    var newTotalInvestmentCost =
+                        oldTotalInvestmentCost + netAmount.Value;
+
                     var newInvestmentCost = RoundFinancial(
-    newTotalInvestmentCost / newQuantity
-);
+                        newTotalInvestmentCost / newQuantity
+                    );
 
                     existingHolding.Quantity = newQuantity;
                     existingHolding.InvestmentCost = newInvestmentCost;
-                    existingHolding.TotalInvestmentCost = (decimal)newTotalInvestmentCost;
+                    existingHolding.TotalInvestmentCost =
+                        newTotalInvestmentCost;
 
                     existingAccount.InvestedBalance += netAmount.Value;
                     existingAccount.CurrentBalance -= netAmount.Value;
