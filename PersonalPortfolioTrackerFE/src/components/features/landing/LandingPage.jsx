@@ -410,7 +410,7 @@ export default function LandingPage() {
               type="button"
               aria-pressed={language === "vi"}
               onClick={() => setLanguage("vi")}
-              className={`rounded-full px-2.5 py-1.5 transition-all sm:px-3 ${
+              className={`rounded-full px-2 py-1.5 transition-all sm:px-3 ${
                 language === "vi"
                   ? "bg-pink-500 text-white shadow-md"
                   : "text-slate-400 hover:text-white"
@@ -423,7 +423,7 @@ export default function LandingPage() {
               type="button"
               aria-pressed={language === "en"}
               onClick={() => setLanguage("en")}
-              className={`rounded-full px-2.5 py-1.5 transition-all sm:px-3 ${
+              className={`rounded-full px-2 py-1.5 transition-all sm:px-3 ${
                 language === "en"
                   ? "bg-pink-500 text-white shadow-md"
                   : "text-slate-400 hover:text-white"
@@ -441,21 +441,35 @@ export default function LandingPage() {
               {text.navbar.dashboard}
             </a>
           ) : (
-            <div className="flex items-center gap-2 md:gap-4">
-              <a
-                href="/login"
-                className="hidden px-3 py-2 font-semibold text-slate-300 transition hover:text-white sm:inline"
-              >
-                {text.navbar.login}
-              </a>
+            <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4">
+  <a
+    href="/login"
+    className="
+      whitespace-nowrap rounded-full
+      px-2 py-2
+      text-xs font-semibold text-slate-300
+      transition hover:bg-white/5 hover:text-white
+      sm:px-3 md:text-sm
+    "
+  >
+    {text.navbar.login}
+  </a>
 
-              <a
-                href="/register"
-                className="whitespace-nowrap rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-3 py-2 text-xs font-bold text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all hover:scale-105 sm:px-4 md:px-6 md:text-sm"
-              >
-                {text.navbar.register}
-              </a>
-            </div>
+  <a
+    href="/register"
+    className="
+      whitespace-nowrap rounded-full
+      bg-gradient-to-r from-pink-500 to-rose-500
+      px-3 py-2
+      text-xs font-bold text-white
+      shadow-[0_0_20px_rgba(236,72,153,0.3)]
+      transition-all hover:scale-105
+      sm:px-4 md:px-6 md:text-sm
+    "
+  >
+    {text.navbar.register}
+  </a>
+</div>
           )}
         </div>
       </nav>
