@@ -13,6 +13,17 @@ namespace PersonalPortfolioTracker.Services.TransactionService
         private readonly IUnitOfWork _uow;
         private readonly Guid _investorID;
 
+        // scale price cho cac ticker co gia rat nho, vi du 0.000002 cua PEPE
+        private const int FinancialScale = 8;
+        private static decimal RoundFinancial(decimal value)
+        {
+            return decimal.Round(
+                value,
+                FinancialScale,
+                MidpointRounding.AwayFromZero
+            );
+        }
+
         public TransactionService(IUnitOfWork uow, IHttpContextAccessor _httpcontext)
         {
             _uow = uow ?? throw new ArgumentNullException(nameof(uow));
@@ -160,7 +171,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                     var newQuantity = existingHolding.Quantity + (decimal)dto.Quantity;
                     var newTotalInvestmentCost = oldTotalInvestmentCost + netAmount;
-                    var newInvestmentCost = Math.Round((decimal)newTotalInvestmentCost / newQuantity, 2);
+                    var newInvestmentCost = RoundFinancial(
+    newTotalInvestmentCost / newQuantity
+);
 
                     existingHolding.Quantity = newQuantity;
                     existingHolding.InvestmentCost = newInvestmentCost;
@@ -177,7 +190,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     {
                         AccountId = dto.AccountID,
                         TickerId = dto.TickerID,
-                        InvestmentCost = Math.Round((decimal)netAmount / (decimal)dto.Quantity, 2),
+                        InvestmentCost = RoundFinancial(
+    netAmount.Value / dto.Quantity.Value
+),
                         Quantity = (decimal)dto.Quantity,
                         TotalInvestmentCost = (decimal)netAmount,
                         CreatedAt = VietnamTime.Now(),
@@ -266,7 +281,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                     // Trừ theo tỷ lệ phần trăm (Proportion) thay vì lấy Quantity * AverageCost
                     decimal proportion = dto.Quantity.Value / existingHolding.Quantity;
-                    withdrawTotalInvestmentCost = Math.Round(existingHolding.TotalInvestmentCost * proportion, 0);
+                    withdrawTotalInvestmentCost = RoundFinancial(
+    existingHolding.TotalInvestmentCost * proportion
+);
 
                     existingHolding.Quantity -= dto.Quantity.Value;
                     existingHolding.TotalInvestmentCost -= withdrawTotalInvestmentCost;
@@ -318,7 +335,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 var newQuantity = existingHolding.Quantity + dto.Quantity;
 
                 existingHolding.Quantity = (decimal)newQuantity;
-                existingHolding.InvestmentCost = Math.Round(existingHolding.TotalInvestmentCost / (decimal)newQuantity, 2);
+                existingHolding.InvestmentCost = RoundFinancial(
+    existingHolding.TotalInvestmentCost / newQuantity.Value
+);
                 existingHolding.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
