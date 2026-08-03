@@ -107,7 +107,11 @@ export default function Sidebar() {
     {
       section: "About",
       items: [
-        { label: "App Info", path: "/landing", icon: <Info size={18} /> },
+        {
+          label: "App Info",
+          path: "/landing#app-info",
+          icon: <Info size={18} />,
+        },
       ],
     },
   ];

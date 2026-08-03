@@ -195,6 +195,16 @@ export default function TickerPage() {
   }, [pageNumber, fetchTickers]);
 
   const currentSelectedTypeObj = tickerTypes.find((t) => t.id === selectedType);
+  const selectedTypeCode = getEnglishTypeCode(
+    currentSelectedTypeObj?.code || "",
+  );
+
+  const marketDataSource =
+    selectedTypeCode === "STOCK"
+      ? "VPS Securities"
+      : selectedTypeCode === "CRYPTO"
+        ? "Binance public market data"
+        : "Manually maintained data";
 
   // === MODAL HANDLERS ===
   const openFormModal = (ticker = null) => {
@@ -328,10 +338,20 @@ export default function TickerPage() {
                 <Loader2 className="animate-spin text-pink-500" size={20} />
               )}
             </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              View supported assets and near real-time market prices (2-minute
-              delay).
-            </p>
+            <div className="mt-1 space-y-1">
+              <p className="text-sm text-gray-500">
+                View supported assets and near real-time market prices.
+              </p>
+
+              <p className="text-[11px] text-gray-400">
+                Data source:{" "}
+                <span className="font-semibold text-gray-500">
+                  {marketDataSource}
+                </span>
+                . Prices are refreshed approximately every 2 minutes when the
+                upstream service is available.
+              </p>
+            </div>
           </div>
 
           {/* FILTER CONTROLS */}
@@ -539,6 +559,16 @@ export default function TickerPage() {
             </button>
           </div>
         )}
+
+        <div className="mt-8 border-t border-gray-200 pt-5 text-center">
+          <p className="text-[11px] text-gray-400 leading-relaxed">
+            Stock prices are sourced from VPS Securities. Cryptocurrency prices
+            are sourced from Binance public market data.
+            <br />
+            Data may be delayed, unavailable, incomplete, or inaccurate and is
+            provided for informational purposes only.
+          </p>
+        </div>
 
         {/* ========================================================
             MODAL: FORM ADD / EDIT TICKER
