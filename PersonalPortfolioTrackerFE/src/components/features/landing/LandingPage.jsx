@@ -50,7 +50,7 @@ const translations = {
         {
           title: "Portfolio Holdings",
           description:
-            "Real-time P&L tracking. Set your Target Prices to plan your next buy and sell moves with confidence.",
+            "Near real-time P&L tracking. Set your Target Prices to plan your next buy and sell moves with confidence.",
         },
         {
           title: "Visual Analysis",
@@ -70,7 +70,7 @@ const translations = {
         {
           title: "Secure & Private",
           description:
-            "Your financial data remains confidential with modern security standards and encryption.",
+            "Your financial data is protected through authenticated access and modern security practices.",
         },
       ],
     },
@@ -121,8 +121,7 @@ const translations = {
 
     appInfo: {
       title: "ℹ️ Application Information",
-      description:
-        "Data sources, legal information, and developer contact.",
+      description: "Data sources, legal information, and developer contact.",
 
       sourcesTitle: "Market Data Sources",
       stockTitle: "Vietnamese stocks",
@@ -135,13 +134,16 @@ const translations = {
 
       disclaimerTitle: "Disclaimer & Contact",
       disclaimer1:
-        "Market information may be delayed, unavailable, incomplete, or inaccurate. This platform is provided solely for personal portfolio tracking and informational purposes and does not constitute investment, financial, legal, or tax advice.",
+        "Market information may be delayed, unavailable, incomplete, or inaccurate. This platform is provided solely for users to track their personal portfolios and access information for reference. The displayed content does not constitute investment, financial, legal, or tax advice.",
+
       disclaimer2:
-        "This is an independent, non-commercial personal project. The platform does not sell, license, or redistribute market data as a standalone service, does not execute trades, and does not provide brokerage, investment management, or financial advisory services.",
+        "This is an independent personal project operated on a non-commercial basis. The platform does not sell, sublicense, or offer market data as a standalone product or service. It does not place or execute trades on behalf of users and does not provide brokerage, investment management, or financial advisory services.",
+
       disclaimer3:
-        "This platform is not affiliated with, sponsored by, endorsed by, or officially connected with VPS Securities or Binance. All company names, trademarks, and market data sources remain the property of their respective owners.",
+        "This platform has no affiliation, partnership, sponsorship, endorsement, or official connection with VPS Securities or Binance. References to these organizations are made solely to identify the relevant data sources. Company names and trademarks belong to their respective owners. Any rights in the displayed market data remain with the applicable data providers or rights holders.",
+
       disclaimer4:
-        "Use of this platform and any decisions made based on the displayed information are solely at the user's own risk.",
+        "Users are solely responsible for their use of the platform and for any decisions made based on the displayed information. The developer is not responsible for losses resulting from the use of, or reliance on, this information.",
 
       contactTitle: "Developer Contact",
       websiteLabel: "Website:",
@@ -149,10 +151,8 @@ const translations = {
     },
 
     footer: {
-      copyright:
-        "© 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.",
-      sources:
-        "Market data: VPS Securities and Binance public market data.",
+      copyright: "© 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.",
+      sources: "Market data: VPS Securities and Binance public market data.",
       disclaimer:
         "Delayed data. For informational purposes only. Not investment advice.",
       appInfoLink: "Data sources, disclaimer & contact",
@@ -206,7 +206,7 @@ const translations = {
         {
           title: "Bảo mật và riêng tư",
           description:
-            "Dữ liệu tài chính của người dùng được bảo vệ bằng các tiêu chuẩn bảo mật và mã hóa hiện đại.",
+            "Dữ liệu tài chính của người dùng được bảo vệ bằng cơ chế xác thực và các biện pháp bảo mật hiện đại.",
         },
       ],
     },
@@ -272,13 +272,16 @@ const translations = {
 
       disclaimerTitle: "Miễn trừ trách nhiệm và Liên hệ",
       disclaimer1:
-        "Thông tin thị trường có thể bị chậm, gián đoạn, thiếu hoặc không chính xác. Nền tảng này chỉ được cung cấp nhằm mục đích theo dõi danh mục tài sản cá nhân và tham khảo thông tin; không cấu thành tư vấn đầu tư, tài chính, pháp lý hoặc thuế.",
+        "Thông tin thị trường có thể bị chậm, gián đoạn, thiếu hoặc không chính xác. Nền tảng này chỉ được cung cấp để người dùng tự theo dõi danh mục tài sản cá nhân và tham khảo thông tin. Nội dung hiển thị không phải là tư vấn đầu tư, tài chính, pháp lý hoặc thuế.",
+
       disclaimer2:
-        "Đây là dự án cá nhân độc lập, phi thương mại. Nền tảng không bán, cấp phép hoặc phân phối lại dữ liệu thị trường như một dịch vụ độc lập; không thực hiện giao dịch và không cung cấp dịch vụ môi giới, quản lý đầu tư hoặc tư vấn tài chính.",
+        "Đây là một dự án cá nhân độc lập và không nhằm mục đích thương mại. Nền tảng không bán, cấp phép lại hoặc cung cấp dữ liệu thị trường như một sản phẩm hay dịch vụ độc lập. Nền tảng không đặt lệnh hoặc thực hiện giao dịch thay cho người dùng, đồng thời không cung cấp dịch vụ môi giới, quản lý đầu tư hoặc tư vấn tài chính.",
+
       disclaimer3:
-        "Nền tảng không liên kết, được tài trợ, bảo chứng hoặc kết nối chính thức với VPS Securities hoặc Binance. Tên doanh nghiệp, nhãn hiệu và nguồn dữ liệu thị trường thuộc quyền sở hữu của các bên tương ứng.",
+        "Nền tảng này không có bất kỳ mối quan hệ liên kết, hợp tác, tài trợ, bảo chứng hoặc kết nối chính thức nào với VPS Securities hoặc Binance. Việc đề cập đến các đơn vị này chỉ nhằm xác định nguồn dữ liệu. Tên doanh nghiệp và nhãn hiệu thuộc quyền sở hữu của các chủ sở hữu tương ứng. Các quyền đối với dữ liệu thị trường được hiển thị, nếu có, thuộc về nhà cung cấp dữ liệu hoặc chủ thể quyền liên quan.",
+
       disclaimer4:
-        "Người dùng tự chịu trách nhiệm đối với việc sử dụng nền tảng và mọi quyết định được đưa ra dựa trên thông tin hiển thị.",
+        "Người dùng tự chịu trách nhiệm về việc sử dụng nền tảng và mọi quyết định được đưa ra dựa trên thông tin hiển thị. Nhà phát triển không chịu trách nhiệm đối với tổn thất phát sinh từ việc sử dụng hoặc dựa vào các thông tin này.",
 
       contactTitle: "Liên hệ nhà phát triển",
       websiteLabel: "Website:",
@@ -286,8 +289,7 @@ const translations = {
     },
 
     footer: {
-      copyright:
-        "© 2026 Nguyễn Ngọc Thiên Phúc. Đã đăng ký bản quyền.",
+      copyright: "© 2026 Nguyễn Ngọc Thiên Phúc. Mọi quyền được bảo lưu.",
       sources:
         "Nguồn dữ liệu thị trường: VPS Securities và dữ liệu thị trường công khai của Binance.",
       disclaimer:
@@ -340,10 +342,14 @@ export default function LandingPage() {
   }, [language]);
 
   useEffect(() => {
+    let timerId;
+
     const scrollToHash = () => {
+      clearTimeout(timerId);
+
       if (!window.location.hash) return;
 
-      const timer = setTimeout(() => {
+      timerId = setTimeout(() => {
         const target = document.querySelector(window.location.hash);
 
         target?.scrollIntoView({
@@ -351,16 +357,13 @@ export default function LandingPage() {
           block: "start",
         });
       }, 100);
-
-      return timer;
     };
 
-    const timer = scrollToHash();
-
+    scrollToHash();
     window.addEventListener("hashchange", scrollToHash);
 
     return () => {
-      if (timer) clearTimeout(timer);
+      clearTimeout(timerId);
       window.removeEventListener("hashchange", scrollToHash);
     };
   }, []);
@@ -397,9 +400,7 @@ export default function LandingPage() {
       {/* NAVBAR */}
       <nav className="fixed left-0 right-0 top-0 z-50 flex h-[76px] items-center justify-between border-b border-white/5 bg-[#0f172a]/90 px-4 backdrop-blur-xl sm:px-6 md:px-8">
         <h1 className="whitespace-nowrap text-lg font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400 md:text-2xl">
-          <span className="hidden sm:inline">
-            Wealth Management Platform
-          </span>
+          <span className="hidden sm:inline">Wealth Management Platform</span>
           <span className="sm:hidden">WMP</span>
         </h1>
 
@@ -442,22 +443,22 @@ export default function LandingPage() {
             </a>
           ) : (
             <div className="flex items-center gap-1.5 sm:gap-3 md:gap-4">
-  <a
-    href="/login"
-    className="
+              <a
+                href="/login"
+                className="
       whitespace-nowrap rounded-full
       px-2 py-2
       text-xs font-semibold text-slate-300
       transition hover:bg-white/5 hover:text-white
       sm:px-3 md:text-sm
     "
-  >
-    {text.navbar.login}
-  </a>
+              >
+                {text.navbar.login}
+              </a>
 
-  <a
-    href="/register"
-    className="
+              <a
+                href="/register"
+                className="
       whitespace-nowrap rounded-full
       bg-gradient-to-r from-pink-500 to-rose-500
       px-3 py-2
@@ -466,10 +467,10 @@ export default function LandingPage() {
       transition-all hover:scale-105
       sm:px-4 md:px-6 md:text-sm
     "
-  >
-    {text.navbar.register}
-  </a>
-</div>
+              >
+                {text.navbar.register}
+              </a>
+            </div>
           )}
         </div>
       </nav>
@@ -480,8 +481,8 @@ export default function LandingPage() {
 
         <h2 className="relative mb-6 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
           {text.hero.titleTop}
-          <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 md:ml-3">
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400">
             {text.hero.titleBottom}
           </span>
         </h2>
@@ -509,9 +510,7 @@ export default function LandingPage() {
               {text.features.title}
             </h3>
 
-            <p className="text-slate-500">
-              {text.features.description}
-            </p>
+            <p className="text-slate-500">{text.features.description}</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -545,9 +544,7 @@ export default function LandingPage() {
               {text.gettingStarted.title}
             </h3>
 
-            <p className="text-slate-500">
-              {text.gettingStarted.description}
-            </p>
+            <p className="text-slate-500">{text.gettingStarted.description}</p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-3">
@@ -605,10 +602,7 @@ export default function LandingPage() {
 
               <ul className="space-y-4">
                 {text.gettingStarted.steps[2].items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3"
-                  >
+                  <li key={item} className="flex items-start gap-3">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-pink-400" />
 
                     <p className="text-sm leading-relaxed text-slate-200">
@@ -656,17 +650,12 @@ export default function LandingPage() {
               {text.mobile.title}
             </h3>
 
-            <p className="text-slate-500">
-              {text.mobile.description}
-            </p>
+            <p className="text-slate-500">{text.mobile.description}</p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
             {mobileImages.map((img, index) => (
-              <div
-                key={index}
-                className="group relative"
-              >
+              <div key={index} className="group relative">
                 <div className="custom-scrollbar h-[350px] w-[160px] overflow-y-auto overflow-x-hidden rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 shadow-2xl transition-transform duration-500 group-hover:-translate-y-3 md:h-[450px] md:w-[220px]">
                   <OptimizedImage
                     src={img}
@@ -680,18 +669,13 @@ export default function LandingPage() {
         </section>
 
         {/* APP INFO */}
-        <section
-          id="app-info"
-          className="mx-auto max-w-5xl scroll-mt-28"
-        >
+        <section id="app-info" className="mx-auto max-w-5xl scroll-mt-28">
           <div className="mb-12 text-center">
             <h3 className="mb-3 text-3xl font-black text-white">
               {text.appInfo.title}
             </h3>
 
-            <p className="text-slate-500">
-              {text.appInfo.description}
-            </p>
+            <p className="text-slate-500">{text.appInfo.description}</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -709,9 +693,7 @@ export default function LandingPage() {
                     {text.appInfo.stockTitle}
                   </p>
 
-                  <p className="text-slate-400">
-                    {text.appInfo.stockSource}
-                  </p>
+                  <p className="text-slate-400">{text.appInfo.stockSource}</p>
                 </div>
 
                 <div>
@@ -719,9 +701,7 @@ export default function LandingPage() {
                     {text.appInfo.cryptoTitle}
                   </p>
 
-                  <p className="text-slate-400">
-                    {text.appInfo.cryptoSource}
-                  </p>
+                  <p className="text-slate-400">{text.appInfo.cryptoSource}</p>
                 </div>
 
                 <p className="border-t border-slate-700/50 pt-4 text-xs italic leading-relaxed text-slate-500">
@@ -750,9 +730,7 @@ export default function LandingPage() {
                   </p>
 
                   <div className="space-y-1">
-                    <p className="text-slate-300">
-                      Nguyễn Ngọc Thiên Phúc
-                    </p>
+                    <p className="text-slate-300">Nguyễn Ngọc Thiên Phúc</p>
 
                     <p>
                       {text.appInfo.websiteLabel}{" "}
@@ -786,9 +764,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="mt-20 border-t border-white/5 bg-slate-900/50 py-8">
         <div className="container mx-auto px-6 text-center">
-          <p className="mb-2 text-sm text-slate-400">
-            {text.footer.copyright}
-          </p>
+          <p className="mb-2 text-sm text-slate-400">{text.footer.copyright}</p>
 
           <p className="text-xs leading-relaxed text-slate-600">
             {text.footer.sources}
