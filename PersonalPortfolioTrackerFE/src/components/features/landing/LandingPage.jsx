@@ -524,14 +524,29 @@ export default function LandingPage() {
               <div className="space-y-4 text-sm text-slate-400 leading-relaxed">
                 <p>
                   Market information may be delayed, unavailable, incomplete, or
-                  inaccurate. This platform is provided for portfolio tracking
-                  and informational purposes only and does not constitute
-                  investment advice.
+                  inaccurate. This platform is provided solely for personal
+                  portfolio tracking and informational purposes and does not
+                  constitute investment, financial, legal, or tax advice.
                 </p>
 
                 <p>
-                  This is an independent personal project and is not affiliated
-                  with, sponsored by, or endorsed by VPS Securities or Binance.
+                  This is an independent, non-commercial personal project. The
+                  platform does not sell, license, or redistribute market data
+                  as a standalone service, does not execute trades, and does not
+                  provide brokerage, investment management, or financial
+                  advisory services.
+                </p>
+
+                <p>
+                  This platform is not affiliated with, sponsored by, endorsed
+                  by, or officially connected with VPS Securities or Binance.
+                  All company names, trademarks, and market data sources remain
+                  the property of their respective owners.
+                </p>
+
+                <p>
+                  Use of this platform and any decisions made based on the
+                  displayed information are solely at the user's own risk.
                 </p>
 
                 <div className="border-t border-slate-700/50 pt-4">
