@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Target,
@@ -23,410 +23,612 @@ import AccountMobileImg from "../../../assets/landing/AccountMobile.png";
 import MarketMobileImg from "../../../assets/landing/MarketMobile.png";
 import TransactionMobileImg from "../../../assets/landing/TransactionMobile.png";
 
+const translations = {
+  en: {
+    navbar: {
+      login: "Login",
+      register: "Register",
+      dashboard: "Go to Dashboard",
+    },
+
+    hero: {
+      titleTop: "Comprehensive Wealth",
+      titleBottom: "Management Platform",
+      description:
+        "Monitor your cash, bank, credit, savings, and investments with near real-time updates and advanced analytics.",
+    },
+
+    features: {
+      title: "🌟 Key Features",
+      description: "Everything you need to master your financial journey.",
+      items: [
+        {
+          title: "Intuitive Dashboard",
+          description:
+            "Instant snapshot of Portfolio Value, Cash Balance, and P&L with clear asset allocation charts.",
+        },
+        {
+          title: "Portfolio Holdings",
+          description:
+            "Real-time P&L tracking. Set your Target Prices to plan your next buy and sell moves with confidence.",
+        },
+        {
+          title: "Visual Analysis",
+          description:
+            "Enhance your trading discipline by attaching chart snapshots directly to your transaction notes.",
+        },
+        {
+          title: "Multi-Source Data",
+          description:
+            "Market data integration from external providers for portfolio tracking and reference.",
+        },
+        {
+          title: "Mobile-First Design",
+          description:
+            "Optimized for on-the-go tracking, allowing quick transaction entries directly from your smartphone.",
+        },
+        {
+          title: "Secure & Private",
+          description:
+            "Your financial data remains confidential with modern security standards and encryption.",
+        },
+      ],
+    },
+
+    gettingStarted: {
+      title: "📋 How to get started",
+      description: "3 simple steps to take control of your assets.",
+      steps: [
+        {
+          title: "Account Setup",
+          description:
+            "Create accounts that mirror your real-world assets, such as brokerage accounts, crypto wallets, cash, bank accounts, credit cards, and savings. Categorize them correctly for accurate performance tracking.",
+        },
+        {
+          title: "Trading & Analytics",
+          buyLabel: "BUY:",
+          buyDescription:
+            "Funds are automatically deducted from Available Cash and updated into Invested Balance.",
+          targetLabel: "Target:",
+          targetDescription:
+            "Use Holdings to set target prices and upload technical charts in Notes.",
+        },
+        {
+          title: "Import Existing Holdings",
+          items: [
+            "Input your current invested capital into the relevant account.",
+            'Record a "BUY" transaction with your actual quantity and cost price.',
+            "Set the FEE Rate to 0% to preserve your original cost basis.",
+          ],
+        },
+      ],
+    },
+
+    desktop: {
+      title: "💻 Desktop Experience",
+      items: {
+        account: "Account Management",
+        holdings: "Portfolio Holdings",
+        market: "Market Tickers",
+        transactions: "Transaction History",
+      },
+    },
+
+    mobile: {
+      title: "📱 Mobile Experience",
+      description: "Fully optimized for on-the-go portfolio tracking.",
+    },
+
+    appInfo: {
+      title: "ℹ️ Application Information",
+      description:
+        "Data sources, legal information, and developer contact.",
+
+      sourcesTitle: "Market Data Sources",
+      stockTitle: "Vietnamese stocks",
+      stockSource: "Market prices are sourced from VPS Securities.",
+      cryptoTitle: "Cryptocurrency",
+      cryptoSource:
+        "Market prices are sourced from Binance public market data.",
+      refreshNote:
+        "Prices are refreshed approximately every two minutes when the upstream data services are available.",
+
+      disclaimerTitle: "Disclaimer & Contact",
+      disclaimer1:
+        "Market information may be delayed, unavailable, incomplete, or inaccurate. This platform is provided solely for personal portfolio tracking and informational purposes and does not constitute investment, financial, legal, or tax advice.",
+      disclaimer2:
+        "This is an independent, non-commercial personal project. The platform does not sell, license, or redistribute market data as a standalone service, does not execute trades, and does not provide brokerage, investment management, or financial advisory services.",
+      disclaimer3:
+        "This platform is not affiliated with, sponsored by, endorsed by, or officially connected with VPS Securities or Binance. All company names, trademarks, and market data sources remain the property of their respective owners.",
+      disclaimer4:
+        "Use of this platform and any decisions made based on the displayed information are solely at the user's own risk.",
+
+      contactTitle: "Developer Contact",
+      websiteLabel: "Website:",
+      emailLabel: "Email:",
+    },
+
+    footer: {
+      copyright:
+        "© 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.",
+      sources:
+        "Market data: VPS Securities and Binance public market data.",
+      disclaimer:
+        "Delayed data. For informational purposes only. Not investment advice.",
+      appInfoLink: "Data sources, disclaimer & contact",
+    },
+  },
+
+  vi: {
+    navbar: {
+      login: "Đăng nhập",
+      register: "Đăng ký",
+      dashboard: "Vào Dashboard",
+    },
+
+    hero: {
+      titleTop: "Nền tảng Quản lý",
+      titleBottom: "Tài sản Toàn diện",
+      description:
+        "Theo dõi tiền mặt, ngân hàng, tín dụng, tiết kiệm và danh mục đầu tư với dữ liệu cập nhật gần thời gian thực cùng các công cụ phân tích trực quan.",
+    },
+
+    features: {
+      title: "🌟 Tính năng nổi bật",
+      description:
+        "Những công cụ cần thiết để quản lý hành trình tài chính của bạn.",
+      items: [
+        {
+          title: "Dashboard trực quan",
+          description:
+            "Theo dõi nhanh tổng giá trị danh mục, số dư tiền mặt và hiệu suất P&L với các biểu đồ phân bổ tài sản rõ ràng.",
+        },
+        {
+          title: "Quản lý danh mục đầu tư",
+          description:
+            "Theo dõi P&L gần thời gian thực và thiết lập giá mục tiêu để chủ động kế hoạch mua hoặc bán.",
+        },
+        {
+          title: "Công cụ phân tích",
+          description:
+            "Đính kèm ảnh biểu đồ vào ghi chú giao dịch để lưu lại lý do đầu tư và duy trì kỷ luật.",
+        },
+        {
+          title: "Dữ liệu từ nhiều nguồn",
+          description:
+            "Tích hợp dữ liệu thị trường từ các nguồn bên ngoài nhằm phục vụ theo dõi danh mục và tham khảo.",
+        },
+        {
+          title: "Thiết kế ưu tiên di động",
+          description:
+            "Tối ưu cho việc theo dõi tài sản mọi lúc, đồng thời hỗ trợ nhập giao dịch nhanh trên điện thoại.",
+        },
+        {
+          title: "Bảo mật và riêng tư",
+          description:
+            "Dữ liệu tài chính của người dùng được bảo vệ bằng các tiêu chuẩn bảo mật và mã hóa hiện đại.",
+        },
+      ],
+    },
+
+    gettingStarted: {
+      title: "📋 Hướng dẫn sử dụng",
+      description: "3 bước đơn giản để bắt đầu quản lý tài sản.",
+      steps: [
+        {
+          title: "Thiết lập tài khoản",
+          description:
+            "Tạo các tài khoản tương ứng với tài sản thực tế như tài khoản chứng khoán, ví tiền điện tử, tiền mặt, ngân hàng, thẻ tín dụng và tiết kiệm. Phân loại chính xác để hệ thống tính toán đúng.",
+        },
+        {
+          title: "Giao dịch và phân tích",
+          buyLabel: "MUA:",
+          buyDescription:
+            "Tiền được tự động trừ khỏi số dư khả dụng và chuyển sang giá trị đã đầu tư.",
+          targetLabel: "Mục tiêu:",
+          targetDescription:
+            "Sử dụng Holdings để thiết lập giá mục tiêu và tải ảnh phân tích kỹ thuật vào phần ghi chú.",
+        },
+        {
+          title: "Nhập danh mục hiện có",
+          items: [
+            "Nhập số vốn hiện đang đầu tư vào tài khoản tương ứng.",
+            'Tạo một giao dịch "BUY" với số lượng và giá vốn thực tế.',
+            "Đặt tỷ lệ phí bằng 0% để giữ nguyên giá vốn ban đầu.",
+          ],
+        },
+      ],
+    },
+
+    desktop: {
+      title: "💻 Trải nghiệm trên máy tính",
+      items: {
+        account: "Quản lý tài khoản",
+        holdings: "Danh mục đầu tư",
+        market: "Giá thị trường",
+        transactions: "Lịch sử giao dịch",
+      },
+    },
+
+    mobile: {
+      title: "📱 Trải nghiệm trên di động",
+      description:
+        "Được tối ưu hoàn toàn để theo dõi danh mục mọi lúc, mọi nơi.",
+    },
+
+    appInfo: {
+      title: "ℹ️ Thông tin ứng dụng",
+      description:
+        "Nguồn dữ liệu, thông tin pháp lý và liên hệ nhà phát triển.",
+
+      sourcesTitle: "Nguồn dữ liệu thị trường",
+      stockTitle: "Chứng khoán Việt Nam",
+      stockSource: "Giá thị trường được lấy từ VPS Securities.",
+      cryptoTitle: "Tiền điện tử",
+      cryptoSource:
+        "Giá thị trường được lấy từ dữ liệu thị trường công khai của Binance.",
+      refreshNote:
+        "Giá được cập nhật khoảng hai phút một lần khi các dịch vụ cung cấp dữ liệu bên ngoài hoạt động bình thường.",
+
+      disclaimerTitle: "Miễn trừ trách nhiệm và Liên hệ",
+      disclaimer1:
+        "Thông tin thị trường có thể bị chậm, gián đoạn, thiếu hoặc không chính xác. Nền tảng này chỉ được cung cấp nhằm mục đích theo dõi danh mục tài sản cá nhân và tham khảo thông tin; không cấu thành tư vấn đầu tư, tài chính, pháp lý hoặc thuế.",
+      disclaimer2:
+        "Đây là dự án cá nhân độc lập, phi thương mại. Nền tảng không bán, cấp phép hoặc phân phối lại dữ liệu thị trường như một dịch vụ độc lập; không thực hiện giao dịch và không cung cấp dịch vụ môi giới, quản lý đầu tư hoặc tư vấn tài chính.",
+      disclaimer3:
+        "Nền tảng không liên kết, được tài trợ, bảo chứng hoặc kết nối chính thức với VPS Securities hoặc Binance. Tên doanh nghiệp, nhãn hiệu và nguồn dữ liệu thị trường thuộc quyền sở hữu của các bên tương ứng.",
+      disclaimer4:
+        "Người dùng tự chịu trách nhiệm đối với việc sử dụng nền tảng và mọi quyết định được đưa ra dựa trên thông tin hiển thị.",
+
+      contactTitle: "Liên hệ nhà phát triển",
+      websiteLabel: "Website:",
+      emailLabel: "Email:",
+    },
+
+    footer: {
+      copyright:
+        "© 2026 Nguyễn Ngọc Thiên Phúc. Đã đăng ký bản quyền.",
+      sources:
+        "Nguồn dữ liệu thị trường: VPS Securities và dữ liệu thị trường công khai của Binance.",
+      disclaimer:
+        "Dữ liệu có độ trễ, chỉ mang tính chất tham khảo và không phải lời khuyên đầu tư.",
+      appInfoLink: "Nguồn dữ liệu, miễn trừ trách nhiệm và liên hệ",
+    },
+  },
+};
+
+const featureIcons = [
+  LayoutDashboard,
+  Target,
+  BarChart3,
+  Globe,
+  Smartphone,
+  ShieldCheck,
+];
+
+const OptimizedImage = ({ src, alt, className }) => (
+  <img
+    src={src}
+    alt={alt}
+    loading="lazy"
+    decoding="async"
+    className={className}
+  />
+);
+
 export default function LandingPage() {
+  const [language, setLanguage] = useState(() => {
+    const savedLanguage = localStorage.getItem("landing_language");
+
+    if (savedLanguage === "vi" || savedLanguage === "en") {
+      return savedLanguage;
+    }
+
+    return navigator.language.toLowerCase().startsWith("vi") ? "vi" : "en";
+  });
+
   const isLoggedIn = !!localStorage.getItem("token");
+  const text = translations[language];
 
   useEffect(() => {
-    if (!window.location.hash) return;
+    localStorage.setItem("landing_language", language);
+    document.documentElement.lang = language;
 
-    const timer = setTimeout(() => {
-      const target = document.querySelector(window.location.hash);
+    return () => {
+      document.documentElement.lang = "en";
+    };
+  }, [language]);
 
-      target?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
+  useEffect(() => {
+    const scrollToHash = () => {
+      if (!window.location.hash) return;
 
-    return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        const target = document.querySelector(window.location.hash);
+
+        target?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+
+      return timer;
+    };
+
+    const timer = scrollToHash();
+
+    window.addEventListener("hashchange", scrollToHash);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("hashchange", scrollToHash);
+    };
   }, []);
 
-  // Component giúp Safari không bị "nghẽn" khi cuộn trang
-  const OptimizedImage = ({ src, alt, className }) => (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      className={className}
-    />
-  );
+  const desktopItems = [
+    {
+      img: AccountImg,
+      title: text.desktop.items.account,
+    },
+    {
+      img: HoldingImg,
+      title: text.desktop.items.holdings,
+    },
+    {
+      img: MarketImg,
+      title: text.desktop.items.market,
+    },
+    {
+      img: TransactionImg,
+      title: text.desktop.items.transactions,
+    },
+  ];
+
+  const mobileImages = [
+    DashboardMobileImg,
+    AccountMobileImg,
+    HoldingMobileImg,
+    MarketMobileImg,
+    TransactionMobileImg,
+  ];
 
   return (
-    <div className="bg-[#0f172a] text-slate-300 min-h-screen font-sans selection:bg-pink-500/30 overflow-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-[#0f172a] pt-[76px] font-sans text-slate-300 selection:bg-pink-500/30">
       {/* NAVBAR */}
-      <nav className="p-6 flex justify-between items-center border-b border-white/5 sticky top-0 bg-[#0f172a]/80 backdrop-blur-xl z-50">
-        <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400 italic tracking-tighter">
-          Wealth Management Platform
+      <nav className="fixed left-0 right-0 top-0 z-50 flex h-[76px] items-center justify-between border-b border-white/5 bg-[#0f172a]/90 px-4 backdrop-blur-xl sm:px-6 md:px-8">
+        <h1 className="whitespace-nowrap text-lg font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-400 md:text-2xl">
+          <span className="hidden sm:inline">
+            Wealth Management Platform
+          </span>
+          <span className="sm:hidden">WMP</span>
         </h1>
-        {isLoggedIn ? (
-          <a
-            href="/investor"
-            className="px-6 py-2 rounded-full font-bold text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)]"
-          >
-            Go to Dashboard
-          </a>
-        ) : (
-          <div className="flex items-center gap-4">
-            <a
-              href="/login"
-              className="px-5 py-2 font-semibold text-slate-300 hover:text-white transition"
+
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+          {/* LANGUAGE SWITCH */}
+          <div className="flex items-center rounded-full border border-slate-700 bg-slate-900/70 p-1 text-xs font-bold">
+            <button
+              type="button"
+              aria-pressed={language === "vi"}
+              onClick={() => setLanguage("vi")}
+              className={`rounded-full px-2.5 py-1.5 transition-all sm:px-3 ${
+                language === "vi"
+                  ? "bg-pink-500 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
-              Login
-            </a>
-            <a
-              href="/register"
-              className="px-6 py-2 rounded-full font-bold text-white bg-gradient-to-r from-pink-500 to-rose-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)]"
+              VI
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={language === "en"}
+              onClick={() => setLanguage("en")}
+              className={`rounded-full px-2.5 py-1.5 transition-all sm:px-3 ${
+                language === "en"
+                  ? "bg-pink-500 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
             >
-              Register
-            </a>
+              EN
+            </button>
           </div>
-        )}
+
+          {isLoggedIn ? (
+            <a
+              href="/investor"
+              className="whitespace-nowrap rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-3 py-2 text-xs font-bold text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all hover:from-pink-600 hover:to-rose-600 sm:px-4 md:px-6 md:text-sm"
+            >
+              {text.navbar.dashboard}
+            </a>
+          ) : (
+            <div className="flex items-center gap-2 md:gap-4">
+              <a
+                href="/login"
+                className="hidden px-3 py-2 font-semibold text-slate-300 transition hover:text-white sm:inline"
+              >
+                {text.navbar.login}
+              </a>
+
+              <a
+                href="/register"
+                className="whitespace-nowrap rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-3 py-2 text-xs font-bold text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all hover:scale-105 sm:px-4 md:px-6 md:text-sm"
+              >
+                {text.navbar.register}
+              </a>
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* HERO SECTION */}
-      <header className="relative pt-24 pb-16 px-6 text-center">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <header className="relative px-6 pb-16 pt-20 text-center md:pt-24">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-600/20 blur-[120px]" />
 
-        <h2 className="relative text-5xl md:text-6xl font-black text-white mb-6 leading-tight">
-          Comprehensive Wealth <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400">
-            Management Platform
+        <h2 className="relative mb-6 text-4xl font-black leading-tight text-white sm:text-5xl md:text-6xl">
+          {text.hero.titleTop}
+          <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400 md:ml-3">
+            {text.hero.titleBottom}
           </span>
         </h2>
 
-        <p className="relative text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-12">
-          <span className="block mb-2">
-            Monitor your cash, bank, credit, savings, and investments with near
-            real-time updates and advanced analytics.
-          </span>
-          <span className="block text-sm italic text-slate-500">
-            Quản lý tài sản cá nhân toàn diện, kiểm soát dòng tiền từ tiền mặt,
-            ngân hàng, tín dụng, tiết kiệm đến chứng khoán và tiền điện tử.
-          </span>
+        <p className="relative mx-auto mb-12 max-w-3xl text-base text-slate-300 md:text-xl">
+          {text.hero.description}
         </p>
 
-        <div className="relative max-w-5xl mx-auto mt-12 rounded-2xl border border-slate-700/50 bg-slate-800/50 p-2 shadow-2xl backdrop-blur-sm">
-          {/* ẢNH HERO: KHÔNG dùng lazy load, BẮT BUỘC ưu tiên load cao nhất */}
+        <div className="relative mx-auto mt-12 max-w-5xl rounded-2xl border border-slate-700/50 bg-slate-800/50 p-2 shadow-2xl backdrop-blur-sm">
           <img
             src={DashboardImg}
             alt="Dashboard Preview"
             fetchPriority="high"
             decoding="async"
-            className="rounded-xl w-full border border-slate-700/50 bg-slate-900"
+            className="w-full rounded-xl border border-slate-700/50 bg-slate-900"
           />
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-16 space-y-32">
+      <main className="container mx-auto space-y-32 px-6 py-16">
         {/* KEY FEATURES */}
         <section>
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-black text-white mb-3">
-              🌟 Key Features <span className="text-pink-500">/</span>{" "}
-              <span className="text-slate-400 font-medium">
-                Tính năng nổi bật
-              </span>
+          <div className="mb-16 text-center">
+            <h3 className="mb-3 text-3xl font-black text-white">
+              {text.features.title}
             </h3>
+
             <p className="text-slate-500">
-              Everything you need to master your financial journey.
+              {text.features.description}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <LayoutDashboard className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Intuitive Dashboard
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Instant snapshot of Portfolio Value, Cash Balance, and P&L with
-                clear asset allocation charts.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Dashboard trực quan
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Theo dõi nhanh tổng tài sản, số dư tiền mặt cùng hiệu suất P&L
-                  với biểu đồ phân bổ chi tiết.
-                </p>
-              </div>
-            </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {text.features.items.map((feature, index) => {
+              const FeatureIcon = featureIcons[index];
 
-            {/* Feature 2 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <Target className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Portfolio Holdings
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Real-time P&L tracking. Set your Target Prices to plan your next
-                buy/sell moves with confidence.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Quản lý danh mục
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Theo dõi P&L thời gian thực. Hỗ trợ thiết lập giá mục tiêu để
-                  chủ động kế hoạch giao dịch.
-                </p>
-              </div>
-            </div>
+              return (
+                <div
+                  key={feature.title}
+                  className="group rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6 transition-colors hover:border-pink-500/50"
+                >
+                  <FeatureIcon className="mb-4 h-10 w-10 text-pink-400 transition-transform group-hover:scale-110" />
 
-            {/* Feature 3 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <BarChart3 className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Visual Analysis
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Enhance your trading discipline by attaching chart snapshots
-                directly to your transaction notes.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Công cụ phân tích
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Đính kèm ảnh chụp biểu đồ vào ghi chú giao dịch để lưu lại lý
-                  do đầu tư, duy trì kỷ luật.
-                </p>
-              </div>
-            </div>
+                  <h4 className="mb-2 text-lg font-bold text-white">
+                    {feature.title}
+                  </h4>
 
-            {/* Feature 4 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <Globe className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Multi-Source Data
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Market data integration from external providers for portfolio
-                tracking and reference.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Đa nguồn dữ liệu
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Tích hợp dữ liệu thị trường từ các nguồn bên ngoài để phục vụ
-                  theo dõi danh mục và tham khảo.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <Smartphone className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Mobile-First Design
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Optimized for on-the-go tracking, allowing quick transaction
-                entries directly from your smartphone.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Giao diện Responsive
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Tối ưu hoàn hảo cho cả Desktop và Mobile, giúp bạn cập nhật
-                  danh mục mọi lúc mọi nơi.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-colors group">
-              <ShieldCheck className="w-10 h-10 text-pink-400 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="text-lg font-bold text-white mb-2">
-                Secure & Private
-              </h4>
-              <p className="text-sm text-slate-300 mb-3">
-                Your financial data remains strictly confidential with modern
-                security standards and encryption.
-              </p>
-              <div className="border-t border-slate-700/50 pt-3 mt-3">
-                <h4 className="text-sm font-bold text-slate-400 mb-1">
-                  Bảo mật & Riêng tư
-                </h4>
-                <p className="text-xs text-slate-500 italic">
-                  Dữ liệu tài chính là của riêng bạn. Hệ thống áp dụng tiêu
-                  chuẩn bảo mật hiện đại nhất.
-                </p>
-              </div>
-            </div>
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* HOW TO GET STARTED */}
         <section>
-          <div className="text-center mb-16">
-            <h3 className="text-3xl font-black text-white mb-3">
-              📋 How to get started <span className="text-pink-500">/</span>{" "}
-              <span className="text-slate-400 font-medium">
-                Hướng dẫn sử dụng
-              </span>
+          <div className="mb-16 text-center">
+            <h3 className="mb-3 text-3xl font-black text-white">
+              {text.gettingStarted.title}
             </h3>
+
             <p className="text-slate-500">
-              3 simple steps to take control of your assets.
+              {text.gettingStarted.description}
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Step 1 */}
-            <div className="relative bg-slate-800/30 border border-slate-700/50 p-8 rounded-2xl">
-              <div className="absolute -top-5 -left-5 w-12 h-12 bg-slate-800 border-2 border-pink-500 rounded-full flex items-center justify-center text-xl font-black text-pink-500 shadow-lg">
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* STEP 1 */}
+            <div className="relative rounded-2xl border border-slate-700/50 bg-slate-800/30 p-8">
+              <div className="absolute -left-5 -top-5 flex h-12 w-12 items-center justify-center rounded-full border-2 border-pink-500 bg-slate-800 text-xl font-black text-pink-500 shadow-lg">
                 1
               </div>
-              <h4 className="text-xl font-bold text-white mb-3">
-                Account Setup
+
+              <h4 className="mb-3 text-xl font-bold text-white">
+                {text.gettingStarted.steps[0].title}
               </h4>
-              <p className="text-slate-300 text-sm mb-4">
-                Create accounts that mirror your real-world assets (Brokerage,
-                Crypto Wallets, Cash). Categorize correctly for accurate
-                performance tracking.
+
+              <p className="text-sm leading-relaxed text-slate-300">
+                {text.gettingStarted.steps[0].description}
               </p>
-              <div className="border-t border-slate-700/50 pt-3">
-                <h5 className="text-sm font-bold text-slate-400 mb-1">
-                  Thiết lập tài khoản
-                </h5>
-                <p className="text-slate-500 text-xs italic">
-                  Tạo các "Account" tương ứng với ví thực tế (Ví dụ: TCBS,
-                  Binance, Tiền mặt). Lưu ý phân loại đúng loại tài khoản.
-                </p>
-              </div>
             </div>
 
-            {/* Step 2 */}
-            <div className="relative bg-slate-800/30 border border-slate-700/50 p-8 rounded-2xl">
-              <div className="absolute -top-5 -left-5 w-12 h-12 bg-slate-800 border-2 border-pink-500 rounded-full flex items-center justify-center text-xl font-black text-pink-500 shadow-lg">
+            {/* STEP 2 */}
+            <div className="relative rounded-2xl border border-slate-700/50 bg-slate-800/30 p-8">
+              <div className="absolute -left-5 -top-5 flex h-12 w-12 items-center justify-center rounded-full border-2 border-pink-500 bg-slate-800 text-xl font-black text-pink-500 shadow-lg">
                 2
               </div>
-              <h4 className="text-xl font-bold text-white mb-3">
-                Trading & Analytics
+
+              <h4 className="mb-3 text-xl font-bold text-white">
+                {text.gettingStarted.steps[1].title}
               </h4>
-              <ul className="space-y-3 mb-4">
-                <li className="text-sm text-slate-300">
-                  <span className="font-bold text-pink-400">BUY:</span> Funds
-                  are automatically deducted from Available Cash and updated
-                  into Invested Balance.
+
+              <ul className="space-y-3">
+                <li className="text-sm leading-relaxed text-slate-300">
+                  <span className="font-bold text-pink-400">
+                    {text.gettingStarted.steps[1].buyLabel}
+                  </span>{" "}
+                  {text.gettingStarted.steps[1].buyDescription}
                 </li>
-                <li className="text-sm text-slate-300">
-                  <span className="font-bold text-pink-400">Target:</span> Use
-                  Holdings to set targets. Upload technical charts in Notes.
+
+                <li className="text-sm leading-relaxed text-slate-300">
+                  <span className="font-bold text-pink-400">
+                    {text.gettingStarted.steps[1].targetLabel}
+                  </span>{" "}
+                  {text.gettingStarted.steps[1].targetDescription}
                 </li>
               </ul>
-              <div className="border-t border-slate-700/50 pt-3">
-                <h5 className="text-sm font-bold text-slate-400 mb-1">
-                  Giao dịch & Mục tiêu
-                </h5>
-                <p className="text-slate-500 text-xs italic">
-                  Lệnh Mua tự động trừ tiền Cash. Đặt Target và dùng Note lưu
-                  ảnh phân tích kỹ thuật.
-                </p>
-              </div>
             </div>
 
-            {/* Step 3 */}
-            <div className="relative bg-slate-800/30 border border-pink-500/30 p-8 rounded-2xl shadow-[0_0_15px_rgba(236,72,153,0.1)]">
-              <div className="absolute -top-5 -left-5 w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-xl font-black text-white shadow-lg shadow-pink-500/40">
+            {/* STEP 3 */}
+            <div className="relative rounded-2xl border border-pink-500/30 bg-slate-800/30 p-8 shadow-[0_0_15px_rgba(236,72,153,0.1)]">
+              <div className="absolute -left-5 -top-5 flex h-12 w-12 items-center justify-center rounded-full bg-pink-500 text-xl font-black text-white shadow-lg shadow-pink-500/40">
                 3
               </div>
-              <h4 className="text-xl font-bold text-white mb-4">
-                Import Existing Holdings
+
+              <h4 className="mb-4 text-xl font-bold text-white">
+                {text.gettingStarted.steps[2].title}
               </h4>
 
-              <ul className="space-y-4 mb-5">
-                <li className="flex gap-3 items-start">
-                  <CheckCircle2 className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-slate-200">
-                      Input your current invested capital into the relevant
-                      account.
+              <ul className="space-y-4">
+                {text.gettingStarted.steps[2].items.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-3"
+                  >
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-pink-400" />
+
+                    <p className="text-sm leading-relaxed text-slate-200">
+                      {item}
                     </p>
-                  </div>
-                </li>
-                <li className="flex gap-3 items-start">
-                  <CheckCircle2 className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-slate-200">
-                      Record a "BUY" transaction with your actual quantity and
-                      cost price.
-                    </p>
-                  </div>
-                </li>
-                <li className="flex gap-3 items-start">
-                  <CheckCircle2 className="w-5 h-5 text-pink-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-slate-200">
-                      Set the{" "}
-                      <span className="font-bold text-pink-400">
-                        FEE Rate to 0%
-                      </span>{" "}
-                      to preserve your cost basis.
-                    </p>
-                  </div>
-                </li>
+                  </li>
+                ))}
               </ul>
-              <div className="border-t border-pink-500/30 pt-3">
-                <h5 className="text-sm font-bold text-pink-300 mb-1">
-                  Nhập dữ liệu cũ
-                </h5>
-                <p className="text-pink-400/70 text-xs italic">
-                  1. Nhập vốn vào Account. 2. Tạo giao dịch Mua với giá vốn thực
-                  tế. 3. Đặt Phí 0% để giữ nguyên giá vốn ban đầu.
-                </p>
-              </div>
             </div>
           </div>
         </section>
 
         {/* DESKTOP PRODUCT TOUR */}
         <section>
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-black text-white mb-3">
-              💻 Desktop Experience
+          <div className="mb-12 text-center">
+            <h3 className="text-3xl font-black text-white">
+              {text.desktop.title}
             </h3>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                img: AccountImg,
-                en: "Account Management",
-                vi: "Quản lý Tài khoản",
-              },
-              {
-                img: HoldingImg,
-                en: "Portfolio Holdings",
-                vi: "Danh mục đầu tư",
-              },
-              { img: MarketImg, en: "Market Tickers", vi: "Thị trường" },
-              {
-                img: TransactionImg,
-                en: "Transaction History",
-                vi: "Nhật ký Giao dịch",
-              },
-            ].map((item, idx) => (
+          <div className="grid gap-8 md:grid-cols-2">
+            {desktopItems.map((item) => (
               <div
-                key={idx}
-                className="group relative rounded-xl overflow-hidden border border-slate-700/50 bg-slate-800"
+                key={item.title}
+                className="group relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800"
               >
-                <div className="absolute top-0 left-0 w-full bg-slate-900/80 backdrop-blur px-4 py-2 text-sm font-bold border-b border-slate-700/50 text-pink-400 z-10 flex justify-between items-center">
-                  <span>{item.en}</span>
-                  <span className="text-xs text-slate-400 font-normal">
-                    {item.vi}
-                  </span>
+                <div className="absolute left-0 top-0 z-10 w-full border-b border-slate-700/50 bg-slate-900/80 px-4 py-2 text-sm font-bold text-pink-400 backdrop-blur">
+                  {item.title}
                 </div>
-                {/* ĐÃ DÙNG OPTIMIZED IMAGE Ở ĐÂY */}
+
                 <OptimizedImage
                   src={item.img}
-                  alt={item.en}
-                  className="w-full mt-8 group-hover:scale-105 transition-transform duration-700 bg-slate-900"
+                  alt={item.title}
+                  className="mt-8 w-full bg-slate-900 transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
             ))}
@@ -435,30 +637,27 @@ export default function LandingPage() {
 
         {/* MOBILE PRODUCT TOUR */}
         <section>
-          <div className="text-center mb-12 mt-20">
-            <h3 className="text-3xl font-black text-white mb-3">
-              📱 Mobile Experience
+          <div className="mb-12 mt-20 text-center">
+            <h3 className="mb-3 text-3xl font-black text-white">
+              {text.mobile.title}
             </h3>
+
             <p className="text-slate-500">
-              Fully optimized for on-the-go portfolio tracking.
+              {text.mobile.description}
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
-            {[
-              DashboardMobileImg,
-              AccountMobileImg,
-              HoldingMobileImg,
-              MarketMobileImg,
-              TransactionMobileImg,
-            ].map((img, idx) => (
-              <div key={idx} className="relative group">
-                <div className="w-[160px] md:w-[220px] h-[350px] md:h-[450px] rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 overflow-y-auto overflow-x-hidden shadow-2xl group-hover:-translate-y-3 transition-transform duration-500 custom-scrollbar">
-                  {/* ĐÃ DÙNG OPTIMIZED IMAGE Ở ĐÂY */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8">
+            {mobileImages.map((img, index) => (
+              <div
+                key={index}
+                className="group relative"
+              >
+                <div className="custom-scrollbar h-[350px] w-[160px] overflow-y-auto overflow-x-hidden rounded-[2rem] border-[6px] border-slate-800 bg-slate-900 shadow-2xl transition-transform duration-500 group-hover:-translate-y-3 md:h-[450px] md:w-[220px]">
                   <OptimizedImage
                     src={img}
-                    alt="Mobile UI"
-                    className="w-full h-auto object-top bg-slate-900"
+                    alt={`${text.mobile.title} ${index + 1}`}
+                    className="h-auto w-full bg-slate-900 object-top"
                   />
                 </div>
               </div>
@@ -467,113 +666,97 @@ export default function LandingPage() {
         </section>
 
         {/* APP INFO */}
-        <section id="app-info" className="max-w-5xl mx-auto scroll-mt-28">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-black text-white mb-3">
-              ℹ️ Application Information
-              <span className="text-pink-500"> / </span>
-              <span className="text-slate-400 font-medium">
-                Thông tin ứng dụng
-              </span>
+        <section
+          id="app-info"
+          className="mx-auto max-w-5xl scroll-mt-28"
+        >
+          <div className="mb-12 text-center">
+            <h3 className="mb-3 text-3xl font-black text-white">
+              {text.appInfo.title}
             </h3>
 
             <p className="text-slate-500">
-              Data sources, legal information, and developer contact.
+              {text.appInfo.description}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
             {/* DATA SOURCES */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-7 rounded-2xl">
-              <Globe className="w-9 h-9 text-pink-400 mb-4" />
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-7">
+              <Globe className="mb-4 h-9 w-9 text-pink-400" />
 
-              <h4 className="text-lg font-bold text-white mb-4">
-                Market Data Sources
+              <h4 className="mb-4 text-lg font-bold text-white">
+                {text.appInfo.sourcesTitle}
               </h4>
 
               <div className="space-y-4 text-sm text-slate-300">
                 <div>
-                  <p className="font-bold text-slate-200">Vietnamese stocks</p>
+                  <p className="font-bold text-slate-200">
+                    {text.appInfo.stockTitle}
+                  </p>
+
                   <p className="text-slate-400">
-                    Market prices are sourced from VPS Securities.
+                    {text.appInfo.stockSource}
                   </p>
                 </div>
 
                 <div>
-                  <p className="font-bold text-slate-200">Cryptocurrency</p>
+                  <p className="font-bold text-slate-200">
+                    {text.appInfo.cryptoTitle}
+                  </p>
+
                   <p className="text-slate-400">
-                    Market prices are sourced from Binance public market data.
+                    {text.appInfo.cryptoSource}
                   </p>
                 </div>
 
-                <p className="text-xs text-slate-500 italic border-t border-slate-700/50 pt-4">
-                  Prices are refreshed approximately every two minutes when the
-                  upstream data services are available.
+                <p className="border-t border-slate-700/50 pt-4 text-xs italic leading-relaxed text-slate-500">
+                  {text.appInfo.refreshNote}
                 </p>
               </div>
             </div>
 
             {/* DISCLAIMER & CONTACT */}
-            <div className="bg-slate-800/40 border border-slate-700/50 p-7 rounded-2xl">
-              <ShieldCheck className="w-9 h-9 text-pink-400 mb-4" />
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-7">
+              <ShieldCheck className="mb-4 h-9 w-9 text-pink-400" />
 
-              <h4 className="text-lg font-bold text-white mb-4">
-                Disclaimer & Contact
+              <h4 className="mb-4 text-lg font-bold text-white">
+                {text.appInfo.disclaimerTitle}
               </h4>
 
-              <div className="space-y-4 text-sm text-slate-400 leading-relaxed">
-                <p>
-                  Market information may be delayed, unavailable, incomplete, or
-                  inaccurate. This platform is provided solely for personal
-                  portfolio tracking and informational purposes and does not
-                  constitute investment, financial, legal, or tax advice.
-                </p>
-
-                <p>
-                  This is an independent, non-commercial personal project. The
-                  platform does not sell, license, or redistribute market data
-                  as a standalone service, does not execute trades, and does not
-                  provide brokerage, investment management, or financial
-                  advisory services.
-                </p>
-
-                <p>
-                  This platform is not affiliated with, sponsored by, endorsed
-                  by, or officially connected with VPS Securities or Binance.
-                  All company names, trademarks, and market data sources remain
-                  the property of their respective owners.
-                </p>
-
-                <p>
-                  Use of this platform and any decisions made based on the
-                  displayed information are solely at the user's own risk.
-                </p>
+              <div className="space-y-4 text-sm leading-relaxed text-slate-400">
+                <p>{text.appInfo.disclaimer1}</p>
+                <p>{text.appInfo.disclaimer2}</p>
+                <p>{text.appInfo.disclaimer3}</p>
+                <p>{text.appInfo.disclaimer4}</p>
 
                 <div className="border-t border-slate-700/50 pt-4">
-                  <p className="font-bold text-slate-200 mb-2">
-                    Developer Contact
+                  <p className="mb-2 font-bold text-slate-200">
+                    {text.appInfo.contactTitle}
                   </p>
 
                   <div className="space-y-1">
-                    <p className="text-slate-300">Nguyễn Ngọc Thiên Phúc</p>
+                    <p className="text-slate-300">
+                      Nguyễn Ngọc Thiên Phúc
+                    </p>
 
                     <p>
-                      Website:{" "}
+                      {text.appInfo.websiteLabel}{" "}
                       <a
                         href="https://nnthienphuc.me"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-pink-400 hover:text-pink-300 transition-colors"
+                        className="text-pink-400 transition-colors hover:text-pink-300"
                       >
                         nnthienphuc.me
                       </a>
                     </p>
 
                     <p>
-                      Email:{" "}
+                      {text.appInfo.emailLabel}{" "}
                       <a
                         href="mailto:nnthienphuc@gmail.com"
-                        className="text-pink-400 hover:text-pink-300 transition-colors"
+                        className="text-pink-400 transition-colors hover:text-pink-300"
                       >
                         nnthienphuc@gmail.com
                       </a>
@@ -587,24 +770,23 @@ export default function LandingPage() {
       </main>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/5 bg-slate-900/50 py-8 mt-20">
+      <footer className="mt-20 border-t border-white/5 bg-slate-900/50 py-8">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-slate-400 text-sm mb-2">
-            © 2026 Nguyễn Ngọc Thiên Phúc. All rights reserved.
+          <p className="mb-2 text-sm text-slate-400">
+            {text.footer.copyright}
           </p>
 
-          <p className="text-slate-600 text-xs leading-relaxed">
-            Market data: VPS Securities and Binance public market data.
+          <p className="text-xs leading-relaxed text-slate-600">
+            {text.footer.sources}
             <br />
-            Delayed data. For informational purposes only. Not investment
-            advice.
+            {text.footer.disclaimer}
           </p>
 
           <a
             href="#app-info"
-            className="inline-block mt-3 text-xs font-semibold text-pink-400 hover:text-pink-300"
+            className="mt-3 inline-block text-xs font-semibold text-pink-400 hover:text-pink-300"
           >
-            Data sources, disclaimer & contact
+            {text.footer.appInfoLink}
           </a>
         </div>
       </footer>
