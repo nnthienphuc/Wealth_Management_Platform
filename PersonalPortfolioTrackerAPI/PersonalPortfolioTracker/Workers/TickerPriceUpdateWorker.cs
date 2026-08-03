@@ -4,6 +4,7 @@ using PersonalPortfolioTracker.Common.Helper;
 using PersonalPortfolioTracker.Data.Entities;
 using PersonalPortfolioTracker.Data.Repositories;
 using System;
+using System.Globalization;
 using System.Text.Json.Serialization;
 
 public class TickerPriceUpdateWorker : BackgroundService
@@ -66,64 +67,124 @@ public class TickerPriceUpdateWorker : BackgroundService
         catch (Exception e) { _logger.LogWarning($"[SKIP] VPS API: {e.Message}"); }
     }
 
+    private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
+    {
+        var cryptos = activeTickers
+            .Where(t =>
+                t.TickerType != null &&
+                t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO)
+            .ToList();
+
+        if (!cryptos.Any())
+            return;
+
+        const string url =
+            "https://data-api.binance.vision/api/v3/ticker/price";
+
+        using var cts =
+            new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+        try
+        {
+            var quotes =
+                await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(
+                    url,
+                    cts.Token
+                );
+
+            if (quotes == null || quotes.Count == 0)
+            {
+                _logger.LogWarning(
+                    "[BINANCE] Empty ticker-price response."
+                );
+                return;
+            }
+
+            var quoteDictionary = quotes
+                .Where(q => !string.IsNullOrWhiteSpace(q.Symbol))
+                .ToDictionary(
+                    q => q.Symbol.ToUpperInvariant(),
+                    q => q.Price,
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+            foreach (var ticker in cryptos)
+            {
+                var symbol = ticker.Symbol
+                    .ToUpperInvariant()
+                    .Replace("/", "")
+                    .Replace("-", "");
+
+                if (!quoteDictionary.TryGetValue(symbol, out var rawPrice))
+                {
+                    _logger.LogWarning(
+                        "[BINANCE] Symbol not found: {Symbol}",
+                        symbol
+                    );
+                    continue;
+                }
+
+                if (!decimal.TryParse(
+                        rawPrice,
+                        NumberStyles.Float,
+                        CultureInfo.InvariantCulture,
+                        out var price) ||
+                    price <= 0)
+                {
+                    _logger.LogWarning(
+                        "[BINANCE] Invalid price for {Symbol}: {Price}",
+                        symbol,
+                        rawPrice
+                    );
+                    continue;
+                }
+
+                ticker.MarketPrice = price;
+                ticker.UpdatedAt = VietnamTime.Now();
+
+                _logger.LogInformation(
+                    "[BINANCE] Updated {Symbol} to {Price}",
+                    symbol,
+                    price
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "[FAIL] Binance market-data API error."
+            );
+        }
+    }
+
     //private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
     //{
     //    var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
     //    if (!cryptos.Any()) return;
 
-    //    var binanceUrl = "https://api.binance.com/api/v3/ticker/price";
-    //    _logger.LogInformation($"[BINANCE API] Calling URL: {binanceUrl}");
-
-    //    try
+    //    foreach (var ticker in cryptos)
     //    {
-    //        var binanceQuotes = await _httpClient.GetFromJsonAsync<List<BinanceQuote>>(binanceUrl);
-    //        if (binanceQuotes != null && binanceQuotes.Any())
+    //        string symbol = ticker.Symbol.ToUpper();
+    //        var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}";
+
+    //        try
     //        {
-    //            foreach (var ticker in cryptos)
+    //            var response = await _httpClient.GetFromJsonAsync<MexcQuote>(url);
+    //            if (response != null && decimal.TryParse(response.Price, out decimal price) && price > 0)
     //            {
-    //                string searchSymbol = ticker.Symbol.ToUpperInvariant().Replace("/", "").Replace("-", "");
-    //                var quote = binanceQuotes.FirstOrDefault(q => q.Symbol == searchSymbol);
-    //                if (quote != null && decimal.TryParse(quote.Price, out decimal price) && price > 0)
-    //                {
-    //                    ticker.MarketPrice = price;
-    //                    ticker.UpdatedAt = DateTime.Now;
-    //                }
+    //                ticker.MarketPrice = price;
+    //                ticker.UpdatedAt = VietnamTime.Now();
+    //                _logger.LogInformation($"[MEXC] Updated {ticker.Symbol} to {price}");
     //            }
     //        }
-    //    }
-    //    catch (Exception e)
-    //    {
-    //        _logger.LogWarning($"[FAIL] Binance API error: {e.Message}");
+    //        catch (Exception e)
+    //        {
+    //            _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {url}\n{e.Message}");
+    //        }
+    //        await Task.Delay(120);
     //    }
     //}
-
-    private async Task UpdateCryptosAsync(List<Tickers> activeTickers)
-    {
-        var cryptos = activeTickers.Where(t => t.TickerType != null && t.TickerType.Code.ToUpper() == TickerTypeConstants.CRYPTO).ToList();
-        if (!cryptos.Any()) return;
-
-        foreach (var ticker in cryptos)
-        {
-            string symbol = ticker.Symbol.ToUpper();
-            var url = $"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}";
-
-            try
-            {
-                var response = await _httpClient.GetFromJsonAsync<MexcQuote>(url);
-                if (response != null && decimal.TryParse(response.Price, out decimal price) && price > 0)
-                {
-                    ticker.MarketPrice = price;
-                    ticker.UpdatedAt = VietnamTime.Now();
-                    _logger.LogInformation($"[MEXC] Updated {ticker.Symbol} to {price}");
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogWarning($"[FAIL] MEXC API error for {symbol}: {url}\n{e.Message}");
-            }
-            await Task.Delay(120);
-        }
-    }
 }
 
 public class VpsStockData
