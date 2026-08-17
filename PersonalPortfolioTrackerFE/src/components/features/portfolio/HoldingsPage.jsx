@@ -27,6 +27,16 @@ import {
   Landmark,
   CreditCard,
   Info,
+
+  // Markdown toolbar
+  Bold,
+  Italic,
+  Heading2,
+  List,
+  ListOrdered,
+  Quote,
+  Code2,
+  Link,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -239,6 +249,92 @@ export default function HoldingsPage() {
   const fileInputRef = useRef(null);
 
   const textareaRef = useRef(null);
+
+  const insertMarkdown = (before, after = "", placeholder = "text") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentNote = formData.note || "";
+
+    const selectedText = currentNote.substring(start, end) || placeholder;
+
+    const replacement = `${before}${selectedText}${after}`;
+
+    const newNote =
+      currentNote.substring(0, start) +
+      replacement +
+      currentNote.substring(end);
+
+    setFormData((prev) => ({
+      ...prev,
+      note: newNote,
+    }));
+
+    setTimeout(() => {
+      textarea.focus();
+
+      const selectionStart = start + before.length;
+      const selectionEnd = selectionStart + selectedText.length;
+
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+    }, 0);
+  };
+
+  const insertLinePrefix = (prefix) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentNote = formData.note || "";
+
+    const lineStart = currentNote.lastIndexOf("\n", start - 1) + 1;
+
+    const selectedText = currentNote.substring(lineStart, end) || "Item";
+
+    const formattedText = selectedText
+      .split("\n")
+      .map((line) => `${prefix}${line}`)
+      .join("\n");
+
+    const newNote =
+      currentNote.substring(0, lineStart) +
+      formattedText +
+      currentNote.substring(end);
+
+    setFormData((prev) => ({
+      ...prev,
+      note: newNote,
+    }));
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(lineStart, lineStart + formattedText.length);
+    }, 0);
+  };
+
+  const handleNoteKeyDown = (e) => {
+    const isModifier = e.ctrlKey || e.metaKey;
+
+    if (!isModifier) return;
+
+    if (e.key.toLowerCase() === "b") {
+      e.preventDefault();
+      insertMarkdown("**", "**", "bold text");
+    }
+
+    if (e.key.toLowerCase() === "i") {
+      e.preventDefault();
+      insertMarkdown("*", "*", "italic text");
+    }
+
+    if (e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      insertMarkdown("[", "](https://)", "link text");
+    }
+  };
 
   const processImageUpload = async (file) => {
     setIsUploading(true);
@@ -1191,15 +1287,107 @@ export default function HoldingsPage() {
                     </div>
                     <div className="flex-1 overflow-hidden p-3 flex flex-col bg-white rounded-b-2xl">
                       {noteMode === "edit" ? (
-                        <textarea
-                          ref={textareaRef}
-                          onPaste={handlePaste}
-                          name="note"
-                          value={formData.note}
-                          onChange={handleChange}
-                          className="flex-1 w-full outline-none resize-none font-mono text-[16px] md:text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar"
-                          placeholder="## Plan... (You can Ctrl+V to paste images here)"
-                        />
+                        <>
+                          {/* MARKDOWN TOOLBAR */}
+                          <div className="flex flex-wrap items-center gap-1.5 px-2 pb-2 mb-2 border-b border-gray-100">
+                            <button
+                              type="button"
+                              title="Bold (Ctrl+B)"
+                              onClick={() =>
+                                insertMarkdown("**", "**", "bold text")
+                              }
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Bold size={15} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Italic (Ctrl+I)"
+                              onClick={() =>
+                                insertMarkdown("*", "*", "italic text")
+                              }
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Italic size={15} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Heading"
+                              onClick={() => insertLinePrefix("## ")}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Heading2 size={16} />
+                            </button>
+
+                            <div className="w-px h-5 bg-gray-200 mx-1" />
+
+                            <button
+                              type="button"
+                              title="Bullet List"
+                              onClick={() => insertLinePrefix("- ")}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <List size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Numbered List"
+                              onClick={() => insertLinePrefix("1. ")}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <ListOrdered size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Quote"
+                              onClick={() => insertLinePrefix("> ")}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Quote size={15} />
+                            </button>
+
+                            <div className="w-px h-5 bg-gray-200 mx-1" />
+
+                            <button
+                              type="button"
+                              title="Inline Code"
+                              onClick={() => insertMarkdown("`", "`", "code")}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Code2 size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Insert Link (Ctrl+K)"
+                              onClick={() =>
+                                insertMarkdown("[", "](https://)", "link text")
+                              }
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
+                            >
+                              <Link size={15} />
+                            </button>
+
+                            <span className="ml-auto hidden lg:inline text-[10px] text-gray-400">
+                              Ctrl+B Bold · Ctrl+I Italic · Ctrl+K Link
+                            </span>
+                          </div>
+
+                          <textarea
+                            ref={textareaRef}
+                            onPaste={handlePaste}
+                            onKeyDown={handleNoteKeyDown}
+                            name="note"
+                            value={formData.note}
+                            onChange={handleChange}
+                            className="flex-1 w-full outline-none resize-none font-mono text-[16px] md:text-[13px] leading-relaxed text-gray-700 p-2 custom-scrollbar"
+                            placeholder="Write your trading plan here..."
+                          />
+                        </>
                       ) : (
                         <div className="flex-1 w-full overflow-y-auto text-[13px] text-gray-800 p-2 custom-scrollbar prose prose-sm max-w-none">
                           <ReactMarkdown
