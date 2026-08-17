@@ -154,10 +154,59 @@ const API_BASE_URL =
 
 const markdownComponents = {
   h1: (props) => <h1 className="text-base font-bold mt-4 mb-2" {...props} />,
+
   h2: (props) => <h2 className="text-sm font-bold mt-3 mb-1" {...props} />,
+
   p: (props) => <p className="my-2 leading-relaxed" {...props} />,
-  ul: (props) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+
+  // Bullet list
+  ul: (props) => <ul className="list-disc pl-6 my-3 space-y-1" {...props} />,
+
+  // Numbered list
+  ol: (props) => <ol className="list-decimal pl-6 my-3 space-y-1" {...props} />,
+
+  li: (props) => <li className="pl-1 leading-relaxed" {...props} />,
+
+  // Quote
+  blockquote: (props) => (
+    <blockquote
+      className="
+        my-3
+        border-l-4 border-pink-400
+        bg-pink-50
+        px-4 py-2.5
+        rounded-r-lg
+        italic text-gray-700
+      "
+      {...props}
+    />
+  ),
+
   strong: (props) => <strong className="font-bold text-gray-900" {...props} />,
+
+  // Clickable highlighted link
+  a: ({ href, children, ...props }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="
+        font-semibold
+        text-blue-600
+        underline
+        decoration-blue-300
+        underline-offset-2
+        break-words
+        hover:text-pink-600
+        hover:decoration-pink-400
+        transition-colors
+      "
+      {...props}
+    >
+      {children}
+    </a>
+  ),
+
   img: ({ node, ...props }) => {
     const imageSrc = props.src?.startsWith("/")
       ? `${API_BASE_URL}${props.src}`
@@ -174,6 +223,7 @@ const markdownComponents = {
       </Zoom>
     );
   },
+
   code: ({ inline, children, ...props }) =>
     inline ? (
       <code
@@ -315,6 +365,78 @@ export default function HoldingsPage() {
     }, 0);
   };
 
+  const insertNumberedList = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentNote = formData.note || "";
+
+    const lineStart = currentNote.lastIndexOf("\n", start - 1) + 1;
+
+    const selectedText = currentNote.substring(lineStart, end) || "Item";
+
+    const formattedText = selectedText
+      .split("\n")
+      .map((line, index) => `${index + 1}. ${line}`)
+      .join("\n");
+
+    const newNote =
+      currentNote.substring(0, lineStart) +
+      formattedText +
+      currentNote.substring(end);
+
+    setFormData((prev) => ({
+      ...prev,
+      note: newNote,
+    }));
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(lineStart, lineStart + formattedText.length);
+    }, 0);
+  };
+
+  const insertLink = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentNote = formData.note || "";
+
+    const selectedText = currentNote.substring(start, end) || "Link";
+
+    const inputUrl = window.prompt("Enter URL:", "https://");
+
+    if (!inputUrl || inputUrl.trim() === "https://") {
+      return;
+    }
+
+    const trimmedUrl = inputUrl.trim();
+
+    const url = /^(https?:\/\/|mailto:)/i.test(trimmedUrl)
+      ? trimmedUrl
+      : `https://${trimmedUrl}`;
+
+    const markdown = `[${selectedText}](${url})`;
+
+    const newNote =
+      currentNote.substring(0, start) + markdown + currentNote.substring(end);
+
+    setFormData((prev) => ({
+      ...prev,
+      note: newNote,
+    }));
+
+    setTimeout(() => {
+      textarea.focus();
+
+      textarea.setSelectionRange(start + 1, start + 1 + selectedText.length);
+    }, 0);
+  };
+
   const handleNoteKeyDown = (e) => {
     const isModifier = e.ctrlKey || e.metaKey;
 
@@ -332,7 +454,7 @@ export default function HoldingsPage() {
 
     if (e.key.toLowerCase() === "k") {
       e.preventDefault();
-      insertMarkdown("[", "](https://)", "link text");
+      insertLink();
     }
   };
 
@@ -688,13 +810,14 @@ export default function HoldingsPage() {
         {/* HEADER AREA */}
         <div className="mb-5">
           <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-3">
-            Ticker Management
+            My Holdings
             {loading && (
               <Loader2 className="animate-spin text-pink-500" size={20} />
             )}
           </h3>
+
           <p className="text-sm text-gray-500 mt-1">
-            Manage your investments and track P&L performance
+            Manage your portfolio holdings and track P&L performance
           </p>
         </div>
 
@@ -870,7 +993,7 @@ export default function HoldingsPage() {
                 onChange={handleOwnedToggle}
                 className="w-4 h-4 rounded text-pink-500 focus:ring-pink-400 border-gray-300"
               />
-              The ticket holders currently own
+              Currently owned tickers
             </label>
           )}
 
@@ -1335,7 +1458,7 @@ export default function HoldingsPage() {
                             <button
                               type="button"
                               title="Numbered List"
-                              onClick={() => insertLinePrefix("1. ")}
+                              onClick={insertNumberedList}
                               className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
                             >
                               <ListOrdered size={16} />
@@ -1364,9 +1487,7 @@ export default function HoldingsPage() {
                             <button
                               type="button"
                               title="Insert Link (Ctrl+K)"
-                              onClick={() =>
-                                insertMarkdown("[", "](https://)", "link text")
-                              }
+                              onClick={insertLink}
                               className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors"
                             >
                               <Link size={15} />
@@ -1499,7 +1620,7 @@ export default function HoldingsPage() {
                         {t.name}
                       </div>
                     </div>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2.5 py-1 bg-gray-100 rounded-lg group-hover:bg-white group-hover:text-pink-50">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2.5 py-1 bg-gray-100 rounded-lg group-hover:bg-white group-hover:text-pink-500">
                       {t.tickerTypeName}
                     </div>
                   </div>
