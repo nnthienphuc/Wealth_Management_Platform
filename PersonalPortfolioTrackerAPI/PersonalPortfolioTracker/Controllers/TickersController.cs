@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PersonalPortfolioTracker.Common.Controller;
 using PersonalPortfolioTracker.Models.Requests;
 using PersonalPortfolioTracker.Services.TickerService;
@@ -37,6 +38,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAsync([FromBody] TickerCreate dto)
         {
             await _service.AddAsync(dto);
@@ -44,20 +46,22 @@ namespace PersonalPortfolioTracker.Controllers
             return Ok(new { message = "Added new Ticker successfully." });
         }
 
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] TickerUpdate dto)
-        //{
-        //    await _service.UpdateAsync(id, dto);
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] TickerUpdate dto)
+        {
+            await _service.UpdateAsync(id, dto);
 
-        //    return Ok(new { message = "Updated Ticker successfully." });
-        //}
+            return Ok(new { message = "Updated Ticker successfully." });
+        }
 
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeleteAsync(Guid id)
-        //{
-        //    await _service.DeleteAsync(id);
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteAsync(Guid id)
+        {
+            await _service.DeleteAsync(id);
 
-        //    return Ok(new { message = "Soft deleted Ticker successfully." });
-        //}
+            return Ok(new { message = "Soft deleted Ticker successfully." });
+        }
     }
 }

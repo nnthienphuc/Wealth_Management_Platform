@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PersonalPortfolioTracker.Common.Controller;
 using PersonalPortfolioTracker.Models.Requests;
 using PersonalPortfolioTracker.Services.TickerTypeService;
@@ -33,6 +34,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddAsync([FromBody] TickerTypeCreate dto)
         {
             await _service.AddAsync(dto);
@@ -41,6 +43,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAsync(Guid id,  [FromBody] TickerTypeUpdate dto)
         {
             await _service.UpdateAsync(id, dto);
@@ -49,6 +52,7 @@ namespace PersonalPortfolioTracker.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             await _service.DeleteAsync(id);

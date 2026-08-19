@@ -25,6 +25,9 @@ namespace PersonalPortfolioTracker.Data.Configurations
                 .IsUnicode(false);
             builder.Property(e => e.Note).HasMaxLength(1000);
             builder.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysdatetime())");
+            builder.Property(x => x.IsAdmin)
+    .IsRequired()
+    .HasDefaultValue(false);
         }
     }
 }

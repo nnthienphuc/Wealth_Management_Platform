@@ -119,6 +119,19 @@ namespace PersonalPortfolioTracker.Services.TickerTypeService
 
         public async Task<bool> DeleteAsync(Guid id)
         {
+            var hasActiveTickers = await _uow.Repository<Tickers>()
+    .FindByCondition(t =>
+        t.TickerTypeId == id &&
+        !t.IsDeleted)
+    .AnyAsync();
+
+            if (hasActiveTickers)
+            {
+                throw new InvalidOperationException(
+                    "Cannot delete this ticker type because active tickers are still using it."
+                );
+            }
+            
             var existingTickerType = await _uow.Repository<TickerTypes>()
                 .FindByCondition(tt => tt.ID == id)
                 .IgnoreQueryFilters()

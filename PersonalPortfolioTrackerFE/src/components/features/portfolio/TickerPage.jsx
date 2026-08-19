@@ -64,6 +64,11 @@ const getRawIcon = (code, size = 16) => {
 };
 
 export default function TickerPage() {
+  const role =
+  localStorage.getItem("role") || "Investor";
+
+const isAdmin = role === "Admin";
+
   const [tickers, setTickers] = useState([]);
   const [tickerTypes, setTickerTypes] = useState([]);
   const [totalRecords, setTotalRecords] = useState(0); // THÊM STATE TOTAL RECORDS
@@ -440,12 +445,14 @@ export default function TickerPage() {
                 {totalRecords} items
               </span>
             </div>
-            {/* <button
-              onClick={() => openFormModal()}
-              className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
-            >
-              + ADD TICKER
-            </button> */}
+            {isAdmin && (
+  <button
+    onClick={() => openFormModal()}
+    className="w-full sm:w-auto whitespace-nowrap px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400 text-white font-bold text-[13px] shadow-md hover:-translate-y-0.5 transition-all"
+  >
+    + ADD TICKER
+  </button>
+)}
           </div>
         </div>
 
@@ -511,25 +518,28 @@ export default function TickerPage() {
                     </span>
                   </div>
 
-                  {/* <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openFormModal(t);
-                      }}
-                      title="Edit"
-                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors"
-                    >
-                      <Pencil size={12} />
-                    </button>
-                    <button
-                      onClick={(e) => handleDelete(t, e)}
-                      title="Delete"
-                      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div> */}
+                  {isAdmin && (
+  <div className="flex gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        openFormModal(t);
+      }}
+      title="Edit"
+      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-blue-500 transition-colors"
+    >
+      <Pencil size={12} />
+    </button>
+
+    <button
+      onClick={(e) => handleDelete(t, e)}
+      title="Delete"
+      className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+    >
+      <Trash2 size={12} />
+    </button>
+  </div>
+)}
                 </div>
               </div>
             );

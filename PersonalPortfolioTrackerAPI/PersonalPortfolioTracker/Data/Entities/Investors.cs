@@ -16,6 +16,8 @@ public partial class Investors : BaseAuditableEntity
 
     public string? Note { get; set; }
 
+    public bool IsAdmin { get; set; } = false;
+
     public virtual ICollection<Accounts> Accounts { get; set; } = new List<Accounts>();
 
     public virtual ICollection<AuditLogs> AuditLogs { get; set; } = new List<AuditLogs>();

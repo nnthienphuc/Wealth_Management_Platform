@@ -17,10 +17,12 @@ import TickerPage from "./components/features/portfolio/TickerPage";
 import AccountsPage from "./components/features/portfolio/AccountPage";
 import HoldingsPage from "./components/features/portfolio/HoldingsPage";
 import TransactionPage from "./components/features/portfolio/TransactionPage";
+import TickerTypePage from "./components/features/portfolio/TickerTypePage";
 
 // --- Shared Components & Layouts ---
 import PublicRoute from "./components/shared/PublicRoute";
 import PrivateRoute from "./components/shared/PrivateRoute";
+import AdminRoute from "./components/shared/AdminRoute";
 import InvestorLayout from "./components/shared/InvestorLayout";
 
 function App() {
@@ -83,6 +85,14 @@ function App() {
           <Route index element={<InvestorHomePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route path="tickers" element={<TickerPage />} />
+          <Route
+            path="ticker-types"
+            element={
+              <AdminRoute>
+                <TickerTypePage />
+              </AdminRoute>
+            }
+          />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="holdings" element={<HoldingsPage />} />
           <Route path="transactions" element={<TransactionPage />} />

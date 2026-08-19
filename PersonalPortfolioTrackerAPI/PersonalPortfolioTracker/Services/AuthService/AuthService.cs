@@ -52,7 +52,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 CreatedAt = VietnamTime.Now(),
                 UpdatedAt = VietnamTime.Now(),
                 IsActivated = false,
-                IsDeleted = false
+                IsDeleted = false,
+                IsAdmin = false,
             };
 
             _uow.Repository<Investors>().Create(newInvestor);
@@ -130,7 +131,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
             return new LoginResponse(
                 GenerateJwtToken(existingInvestor),
                 existingInvestor.Email,
-                existingInvestor.FullName
+                existingInvestor.FullName,
+                existingInvestor.IsAdmin ? "Admin" : "Investor"
             );
         }
 
@@ -178,6 +180,7 @@ namespace PersonalPortfolioTracker.Services.AuthService
                     IsDeleted = false,
                     CreatedAt = VietnamTime.Now(),
                     UpdatedAt = VietnamTime.Now(),
+                    IsAdmin = false,
                 };
 
                 _uow.Repository<Investors>().Create(investor);
@@ -210,7 +213,8 @@ namespace PersonalPortfolioTracker.Services.AuthService
             (
                 GenerateJwtToken(investor),
                 investor.Email,
-                investor.FullName
+                investor.FullName,
+                investor.IsAdmin ? "Admin" : "Investor"
             );
         }
 
@@ -407,6 +411,10 @@ namespace PersonalPortfolioTracker.Services.AuthService
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim("investorId", user.ID.ToString()),
                 new Claim("email", user.Email),
+                new Claim(
+    ClaimTypes.Role,
+    user.IsAdmin ? "Admin" : "Investor"
+)
             };
 
             var token = new JwtSecurityToken(

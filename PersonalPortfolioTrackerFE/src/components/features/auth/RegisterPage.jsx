@@ -58,11 +58,12 @@ export default function RegisterPage() {
     try {
       const idToken = credentialResponse.credential;
       const res = await axiosInstance.post("/Auth/google-login", { idToken });
-      const { token, fullName, email } = res.data;
+      const { token, fullName, email, role } = res.data;
 
       localStorage.setItem("token", token);
       if (fullName) localStorage.setItem("fullName", fullName);
       if (email) localStorage.setItem("email", email);
+      localStorage.setItem("role", role || "Investor");
 
       navigate("/investor");
     } catch (err) {

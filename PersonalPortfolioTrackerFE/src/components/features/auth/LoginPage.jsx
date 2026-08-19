@@ -70,11 +70,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await axiosInstance.post("/auth/login", formData);
-      const { token, fullName, email } = res.data;
+      const { token, fullName, email, role } = res.data;
 
       localStorage.setItem("token", token);
       if (fullName) localStorage.setItem("fullName", fullName);
       if (email) localStorage.setItem("email", email);
+      localStorage.setItem("role", role || "Investor");
 
       // Không cần toast lúc login thành công, vào thẳng Dashboard luôn cho mượt
       navigate("/investor");
@@ -91,11 +92,12 @@ export default function LoginPage() {
     try {
       const idToken = credentialResponse.credential;
       const res = await axiosInstance.post("/Auth/google-login", { idToken });
-      const { token, fullName, email } = res.data;
+      const { token, fullName, email, role } = res.data;
 
       localStorage.setItem("token", token);
       if (fullName) localStorage.setItem("fullName", fullName);
       if (email) localStorage.setItem("email", email);
+      localStorage.setItem("role", role || "Investor");
 
       navigate("/investor");
     } catch (err) {

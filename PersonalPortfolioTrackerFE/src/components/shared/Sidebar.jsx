@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Info,
+  Tags,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -20,6 +21,10 @@ export default function Sidebar() {
   const navigate = useNavigate();
 
   const fullName = localStorage.getItem("fullName") || "Nhà đầu tư";
+
+  const role = localStorage.getItem("role") || "Investor";
+
+  const isAdmin = role === "Admin";
 
   // ---- PALETTE PINK UI 2025 ----
   const darkBg = "#0f172a";
@@ -43,11 +48,11 @@ export default function Sidebar() {
     backgroundColor: sectionBg,
     border: `1px solid ${sectionBorder}`,
     color: sectionText,
-    padding: "6px 12px",
-    marginTop: 22,
-    marginBottom: 8,
+    padding: "5px 11px",
+    marginTop: 16,
+    marginBottom: 6,
     borderRadius: 9999,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 800,
     textTransform: "uppercase",
     letterSpacing: 1.2,
@@ -64,6 +69,7 @@ export default function Sidebar() {
         },
       ],
     },
+
     {
       section: "Portfolio",
       items: [
@@ -84,6 +90,7 @@ export default function Sidebar() {
         },
       ],
     },
+
     {
       section: "Activity",
       items: [
@@ -94,6 +101,7 @@ export default function Sidebar() {
         },
       ],
     },
+
     {
       section: "Settings",
       items: [
@@ -104,6 +112,22 @@ export default function Sidebar() {
         },
       ],
     },
+
+    ...(isAdmin
+      ? [
+          {
+            section: "Admin",
+            items: [
+              {
+                label: "Ticker Types",
+                path: "/investor/ticker-types",
+                icon: <Tags size={18} />,
+              },
+            ],
+          },
+        ]
+      : []),
+
     {
       section: "About",
       items: [
@@ -142,16 +166,16 @@ export default function Sidebar() {
         - Màn hình md trở lên: md:translate-x-0 (Luôn hiển thị đứng im)
       */}
       <div
-        className={`fixed top-0 left-0 h-[100vh] w-[260px] flex flex-col justify-between overflow-y-auto custom-scrollbar z-50 transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed top-0 left-0 h-[100dvh] w-[260px] flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
         style={{
           backgroundColor: darkBg,
           color: "#e5e7eb",
-          padding: "16px 16px 20px",
+          padding: "16px 16px 16px",
         }}
       >
-        <div>
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Nút tắt X nằm trong Sidebar (Chỉ hiện trên Mobile) */}
           <div className="flex md:hidden justify-end mb-4">
             <button
@@ -164,12 +188,13 @@ export default function Sidebar() {
 
           {/* === TỐI ƯU USER CARD THEO CHUẨN GLASSMORPHISM === */}
           <div
+            className="shrink-0"
             style={{
               background:
                 "linear-gradient(135deg, #f9a8d4 0%, #fb7185 50%, #ff8fa3 100%)",
               borderRadius: 20,
-              padding: "16px",
-              marginBottom: 24,
+              padding: "14px",
+              marginBottom: 16,
               boxShadow: "0 14px 30px rgba(251, 113, 133, 0.4)",
               display: "flex",
               alignItems: "center",
@@ -239,13 +264,13 @@ export default function Sidebar() {
                   letterSpacing: 1,
                 }}
               >
-                INVESTOR
+                {role.toUpperCase()}
               </div>
             </div>
           </div>
 
           {/* MENU */}
-          <nav>
+          <nav className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 pb-3">
             {menuSections.map((section, idx) => (
               <div key={idx}>
                 <div style={sectionStyle}>{section.section}</div>
@@ -267,8 +292,8 @@ export default function Sidebar() {
                         display: "flex",
                         alignItems: "center",
                         gap: 12,
-                        padding: "10px 14px",
-                        marginBottom: 4,
+                        padding: "9px 14px",
+                        marginBottom: 3,
                         borderRadius: 14,
                         cursor: "pointer",
                         fontWeight: isActive ? 700 : 500,
@@ -305,13 +330,16 @@ export default function Sidebar() {
         </div>
 
         {/* BOTTOM: version + copyright + logout */}
-        <div style={{ marginTop: 24 }}>
+        <div
+          className="shrink-0 border-t border-white/10 pt-3"
+          style={{ marginTop: 8 }}
+        >
           <div
             style={{
               fontSize: 10,
               color: "#94a3b8",
               textAlign: "center",
-              marginBottom: 16,
+              marginBottom: 10,
               lineHeight: 1.6,
               padding: "0 10px",
             }}
