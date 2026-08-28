@@ -280,6 +280,7 @@ export default function HoldingsPage() {
     investmentCost: "",
     targetBuy: "",
     targetSell: "",
+    stopLoss: "",
     note: "",
   });
 
@@ -696,8 +697,13 @@ export default function HoldingsPage() {
         tickerId: holding.tickerID || holding.tickerId,
         quantity: String(holding.quantity),
         investmentCost: String(holding.investmentCost),
-        targetBuy: holding.targetBuy ? String(holding.targetBuy) : "",
-        targetSell: holding.targetSell ? String(holding.targetSell) : "",
+        targetBuy: holding.targetBuy != null ? String(holding.targetBuy) : "",
+
+        stopLoss: holding.stopLoss != null ? String(holding.stopLoss) : "",
+
+        targetSell:
+          holding.targetSell != null ? String(holding.targetSell) : "",
+
         note: holding.note && holding.note !== "N/A" ? holding.note : "",
       });
       setSelectedTickerInfo({
@@ -713,6 +719,7 @@ export default function HoldingsPage() {
         quantity: "",
         investmentCost: "",
         targetBuy: "",
+        stopLoss: "",
         targetSell: "",
         note: "",
       });
@@ -744,6 +751,7 @@ export default function HoldingsPage() {
         const updatePayload = {
           TargetBuy:
             formData.targetBuy === "" ? null : Number(formData.targetBuy),
+          StopLoss: formData.stopLoss === "" ? null : Number(formData.stopLoss),
           TargetSell:
             formData.targetSell === "" ? null : Number(formData.targetSell),
           Note: formData.note.trim() || null,
@@ -758,6 +766,7 @@ export default function HoldingsPage() {
           TickerID: formData.tickerId,
           TargetBuy:
             formData.targetBuy === "" ? null : Number(formData.targetBuy),
+          StopLoss: formData.stopLoss === "" ? null : Number(formData.stopLoss),
           TargetSell:
             formData.targetSell === "" ? null : Number(formData.targetSell),
           Note: formData.note.trim() || null,
@@ -1316,11 +1325,13 @@ export default function HoldingsPage() {
                       </>
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* TARGET BUY */}
                       <div>
                         <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                           Target Buy
                         </label>
+
                         <NumericFormat
                           thousandSeparator=","
                           decimalScale={8}
@@ -1328,20 +1339,45 @@ export default function HoldingsPage() {
                           name="targetBuy"
                           value={formData.targetBuy}
                           placeholder="(Optional)"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-blue-600 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-blue-600 transition-all"
                           onValueChange={(values) => {
-                            const { value } = values;
                             setFormData((prev) => ({
                               ...prev,
-                              targetBuy: value,
+                              targetBuy: values.value,
                             }));
                           }}
                         />
                       </div>
+
+                      {/* STOP LOSS */}
+                      <div>
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                          Stop Loss
+                        </label>
+
+                        <NumericFormat
+                          thousandSeparator=","
+                          decimalScale={8}
+                          allowNegative={false}
+                          name="stopLoss"
+                          value={formData.stopLoss}
+                          placeholder="(Optional)"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-rose-600 transition-all"
+                          onValueChange={(values) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              stopLoss: values.value,
+                            }));
+                          }}
+                        />
+                      </div>
+
+                      {/* TARGET SELL */}
                       <div>
                         <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                           Target Sell
                         </label>
+
                         <NumericFormat
                           thousandSeparator=","
                           decimalScale={8}
@@ -1349,12 +1385,11 @@ export default function HoldingsPage() {
                           name="targetSell"
                           value={formData.targetSell}
                           placeholder="(Optional)"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-orange-600 transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-400 outline-none bg-gray-50 text-base md:text-sm font-semibold text-orange-600 transition-all"
                           onValueChange={(values) => {
-                            const { value } = values;
                             setFormData((prev) => ({
                               ...prev,
-                              targetSell: value,
+                              targetSell: values.value,
                             }));
                           }}
                         />
@@ -1788,65 +1823,133 @@ export default function HoldingsPage() {
                       </span>
                     </span>
                   </div>
+                </div>
+                {/* TRADING TARGETS */}
+                <div className="mt-6 pt-5 border-t border-gray-100">
+                  <span className="text-gray-400 block text-[10px] uppercase tracking-widest font-bold mb-3">
+                    Trading Targets
+                  </span>
 
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">
-                      Target Buy
-                    </span>
-                    {detailHolding.targetBuy ? (
-                      <span className="font-bold text-blue-600 text-[15px] flex flex-wrap items-center gap-1.5">
-                        {formatMoney(
-                          detailHolding.targetBuy,
-                          checkIsCrypto(detailHolding.tickerTypeCode),
-                          true,
-                        )}
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded border ${detailHolding.investmentCost > 0 && detailHolding.targetBuy >= detailHolding.investmentCost ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-blue-50 text-blue-600 border-blue-100"}`}
-                        >
-                          {formatPercent(
-                            detailHolding.investmentCost > 0
-                              ? (detailHolding.targetBuy -
-                                  detailHolding.investmentCost) /
-                                  detailHolding.investmentCost
-                              : 0,
-                          )}
-                        </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* TARGET BUY */}
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+                      <span className="text-blue-400 block text-[9px] uppercase tracking-wider font-bold mb-1">
+                        Target Buy
                       </span>
-                    ) : (
-                      <span className="font-bold text-gray-500 text-[15px]">
-                        -
-                      </span>
-                    )}
-                  </div>
 
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase tracking-wider font-bold mb-1">
-                      Target Sell
-                    </span>
-                    {detailHolding.targetSell ? (
-                      <span className="font-bold text-orange-600 text-[15px] flex flex-wrap items-center gap-1.5">
-                        {formatMoney(
-                          detailHolding.targetSell,
-                          checkIsCrypto(detailHolding.tickerTypeCode),
-                          true,
-                        )}
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded border ${detailHolding.investmentCost > 0 && detailHolding.targetSell >= detailHolding.investmentCost ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-orange-50 text-orange-600 border-orange-100"}`}
-                        >
-                          {formatPercent(
-                            detailHolding.investmentCost > 0
-                              ? (detailHolding.targetSell -
+                      {detailHolding.targetBuy != null ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-bold text-blue-600 text-[15px]">
+                            {formatMoney(
+                              detailHolding.targetBuy,
+                              checkIsCrypto(detailHolding.tickerTypeCode),
+                              true,
+                            )}
+                          </span>
+
+                          {detailHolding.investmentCost > 0 && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                detailHolding.targetBuy >=
+                                detailHolding.investmentCost
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                  : "bg-blue-50 text-blue-600 border-blue-100"
+                              }`}
+                            >
+                              {formatPercent(
+                                (detailHolding.targetBuy -
                                   detailHolding.investmentCost) /
-                                  detailHolding.investmentCost
-                              : 0,
+                                  detailHolding.investmentCost,
+                              )}
+                            </span>
                           )}
+                        </div>
+                      ) : (
+                        <span className="font-bold text-gray-400 text-[15px]">
+                          -
                         </span>
+                      )}
+                    </div>
+
+                    {/* STOP LOSS */}
+                    <div className="rounded-xl border border-rose-100 bg-rose-50/40 p-3">
+                      <span className="text-rose-400 block text-[9px] uppercase tracking-wider font-bold mb-1">
+                        Stop Loss
                       </span>
-                    ) : (
-                      <span className="font-bold text-gray-500 text-[15px]">
-                        -
+
+                      {detailHolding.stopLoss != null ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-bold text-rose-600 text-[15px]">
+                            {formatMoney(
+                              detailHolding.stopLoss,
+                              checkIsCrypto(detailHolding.tickerTypeCode),
+                              true,
+                            )}
+                          </span>
+
+                          {detailHolding.investmentCost > 0 && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                detailHolding.stopLoss >=
+                                detailHolding.investmentCost
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                  : "bg-rose-50 text-rose-600 border-rose-100"
+                              }`}
+                            >
+                              {formatPercent(
+                                (detailHolding.stopLoss -
+                                  detailHolding.investmentCost) /
+                                  detailHolding.investmentCost,
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="font-bold text-gray-400 text-[15px]">
+                          -
+                        </span>
+                      )}
+                    </div>
+
+                    {/* TARGET SELL */}
+                    <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-3">
+                      <span className="text-orange-400 block text-[9px] uppercase tracking-wider font-bold mb-1">
+                        Target Sell
                       </span>
-                    )}
+
+                      {detailHolding.targetSell != null ? (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-bold text-orange-600 text-[15px]">
+                            {formatMoney(
+                              detailHolding.targetSell,
+                              checkIsCrypto(detailHolding.tickerTypeCode),
+                              true,
+                            )}
+                          </span>
+
+                          {detailHolding.investmentCost > 0 && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                detailHolding.targetSell >=
+                                detailHolding.investmentCost
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                  : "bg-orange-50 text-orange-600 border-orange-100"
+                              }`}
+                            >
+                              {formatPercent(
+                                (detailHolding.targetSell -
+                                  detailHolding.investmentCost) /
+                                  detailHolding.investmentCost,
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="font-bold text-gray-400 text-[15px]">
+                          -
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

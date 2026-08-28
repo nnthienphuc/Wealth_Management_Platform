@@ -18,6 +18,8 @@ public partial class Holdings : BaseAuditableEntity
 
     public decimal? TargetSell { get; set; }
 
+    public decimal? StopLoss { get; set; }
+
     public string? Note { get; set; }
 
     public virtual Accounts Account { get; set; } = null!;

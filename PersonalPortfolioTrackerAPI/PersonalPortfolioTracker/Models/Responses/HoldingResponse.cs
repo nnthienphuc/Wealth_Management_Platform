@@ -14,6 +14,7 @@
         decimal TotalInvestmentCost,
         decimal? TargetBuy,
         decimal? TargetSell,
+        decimal? StopLoss,
         DateTime CreatedAt,
         DateTime UpdatedAt,
         string? Note);

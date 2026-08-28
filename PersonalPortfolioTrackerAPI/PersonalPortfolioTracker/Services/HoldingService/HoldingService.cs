@@ -100,6 +100,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.TotalInvestmentCost,
                     tt.TargetBuy,
                     tt.TargetSell,
+                    tt.StopLoss,
                     tt.CreatedAt,
                     tt.UpdatedAt,
                     tt.Note))
@@ -125,6 +126,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                     tt.TotalInvestmentCost,
                     tt.TargetBuy,
                     tt.TargetSell,
+                    tt.StopLoss,
                     tt.CreatedAt,
                     tt.UpdatedAt,
                     tt.Note
@@ -163,6 +165,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
                 TickerId = dto.TickerID,
                 TargetBuy = dto.TargetBuy,
                 TargetSell = dto.TargetSell,
+                StopLoss = dto.StopLoss,
                 InvestmentCost = 0,
                 Quantity = 0,
                 TotalInvestmentCost = 0,
@@ -190,6 +193,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
 
             existingHolding.TargetBuy = dto.TargetBuy;
             existingHolding.TargetSell = dto.TargetSell;
+            existingHolding.StopLoss = dto.StopLoss;
             existingHolding.UpdatedAt = VietnamTime.Now();
             existingHolding.Note = dto.Note;
 

@@ -6,10 +6,12 @@ namespace PersonalPortfolioTracker.Models.Requests
         [Required] Guid TickerID,
         decimal? TargetBuy, 
         decimal? TargetSell, 
+        decimal? StopLoss,
         string? Note);
 
     public record HoldingUpdateRequest(
         decimal? TargetBuy,
         decimal? TargetSell,
+        decimal? StopLoss,
         string? Note);
 }
