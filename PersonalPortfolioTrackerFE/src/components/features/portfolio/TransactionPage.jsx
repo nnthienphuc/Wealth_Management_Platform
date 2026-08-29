@@ -26,10 +26,15 @@ import {
 } from "lucide-react";
 import { NumericFormat } from "react-number-format";
 
-const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
-  if (value == null || isNaN(value)) return "0";
+const formatMoney = (value, currency = "VND") => {
+  if (value == null || isNaN(value)) {
+    return currency?.toUpperCase() === "USD" ? "$0.00" : "0 VND";
+  }
+
   const num = Number(value);
-  if (isCrypto) {
+  const normalizedCurrency = currency?.toUpperCase() || "VND";
+
+  if (normalizedCurrency === "USD") {
     return (
       "$" +
       new Intl.NumberFormat("en-US", {
@@ -38,10 +43,11 @@ const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
       }).format(num)
     );
   }
+
   return (
     new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: isVndDisplay ? 0 : 2,
-    }).format(num) + " ₫"
+      maximumFractionDigits: 0,
+    }).format(num) + " VND"
   );
 };
 
@@ -156,7 +162,6 @@ export default function TransactionPage() {
     transactionType: "BUY",
     price: "",
     quantity: "",
-    grossAmount: "",
     feeRate: 0.03,
     pitRate: 0,
     tradeDate: new Date().toISOString().split("T")[0],
@@ -337,6 +342,33 @@ export default function TransactionPage() {
   const isGlobalCryptoAccount =
     currentAccount?.accountType?.toUpperCase() === "CRYPTO";
 
+  const currentAccountCurrency =
+    currentAccount?.currency?.toUpperCase() || "VND";
+
+  const formAccount = accounts.find(
+    (a) => (a.accountID || a.accountId) === formData.accountId,
+  );
+
+  const formAccountCurrency = formAccount?.currency?.toUpperCase() || "VND";
+
+  const isFormCryptoAccount =
+    formAccount?.accountType?.toUpperCase() === "CRYPTO";
+  const cashDividendPreview = useMemo(() => {
+    const price = Number(formData.price || 0);
+    const quantity = Number(formData.quantity || 0);
+    const pitRate = Number(formData.pitRate || 0);
+
+    const grossAmount = price * quantity;
+    const pit = grossAmount * (pitRate / 100);
+    const netAmount = grossAmount - pit;
+
+    return {
+      grossAmount,
+      pit,
+      netAmount,
+    };
+  }, [formData.price, formData.quantity, formData.pitRate]);
+
   const totalBoughtStats = useMemo(() => {
     if (!Array.isArray(summary)) return { value: 0, count: 0 };
     const buys = summary.find((s) => s.type === "BUY");
@@ -373,7 +405,6 @@ export default function TransactionPage() {
         transactionType: trans.transactionType,
         price: trans.price || "",
         quantity: trans.quantity || "",
-        grossAmount: trans.grossAmount || "",
         feeRate: trans.feeRate || 0,
         pitRate: trans.pitRate || 0,
         tradeDate: trans.tradeDate,
@@ -388,7 +419,6 @@ export default function TransactionPage() {
         transactionType: "BUY",
         price: "",
         quantity: "",
-        grossAmount: "",
         feeRate: 0.03,
         pitRate: 0,
         tradeDate: new Date().toISOString().split("T")[0],
@@ -407,7 +437,24 @@ export default function TransactionPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "transactionType") {
+      setFormData((prev) => ({
+        ...prev,
+        transactionType: value,
+        price: "",
+        quantity: "",
+        feeRate: value === "BUY" || value === "SELL" ? 0.03 : 0,
+        pitRate: 0,
+      }));
+
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -438,8 +485,6 @@ export default function TransactionPage() {
           TransactionType: formData.transactionType,
           Price: formData.price === "" ? null : Number(formData.price),
           Quantity: formData.quantity === "" ? null : Number(formData.quantity),
-          GrossAmount:
-            formData.grossAmount === "" ? null : Number(formData.grossAmount),
           FeeRate: formData.feeRate === "" ? 0 : Number(formData.feeRate),
           PITRate: formData.pitRate === "" ? 0 : Number(formData.pitRate),
           TradeDate: formData.tradeDate,
@@ -485,9 +530,7 @@ export default function TransactionPage() {
               Total Bought
             </span>
             <span className="text-2xl font-black text-rose-600 leading-none pl-2">
-              {isGlobalCryptoAccount
-                ? formatMoney(totalBoughtStats.value, true)
-                : formatMoney(totalBoughtStats.value, false, true)}
+              {formatMoney(totalBoughtStats.value, currentAccountCurrency)}
             </span>
             <span className="text-[10px] text-gray-400 mt-1.5 font-medium pl-2">
               {totalBoughtStats.count} buy transaction(s)
@@ -500,9 +543,7 @@ export default function TransactionPage() {
               Total Sold
             </span>
             <span className="text-2xl font-black text-emerald-600 leading-none pl-2">
-              {isGlobalCryptoAccount
-                ? formatMoney(totalSoldStats.value, true)
-                : formatMoney(totalSoldStats.value, false, true)}
+              {formatMoney(totalSoldStats.value, currentAccountCurrency)}
             </span>
             <span className="text-[10px] text-gray-400 mt-1.5 font-medium pl-2">
               {totalSoldStats.count} sell transaction(s)
@@ -667,7 +708,10 @@ export default function TransactionPage() {
                       {t.accountName}
                     </div>
                     <div className="text-[10px] text-gray-400 mt-0.5 font-bold uppercase tracking-wider">
-                      Trading date: {formatDate(t.tradeDate)}
+                      {t.transactionType === "DIVIDEND_CASH"
+                        ? "Ex-right date"
+                        : "Trading date"}
+                      : {formatDate(t.tradeDate)}
                     </div>
                   </div>
                   <div>{getTransactionBadge(t.transactionType)}</div>
@@ -679,31 +723,51 @@ export default function TransactionPage() {
                     <>
                       <div>
                         <span className="block text-[9px] uppercase text-gray-400 font-bold mb-0.5 tracking-wider">
-                          Gross Amount
+                          Eligible Quantity
                         </span>
-                        <span className="font-black text-gray-900">
-                          {formatMoney(t.grossAmount, isCrypto, true)}
+                        <span className="font-bold text-gray-900">
+                          {formatQuantity(t.quantity, isCrypto)}
                         </span>
                       </div>
+
+                      <div>
+                        <span className="block text-[9px] uppercase text-gray-400 font-bold mb-0.5 tracking-wider">
+                          Dividend / Share
+                        </span>
+                        <span className="font-bold text-blue-600">
+                          {formatMoney(t.price, currentAccountCurrency)}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="block text-[9px] uppercase text-gray-400 font-bold mb-0.5 tracking-wider">
+                          Gross Dividend
+                        </span>
+                        <span className="font-bold text-gray-900">
+                          {formatMoney(t.grossAmount, currentAccountCurrency)}
+                        </span>
+                      </div>
+
                       {t.pitRate > 0 && (
                         <div>
                           <span className="block text-[9px] uppercase text-gray-400 font-bold mb-0.5 tracking-wider">
                             PIT / PIT Rate
                           </span>
-                          <span className="font-bold text-gray-900">
-                            {formatMoney(t.pit, isCrypto, true)}{" "}
+                          <span className="font-bold text-rose-500">
+                            {formatMoney(t.pit, currentAccountCurrency)}{" "}
                             <span className="text-gray-400 font-medium">
                               ({t.pitRate}%)
                             </span>
                           </span>
                         </div>
                       )}
+
                       <div>
                         <span className="block text-[9px] uppercase text-gray-400 font-bold mb-0.5 tracking-wider">
-                          Net Amount
+                          Net Dividend
                         </span>
                         <span className="font-black text-emerald-600">
-                          {formatMoney(t.netAmount, isCrypto, true)}
+                          {formatMoney(t.netAmount, currentAccountCurrency)}
                         </span>
                       </div>
                     </>
@@ -731,7 +795,7 @@ export default function TransactionPage() {
                           Price
                         </span>
                         <span className="font-bold text-gray-900">
-                          {formatMoney(t.price, isCrypto, true)}
+                          {formatMoney(t.price, currentAccountCurrency)}
                         </span>
                       </div>
                       <div>
@@ -739,7 +803,7 @@ export default function TransactionPage() {
                           Gross Amount
                         </span>
                         <span className="font-bold text-gray-900">
-                          {formatMoney(t.grossAmount, isCrypto, true)}
+                          {formatMoney(t.grossAmount, currentAccountCurrency)}
                         </span>
                       </div>
 
@@ -749,7 +813,7 @@ export default function TransactionPage() {
                             Fee / Fee Rate
                           </span>
                           <span className="font-bold text-gray-900">
-                            {formatMoney(t.fee, isCrypto, true)}{" "}
+                            {formatMoney(t.fee, currentAccountCurrency)}{" "}
                             <span className="text-gray-400 font-medium">
                               ({t.feeRate}%)
                             </span>
@@ -763,7 +827,7 @@ export default function TransactionPage() {
                             PIT / PIT Rate
                           </span>
                           <span className="font-bold text-gray-900">
-                            {formatMoney(t.pit, isCrypto, true)}{" "}
+                            {formatMoney(t.pit, currentAccountCurrency)}{" "}
                             <span className="text-gray-400 font-medium">
                               ({t.pitRate}%)
                             </span>
@@ -776,7 +840,7 @@ export default function TransactionPage() {
                           Net Amount
                         </span>
                         <span className="font-black text-gray-900">
-                          {formatMoney(t.netAmount, isCrypto, true)}
+                          {formatMoney(t.netAmount, currentAccountCurrency)}
                         </span>
                       </div>
 
@@ -788,7 +852,7 @@ export default function TransactionPage() {
                           <span
                             className={`font-black flex items-center gap-1.5 ${t.realizedPnL >= 0 ? "text-emerald-500" : "text-rose-500"}`}
                           >
-                            {formatMoney(t.realizedPnL, isCrypto, true)}
+                            {formatMoney(t.realizedPnL, currentAccountCurrency)}
                             <span
                               className={`text-[9px] px-1.5 py-0.5 rounded ${t.realizedPnL >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
                             >
@@ -866,7 +930,11 @@ export default function TransactionPage() {
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">Date</span>
+                      <span className="text-gray-500 font-medium">
+                        {detailTransaction.transactionType === "DIVIDEND_CASH"
+                          ? "Ex-right Date"
+                          : "Date"}
+                      </span>
                       <span className="font-bold text-gray-800">
                         {formatDate(detailTransaction.tradeDate)}
                       </span>
@@ -894,96 +962,171 @@ export default function TransactionPage() {
                     <Receipt size={12} /> Financial Details
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">
-                        Quantity
-                      </span>
-                      <span className="font-bold text-gray-800">
-                        {formatQuantity(
-                          detailTransaction.quantity,
-                          isGlobalCryptoAccount,
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">Price</span>
-                      <span className="font-bold text-gray-800">
-                        {formatMoney(
-                          detailTransaction.price,
-                          isGlobalCryptoAccount,
-                          true,
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">
-                        Gross Amount
-                      </span>
-                      <span className="font-bold text-gray-800">
-                        {formatMoney(
-                          detailTransaction.grossAmount,
-                          isGlobalCryptoAccount,
-                          true,
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">
-                        Fee Rate / Fee
-                      </span>
-                      <span className="font-bold text-gray-800">
-                        {detailTransaction.feeRate}% /{" "}
-                        {formatMoney(
-                          detailTransaction.fee,
-                          isGlobalCryptoAccount,
-                          true,
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-gray-500 font-medium">
-                        PIT Rate / PIT
-                      </span>
-                      <span className="font-bold text-gray-800">
-                        {detailTransaction.pitRate}% /{" "}
-                        {formatMoney(
-                          detailTransaction.pit,
-                          isGlobalCryptoAccount,
-                          true,
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[13px] col-span-1 sm:col-span-2 pt-2 border-t border-gray-50">
-                      <span className="text-gray-500 font-bold">
-                        Net Amount
-                      </span>
-                      <span className="font-black text-pink-600">
-                        {formatMoney(
-                          detailTransaction.netAmount,
-                          isGlobalCryptoAccount,
-                          true,
-                        )}
-                      </span>
-                    </div>
-
-                    {detailTransaction.transactionType === "SELL" && (
-                      <div className="flex justify-between text-[13px] col-span-1 sm:col-span-2 mt-1">
-                        <span className="text-gray-500 font-bold">
-                          Realized P&L
-                        </span>
-                        <span
-                          className={`font-black ${detailTransaction.realizedPnL >= 0 ? "text-emerald-500" : "text-rose-500"}`}
-                        >
-                          {formatMoney(
-                            detailTransaction.realizedPnL,
-                            isGlobalCryptoAccount,
-                            true,
-                          )}{" "}
-                          <span className="font-medium">
-                            ({formatPercent(detailTransaction.realizedPnLRate)})
+                    {detailTransaction.transactionType === "DIVIDEND_CASH" ? (
+                      <>
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Eligible Quantity
                           </span>
-                        </span>
-                      </div>
+                          <span className="font-bold text-gray-800">
+                            {formatQuantity(
+                              detailTransaction.quantity,
+                              isGlobalCryptoAccount,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Dividend / Share
+                          </span>
+                          <span className="font-bold text-blue-600">
+                            {formatMoney(
+                              detailTransaction.price,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Gross Dividend
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {formatMoney(
+                              detailTransaction.grossAmount,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">PIT</span>
+                          <span className="font-bold text-rose-500">
+                            {detailTransaction.pitRate}% /{" "}
+                            {formatMoney(
+                              detailTransaction.pit,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px] col-span-1 sm:col-span-2 pt-3 border-t border-gray-100">
+                          <span className="text-gray-600 font-bold">
+                            Net Dividend
+                          </span>
+                          <span className="font-black text-emerald-600">
+                            {formatMoney(
+                              detailTransaction.netAmount,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Quantity
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {formatQuantity(
+                              detailTransaction.quantity,
+                              isGlobalCryptoAccount,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Price
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {formatMoney(
+                              detailTransaction.price,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Gross Amount
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {formatMoney(
+                              detailTransaction.grossAmount,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            Fee Rate / Fee
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {detailTransaction.feeRate}% /{" "}
+                            {formatMoney(
+                              detailTransaction.fee,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px]">
+                          <span className="text-gray-500 font-medium">
+                            PIT Rate / PIT
+                          </span>
+                          <span className="font-bold text-gray-800">
+                            {detailTransaction.pitRate}% /{" "}
+                            {formatMoney(
+                              detailTransaction.pit,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between text-[13px] col-span-1 sm:col-span-2 pt-2 border-t border-gray-50">
+                          <span className="text-gray-500 font-bold">
+                            Net Amount
+                          </span>
+                          <span className="font-black text-pink-600">
+                            {formatMoney(
+                              detailTransaction.netAmount,
+                              currentAccountCurrency,
+                            )}
+                          </span>
+                        </div>
+
+                        {detailTransaction.transactionType === "SELL" && (
+                          <div className="flex justify-between text-[13px] col-span-1 sm:col-span-2 mt-1">
+                            <span className="text-gray-500 font-bold">
+                              Realized P&L
+                            </span>
+
+                            <span
+                              className={`font-black ${
+                                detailTransaction.realizedPnL >= 0
+                                  ? "text-emerald-500"
+                                  : "text-rose-500"
+                              }`}
+                            >
+                              {formatMoney(
+                                detailTransaction.realizedPnL,
+                                currentAccountCurrency,
+                              )}{" "}
+                              <span className="font-medium">
+                                (
+                                {formatPercent(
+                                  detailTransaction.realizedPnLRate,
+                                )}
+                                )
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -1012,8 +1155,7 @@ export default function TransactionPage() {
                       <span className="font-bold text-gray-800">
                         {formatMoney(
                           detailTransaction.preInvestmentCost,
-                          isGlobalCryptoAccount,
-                          true,
+                          currentAccountCurrency,
                         )}
                       </span>
                     </div>
@@ -1024,8 +1166,7 @@ export default function TransactionPage() {
                       <span className="font-bold text-gray-800">
                         {formatMoney(
                           detailTransaction.preTotalInvestmentCost,
-                          isGlobalCryptoAccount,
-                          true,
+                          currentAccountCurrency,
                         )}
                       </span>
                     </div>
@@ -1158,7 +1299,9 @@ export default function TransactionPage() {
 
                       <div className="col-span-2 sm:col-span-1">
                         <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
-                          Trade Date *
+                          {formData.transactionType === "DIVIDEND_CASH"
+                            ? "Ex-right Date *"
+                            : "Trade Date *"}
                         </label>
                         <input
                           type="date"
@@ -1255,31 +1398,60 @@ export default function TransactionPage() {
 
                         {formData.transactionType === "DIVIDEND_CASH" && (
                           <>
+                            {/* DIVIDEND PER SHARE */}
                             <div>
                               <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">
-                                Gross Amount *
+                                Dividend / Share *
                               </label>
+
                               <NumericFormat
                                 thousandSeparator=","
                                 decimalScale={8}
                                 allowNegative={false}
-                                name="grossAmount"
-                                value={formData.grossAmount}
+                                name="price"
+                                value={formData.price}
                                 required
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm transition-all"
+                                placeholder="e.g. 1,850"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[16px] md:text-sm transition-all"
                                 onValueChange={(values) => {
-                                  const { value } = values;
                                   setFormData((prev) => ({
                                     ...prev,
-                                    grossAmount: value,
+                                    price: values.value,
                                   }));
                                 }}
                               />
                             </div>
+
+                            {/* ELIGIBLE QUANTITY */}
                             <div>
+                              <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">
+                                Eligible Quantity *
+                              </label>
+
+                              <NumericFormat
+                                thousandSeparator=","
+                                decimalScale={8}
+                                allowNegative={false}
+                                name="quantity"
+                                value={formData.quantity}
+                                required
+                                placeholder="e.g. 1,000"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[16px] md:text-sm transition-all"
+                                onValueChange={(values) => {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    quantity: values.value,
+                                  }));
+                                }}
+                              />
+                            </div>
+
+                            {/* PIT RATE */}
+                            <div className="col-span-2">
                               <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase">
                                 PIT Rate (%)
                               </label>
+
                               <input
                                 type="number"
                                 step="any"
@@ -1287,8 +1459,57 @@ export default function TransactionPage() {
                                 name="pitRate"
                                 value={formData.pitRate}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-pink-400 outline-none text-[16px] md:text-sm"
+                                className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-blue-400 outline-none text-[16px] md:text-sm"
                               />
+                            </div>
+
+                            {/* PREVIEW */}
+                            <div className="col-span-2 bg-white rounded-xl border border-blue-100 p-4 mt-1">
+                              <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-3">
+                                Dividend Preview
+                              </div>
+
+                              <div className="space-y-2 text-[12px]">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500">
+                                    Gross Dividend
+                                  </span>
+
+                                  <span className="font-bold text-gray-800">
+                                    {formatMoney(
+                                      cashDividendPreview.grossAmount,
+                                      formAccountCurrency,
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                  <span className="text-gray-500">
+                                    PIT ({formData.pitRate || 0}%)
+                                  </span>
+
+                                  <span className="font-bold text-rose-500">
+                                    -
+                                    {formatMoney(
+                                      cashDividendPreview.pit,
+                                      formAccountCurrency,
+                                    )}
+                                  </span>
+                                </div>
+
+                                <div className="flex justify-between pt-2 border-t border-gray-100">
+                                  <span className="font-bold text-gray-700">
+                                    Net Dividend
+                                  </span>
+
+                                  <span className="font-black text-emerald-600">
+                                    {formatMoney(
+                                      cashDividendPreview.netAmount,
+                                      formAccountCurrency,
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </>
                         )}
@@ -1402,30 +1623,95 @@ export default function TransactionPage() {
                       </div>
                       <div className="flex justify-between border-b border-gray-100 pb-2">
                         <span className="font-semibold text-gray-500">
-                          Trade Date:
+                          {formData.transactionType === "DIVIDEND_CASH"
+                            ? "Ex-right Date:"
+                            : "Trade Date:"}
                         </span>{" "}
                         <span className="font-bold text-gray-900">
                           {formatDate(formData.tradeDate)}
                         </span>
                       </div>
 
-                      {formData.transactionType !== "DIVIDEND_TICKER" && (
+                      {["BUY", "SELL"].includes(formData.transactionType) && (
                         <div className="flex justify-between border-b border-gray-100 pb-2">
                           <span className="font-semibold text-gray-500">
                             Gross Amount:
-                          </span>{" "}
+                          </span>
+
                           <span className="font-bold text-gray-900">
                             {formatMoney(
-                              // Tự động tính Price * Quantity nếu là BUY/SELL
-                              ["BUY", "SELL"].includes(formData.transactionType)
-                                ? Number(formData.price || 0) *
-                                    Number(formData.quantity || 0)
-                                : formData.grossAmount,
-                              isGlobalCryptoAccount,
-                              true,
+                              Number(formData.price || 0) *
+                                Number(formData.quantity || 0),
+                              formAccountCurrency,
                             )}
                           </span>
                         </div>
+                      )}
+                      {formData.transactionType === "DIVIDEND_CASH" && (
+                        <>
+                          <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <span className="font-semibold text-gray-500">
+                              Dividend / Share:
+                            </span>
+
+                            <span className="font-bold text-blue-600">
+                              {formatMoney(formData.price, formAccountCurrency)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <span className="font-semibold text-gray-500">
+                              Eligible Quantity:
+                            </span>
+
+                            <span className="font-bold text-gray-900">
+                              {formatQuantity(
+                                formData.quantity,
+                                isFormCryptoAccount,
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <span className="font-semibold text-gray-500">
+                              Gross Dividend:
+                            </span>
+
+                            <span className="font-bold text-gray-900">
+                              {formatMoney(
+                                cashDividendPreview.grossAmount,
+                                formAccountCurrency,
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between border-b border-gray-100 pb-2">
+                            <span className="font-semibold text-gray-500">
+                              PIT ({formData.pitRate || 0}%):
+                            </span>
+
+                            <span className="font-bold text-rose-500">
+                              -
+                              {formatMoney(
+                                cashDividendPreview.pit,
+                                formAccountCurrency,
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between pt-1">
+                            <span className="font-bold text-gray-700">
+                              Net Dividend:
+                            </span>
+
+                            <span className="font-black text-emerald-600">
+                              {formatMoney(
+                                cashDividendPreview.netAmount,
+                                formAccountCurrency,
+                              )}
+                            </span>
+                          </div>
+                        </>
                       )}
                       {["BUY", "SELL"].includes(formData.transactionType) && (
                         <>
@@ -1434,11 +1720,7 @@ export default function TransactionPage() {
                               Price:
                             </span>{" "}
                             <span className="font-bold text-gray-900">
-                              {formatMoney(
-                                formData.price,
-                                isGlobalCryptoAccount,
-                                true,
-                              )}
+                              {formatMoney(formData.price, formAccountCurrency)}
                             </span>
                           </div>
                           <div className="flex justify-between border-b border-gray-100 pb-2">
@@ -1448,7 +1730,7 @@ export default function TransactionPage() {
                             <span className="font-bold text-gray-900">
                               {formatQuantity(
                                 formData.quantity,
-                                isGlobalCryptoAccount,
+                                isFormCryptoAccount,
                               )}
                             </span>
                           </div>
@@ -1462,9 +1744,7 @@ export default function TransactionPage() {
                           </div>
                         </>
                       )}
-                      {["SELL", "DIVIDEND_CASH"].includes(
-                        formData.transactionType,
-                      ) && (
+                      {formData.transactionType === "SELL" && (
                         <div className="flex justify-between border-b border-gray-100 pb-2">
                           <span className="font-semibold text-gray-500">
                             PIT Rate:
@@ -1482,7 +1762,7 @@ export default function TransactionPage() {
                           <span className="font-bold text-gray-900">
                             {formatQuantity(
                               formData.quantity,
-                              isGlobalCryptoAccount,
+                              isFormCryptoAccount,
                             )}
                           </span>
                         </div>

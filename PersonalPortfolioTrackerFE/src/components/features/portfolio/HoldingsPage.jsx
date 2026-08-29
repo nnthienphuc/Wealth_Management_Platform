@@ -44,8 +44,6 @@ import { NumericFormat } from "react-number-format";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 
-const USD_TO_VND = 27000;
-
 // === FORMATTERS & HELPERS ===
 const checkIsCrypto = (typeCode) => {
   const code = (typeCode || "").toUpperCase();
@@ -54,10 +52,15 @@ const checkIsCrypto = (typeCode) => {
   );
 };
 
-const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
-  if (value == null || isNaN(value)) return "0";
+const formatMoney = (value, currency = "VND") => {
+  if (value == null || isNaN(value)) {
+    return currency?.toUpperCase() === "USD" ? "$0.00" : "0 VND";
+  }
+
   const num = Number(value);
-  if (isCrypto) {
+  const normalizedCurrency = currency?.toUpperCase() || "VND";
+
+  if (normalizedCurrency === "USD") {
     return (
       "$" +
       new Intl.NumberFormat("en-US", {
@@ -66,30 +69,11 @@ const formatMoney = (value, isCrypto = false, isVndDisplay = false) => {
       }).format(num)
     );
   }
+
   return (
     new Intl.NumberFormat("en-US", {
-      maximumFractionDigits: isVndDisplay ? 0 : 2,
-    }).format(num) + " ₫"
-  );
-};
-
-const formatVndTotal = (value) => {
-  if (value == null || isNaN(value)) return "0 VND";
-  return (
-    new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
-      Number(value),
-    ) + " VND"
-  );
-};
-
-const formatUsdTotal = (value) => {
-  if (value == null || isNaN(value)) return "$0";
-  return (
-    "$" +
-    new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    }).format(Number(value))
+      maximumFractionDigits: 0,
+    }).format(num) + " VND"
   );
 };
 
@@ -289,8 +273,10 @@ export default function HoldingsPage() {
       accounts.find((a) => (a.accountID || a.accountId) === selectedAccountId),
     [accounts, selectedAccountId],
   );
-  const isGlobalCryptoAccount =
-    currentAccount?.accountType?.toUpperCase() === "CRYPTO";
+
+  const currentAccountCurrency =
+    currentAccount?.currency?.toUpperCase() || "VND";
+
   const totalPages = useMemo(
     () => Math.ceil(totalRecords / pageSize) || 1,
     [totalRecords, pageSize],
@@ -844,9 +830,10 @@ export default function HoldingsPage() {
                       <div key={type}>
                         {type}:{" "}
                         <strong className="text-gray-900 font-semibold">
-                          {checkIsCrypto(type)
-                            ? formatUsdTotal(data.totalInvested)
-                            : formatVndTotal(data.totalInvested)}
+                          {formatMoney(
+                            data.totalInvested,
+                            currentAccountCurrency,
+                          )}
                         </strong>
                       </div>
                     ),
@@ -854,11 +841,13 @@ export default function HoldingsPage() {
                 </div>
               </div>
               <div className="text-[12px] text-gray-500 pt-2 border-t border-gray-50 flex justify-between items-center mt-auto">
-                <span>Total ({isGlobalCryptoAccount ? "USD" : "VND"}):</span>
+                <span>Total ({currentAccountCurrency}):</span>
+
                 <strong className="text-gray-900 text-[15px] font-black">
-                  {isGlobalCryptoAccount
-                    ? formatUsdTotal(summary.totalInvestedList)
-                    : formatVndTotal(summary.totalInvestedList)}
+                  {formatMoney(
+                    summary.totalInvestedList,
+                    currentAccountCurrency,
+                  )}
                 </strong>
               </div>
             </div>
@@ -874,9 +863,10 @@ export default function HoldingsPage() {
                       <div key={type}>
                         {type}:{" "}
                         <strong className="text-gray-900 font-semibold">
-                          {checkIsCrypto(type)
-                            ? formatUsdTotal(data.totalMarketValue)
-                            : formatVndTotal(data.totalMarketValue)}
+                          {formatMoney(
+                            data.totalMarketValue,
+                            currentAccountCurrency,
+                          )}
                         </strong>
                       </div>
                     ),
@@ -884,11 +874,13 @@ export default function HoldingsPage() {
                 </div>
               </div>
               <div className="text-[12px] text-gray-500 pt-2 border-t border-gray-50 flex justify-between items-center mt-auto">
-                <span>Total ({isGlobalCryptoAccount ? "USD" : "VND"}):</span>
+                <span>Total ({currentAccountCurrency}):</span>
+
                 <strong className="text-gray-900 text-[15px] font-black">
-                  {isGlobalCryptoAccount
-                    ? formatUsdTotal(summary.totalMarketValueList)
-                    : formatVndTotal(summary.totalMarketValueList)}
+                  {formatMoney(
+                    summary.totalMarketValueList,
+                    currentAccountCurrency,
+                  )}
                 </strong>
               </div>
             </div>
@@ -1060,7 +1052,7 @@ export default function HoldingsPage() {
                   </div>
                   <div className="flex flex-col items-end shrink-0">
                     <div className="text-[15px] font-black text-gray-900 leading-tight">
-                      {formatMoney(h.marketPrice, isCrypto, true)}
+                      {formatMoney(h.marketPrice, currentAccountCurrency)}
                     </div>
                     <div
                       className={`mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${unrealizedPnL >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
@@ -1096,7 +1088,7 @@ export default function HoldingsPage() {
                       </div>
                     </span>
                     <span className="font-bold text-gray-800 text-[12px]">
-                      {formatMoney(h.investmentCost, isCrypto, true)}
+                      {formatMoney(h.investmentCost, currentAccountCurrency)}
                     </span>
                   </div>
 
@@ -1105,7 +1097,7 @@ export default function HoldingsPage() {
                       Total Invested
                     </span>
                     <span className="font-bold text-gray-800 text-[12px]">
-                      {formatMoney(totalInvested, isCrypto, true)}
+                      {formatMoney(totalInvested, currentAccountCurrency)}
                     </span>
                   </div>
                   <div>
@@ -1115,7 +1107,7 @@ export default function HoldingsPage() {
                     <span
                       className={`font-bold text-[12px] ${getPnLColor(unrealizedPnL)}`}
                     >
-                      {formatMoney(unrealizedPnL, isCrypto, true)}
+                      {formatMoney(unrealizedPnL, currentAccountCurrency)}
                     </span>
                   </div>
                 </div>
@@ -1753,8 +1745,7 @@ export default function HoldingsPage() {
                     <span className="font-bold text-gray-900 text-[15px]">
                       {formatMoney(
                         detailHolding.investmentCost,
-                        checkIsCrypto(detailHolding.tickerTypeCode),
-                        true,
+                        currentAccountCurrency,
                       )}
                     </span>
                   </div>
@@ -1766,8 +1757,7 @@ export default function HoldingsPage() {
                     <span className="font-bold text-gray-900 text-[15px]">
                       {formatMoney(
                         detailHolding.marketPrice,
-                        checkIsCrypto(detailHolding.tickerTypeCode),
-                        true,
+                        currentAccountCurrency,
                       )}
                     </span>
                   </div>
@@ -1778,8 +1768,7 @@ export default function HoldingsPage() {
                     <span className="font-bold text-gray-900 text-[15px]">
                       {formatMoney(
                         detailHolding.totalInvestmentCost,
-                        checkIsCrypto(detailHolding.tickerTypeCode),
-                        true,
+                        currentAccountCurrency,
                       )}
                     </span>
                   </div>
@@ -1791,8 +1780,7 @@ export default function HoldingsPage() {
                     <span className="font-black text-gray-900 text-[15px]">
                       {formatMoney(
                         detailHolding.marketPrice * detailHolding.quantity,
-                        checkIsCrypto(detailHolding.tickerTypeCode),
-                        true,
+                        currentAccountCurrency,
                       )}
                     </span>
                   </div>
@@ -1806,8 +1794,7 @@ export default function HoldingsPage() {
                       {formatMoney(
                         detailHolding.marketPrice * detailHolding.quantity -
                           detailHolding.totalInvestmentCost,
-                        checkIsCrypto(detailHolding.tickerTypeCode),
-                        true,
+                        currentAccountCurrency,
                       )}
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded border ${detailHolding.marketPrice * detailHolding.quantity - detailHolding.totalInvestmentCost >= 0 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"}`}
@@ -1842,8 +1829,7 @@ export default function HoldingsPage() {
                           <span className="font-bold text-blue-600 text-[15px]">
                             {formatMoney(
                               detailHolding.targetBuy,
-                              checkIsCrypto(detailHolding.tickerTypeCode),
-                              true,
+                              currentAccountCurrency,
                             )}
                           </span>
 
@@ -1882,8 +1868,7 @@ export default function HoldingsPage() {
                           <span className="font-bold text-rose-600 text-[15px]">
                             {formatMoney(
                               detailHolding.stopLoss,
-                              checkIsCrypto(detailHolding.tickerTypeCode),
-                              true,
+                              currentAccountCurrency,
                             )}
                           </span>
 
@@ -1922,8 +1907,7 @@ export default function HoldingsPage() {
                           <span className="font-bold text-orange-600 text-[15px]">
                             {formatMoney(
                               detailHolding.targetSell,
-                              checkIsCrypto(detailHolding.tickerTypeCode),
-                              true,
+                              currentAccountCurrency,
                             )}
                           </span>
 

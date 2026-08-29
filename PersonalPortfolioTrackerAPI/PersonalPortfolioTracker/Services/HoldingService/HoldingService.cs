@@ -25,7 +25,7 @@ namespace PersonalPortfolioTracker.Services.HoldingService
         {
             return await _uow.Repository<Accounts>().FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeConstants.SECURITIES || tt.Type == AccountTypeConstants.CRYPTO))
                 .OrderBy(tt => tt.Name)
-                .Select(tt => new AccountTypeResponse(tt.ID, tt.Type, tt.Name))
+                .Select(tt => new AccountTypeResponse(tt.ID, tt.Type, tt.Name, tt.Currency))
                 .ToListAsync();
         }
 

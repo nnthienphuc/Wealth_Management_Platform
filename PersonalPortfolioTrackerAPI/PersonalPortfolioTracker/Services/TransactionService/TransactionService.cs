@@ -35,7 +35,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
             return await _uow.Repository<Accounts>()
                 .FindByCondition(tt => tt.InvestorId == _investorID && (tt.Type == AccountTypeConstants.SECURITIES || tt.Type == AccountTypeConstants.CRYPTO))
                 .OrderBy(tt => tt.Type)
-                .Select(tt => new AccountTypeResponse(tt.ID, tt.Type, tt.Name))
+                .Select(tt => new AccountTypeResponse(tt.ID, tt.Type, tt.Name, tt.Currency))
                 .ToListAsync();
         }
 
@@ -75,9 +75,9 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
             if (!string.IsNullOrWhiteSpace(tickerSymbol))
                 query = query.Where(tt => tt.Ticker.Symbol.StartsWith(tickerSymbol));
-                
+
             if (fromDate.HasValue && toDate.HasValue)
-                query = query.Where(tt => tt.TradeDate >= fromDate.Value &&  tt.TradeDate <= toDate.Value);
+                query = query.Where(tt => tt.TradeDate >= fromDate.Value && tt.TradeDate <= toDate.Value);
 
             var totalRecords = await query.CountAsync();
 
@@ -135,7 +135,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 if (existingAccount.CurrentBalance < netAmount)
                     throw new InvalidOperationException("The current balance in this account is insufficient to execute this BUY order.");
 
-                    var newTrans = new Transactions
+                var newTrans = new Transactions
                 {
                     AccountId = dto.AccountID,
                     TickerId = dto.TickerID,
@@ -208,7 +208,7 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                     existingAccount.CurrentBalance -= (decimal)netAmount;
                     existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
                 }
-                
+
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
@@ -349,24 +349,40 @@ namespace PersonalPortfolioTracker.Services.TransactionService
                 if (existingHolding == null || existingHolding.Quantity <= 0)
                     throw new InvalidOperationException("You do not own this ticker to receive cash dividends.");
 
+                if (!dto.Price.HasValue || dto.Price.Value <= 0)
+                    throw new ArgumentException("Dividend per share must be greater than 0.");
+
+                if (!dto.Quantity.HasValue || dto.Quantity.Value <= 0)
+                    throw new ArgumentException("Eligible quantity must be greater than 0.");
+
+                if (dto.PITRate.HasValue && dto.PITRate.Value < 0)
+                    throw new ArgumentException("PIT rate cannot be negative.");
+
                 await _uow.BeginTransactionAsync();
 
-                var PIT = dto.GrossAmount * dto.PITRate / 100;
+                var pitRate = dto.PITRate ?? 0;
 
-                var netAmount = dto.GrossAmount - PIT;
-                
+                var grossAmount =
+                    dto.Price.Value * dto.Quantity.Value;
+
+                var pit =
+                    grossAmount * (pitRate / 100);
+
+                var netAmount =
+                    grossAmount - pit;
+
                 var newTrans = new Transactions
                 {
                     AccountId = dto.AccountID,
                     TickerId = dto.TickerID,
                     TransactionType = TransactionTypes.DIVIDEND_CASH,
-                    Price = 0,
-                    Quantity = 0,
-                    GrossAmount = dto.GrossAmount,
+                    Price = dto.Price,
+                    Quantity = dto.Quantity,
+                    GrossAmount = grossAmount,
                     Fee = 0,
                     FeeRate = 0,
-                    PITRate = dto.PITRate,
-                    PIT = PIT,
+                    PITRate = pitRate,
+                    PIT = pit,
                     NetAmount = netAmount,
                     TradeDate = dto.TradeDate,
                     RealizedPnL = 0,
@@ -381,8 +397,35 @@ namespace PersonalPortfolioTracker.Services.TransactionService
 
                 _uow.Repository<Transactions>().Create(newTrans);
 
-                existingAccount.CurrentBalance += (netAmount ?? 0);
-                existingAccount.TotalBalance = existingAccount.InvestedBalance + existingAccount.CurrentBalance;
+                decimal eligibleQuantity = Math.Min(
+    dto.Quantity.Value,
+    existingHolding.Quantity
+);
+
+                decimal costReduction = RoundFinancial(
+                    dto.Price.Value * eligibleQuantity
+                );
+
+                decimal newTotalInvestmentCost = RoundFinancial(
+                    existingHolding.TotalInvestmentCost - costReduction
+                );
+
+                existingHolding.TotalInvestmentCost = newTotalInvestmentCost;
+
+                existingHolding.InvestmentCost = RoundFinancial(
+                    newTotalInvestmentCost / existingHolding.Quantity
+                );
+
+                existingHolding.UpdatedAt = VietnamTime.Now();
+
+                existingAccount.InvestedBalance = RoundFinancial(
+                    existingAccount.InvestedBalance - costReduction
+                );
+
+                existingAccount.TotalBalance =
+                    existingAccount.CurrentBalance +
+                    existingAccount.InvestedBalance;
+
                 existingAccount.UpdatedAt = VietnamTime.Now();
 
                 await _uow.CommitAsync();
